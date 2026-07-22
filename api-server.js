@@ -81,6 +81,24 @@ app.get('/api/get-bookings', (req, res) => {
   }
 });
 
+app.get('/api/debug-db', (req, res) => {
+  const envKeys = Object.keys(process.env).filter(key => 
+    key.includes('KV') || key.includes('REDIS') || key.includes('UPSTASH')
+  );
+  
+  const envStatus = {};
+  envKeys.forEach(key => {
+    envStatus[key] = !!process.env[key];
+  });
+
+  return res.status(200).json({
+    message: 'Local Database Environment Diagnostics',
+    envStatus,
+    nodeEnv: process.env.NODE_ENV,
+    processCwd: process.cwd()
+  });
+});
+
 app.post('/api/create-order', async (req, res) => {
   const { amount } = req.body;
   if (!amount || typeof amount !== 'number') {
