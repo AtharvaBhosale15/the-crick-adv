@@ -42,7 +42,7 @@ import {
 } from 'lucide-react';
 
 // Import images
-import logoImg from './assets/images/the_cricket_advisor_logo.jpg';
+import logoImg from './assets/images/the_cricket_advisor_logo.png';
 import profileImg from './assets/images/prakash_palande_gym_1784639281865.jpg';
 import stadiumBg from './assets/images/stadium_background_1784636094892.jpg';
 import globalNetworkImg from './assets/images/global_network_1784638057795.jpg';
@@ -1185,7 +1185,7 @@ END:VCALENDAR`;
             <img 
               src={logoImg} 
               alt="The Cricket Advisor Logo" 
-              className="h-12 w-12 rounded-full border-2 border-gold-500 object-cover bg-white p-0.5 shadow-sm" 
+              className="h-10 sm:h-12 w-auto rounded-lg object-contain shadow-sm" 
             />
             <div>
               <span className="font-display tracking-tight font-bold text-white text-sm sm:text-base block uppercase leading-tight">
@@ -4117,7 +4117,7 @@ END:VCALENDAR`;
               <img 
                 src={logoImg} 
                 alt="The Cricket Advisor Logo Foot" 
-                className="h-10 w-10 rounded-full border-2 border-gold-500 object-cover bg-white p-0.5 shadow-sm" 
+                className="h-10 sm:h-12 w-auto rounded-lg object-contain shadow-sm" 
               />
               <div>
                 <span className="font-display tracking-tight font-extrabold text-white text-sm block uppercase">
