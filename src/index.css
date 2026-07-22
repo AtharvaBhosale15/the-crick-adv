@@ -1,0 +1,93 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: 'Poppins', system-ui, -apple-system, sans-serif;
+  --font-display: 'Montserrat', system-ui, -apple-system, sans-serif;
+  --font-sharp: 'Oswald', system-ui, -apple-system, sans-serif;
+  --font-arial: Arial, Helvetica, sans-serif;
+  
+  --color-gold-50: #fdfaf2;
+  --color-gold-100: #f9f1db;
+  --color-gold-200: #f2e1b1;
+  --color-gold-300: #ebcf82;
+  --color-gold-400: #e2b950;
+  --color-gold-500: #D4AF37; /* Royal Gold */
+  --color-gold-600: #b89327;
+  --color-gold-700: #93731c;
+  --color-gold-800: #715717;
+  --color-gold-900: #544114;
+  --color-gold-950: #35280b;
+
+  --color-navy-50: #f2f5fa;
+  --color-navy-100: #e1e7f3;
+  --color-navy-200: #cad6ea;
+  --color-navy-300: #a7bcdd;
+  --color-navy-400: #7b9acb;
+  --color-navy-500: #5879b7;
+  --color-navy-600: #445fa0;
+  --color-navy-700: #374c83;
+  --color-navy-800: #0F1E3D; /* Deep Navy */
+  --color-navy-900: #0B162E; /* Luxury Dark Navy */
+  --color-navy-950: #060d1b;
+}
+
+@layer base {
+  body {
+    @apply font-sans bg-[#FAFBFD] text-slate-800 antialiased;
+  }
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-display tracking-tight font-semibold text-navy-900;
+  }
+}
+
+/* Custom animations and visual utilities */
+.text-gradient-gold {
+  background: linear-gradient(135deg, #F3D06D 0%, #D4AF37 50%, #AA820A 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.text-gradient-navy {
+  background: linear-gradient(135deg, #1e3a8a 0%, #0F1E3D 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.bg-gold-gradient {
+  background: linear-gradient(135deg, #F3D06D 0%, #D4AF37 50%, #AA820A 100%);
+}
+
+.bg-navy-gradient {
+  background: linear-gradient(135deg, #1E3A8A 0%, #0F1E3D 50%, #060D1B 100%);
+}
+
+.glass-panel {
+  background: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.glass-panel-dark {
+  background: rgba(15, 30, 61, 0.85);
+  backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.border-gold-glow {
+  box-shadow: 0 0 15px rgba(212, 175, 55, 0.2);
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  @apply bg-slate-100;
+}
+
+::-webkit-scrollbar-thumb {
+  @apply bg-slate-300 rounded-full hover:bg-slate-400;
+}
+
