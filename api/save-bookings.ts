@@ -6,8 +6,21 @@ import type { VercelRequest, VercelResponse } from '@vercel/node';
 const LOCAL_DB_PATH = path.join(process.cwd(), 'bookings-db.json');
 
 const getKVClient = () => {
-  const url = process.env.KV_REST_API_URL || process.env.UPSTASH_REDIS_REST_URL;
-  const token = process.env.KV_REST_API_TOKEN || process.env.UPSTASH_REDIS_REST_TOKEN;
+  // 1. Direct standard checks
+  let url = process.env.KV_REST_API_URL || process.env.UPSTASH_REDIS_REST_URL;
+  let token = process.env.KV_REST_API_TOKEN || process.env.UPSTASH_REDIS_REST_TOKEN;
+
+  // 2. Scan fallback for prefixed variables (e.g., tcc_kv_db_REST_API_URL)
+  if (!url || !token) {
+    const keys = Object.keys(process.env);
+    const urlKey = keys.find(k => k.endsWith('_REST_API_URL') || k.endsWith('_REST_URL'));
+    const tokenKey = keys.find(k => k.endsWith('_REST_API_TOKEN') || k.endsWith('_REST_TOKEN'));
+    if (urlKey && tokenKey) {
+      url = process.env[urlKey];
+      token = process.env[tokenKey];
+    }
+  }
+
   if (url && token) {
     return createClient({ url, token });
   }

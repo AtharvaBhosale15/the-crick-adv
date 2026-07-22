@@ -2,7 +2,9 @@ import type { VercelRequest, VercelResponse } from '@vercel/node';
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   const envKeys = Object.keys(process.env).filter(key => 
-    key.includes('KV') || key.includes('REDIS') || key.includes('UPSTASH')
+    key.toLowerCase().includes('kv') || 
+    key.toLowerCase().includes('redis') || 
+    key.toLowerCase().includes('upstash')
   );
   
   const envStatus: Record<string, boolean> = {};
