@@ -1,5 +1,5 @@
 import crypto from 'crypto';
-import { kv } from '@vercel/kv';
+import { createClient } from '@vercel/kv';
 import fs from 'fs';
 import path from 'path';
 import type { VercelRequest, VercelResponse } from '@vercel/node';
@@ -24,6 +24,15 @@ const saveLocalBookings = (bookings: any[]) => {
   } catch (error) {
     console.error('Error writing local bookings file:', error);
   }
+};
+
+const getKVClient = () => {
+  const url = process.env.KV_REST_API_URL || process.env.UPSTASH_REDIS_REST_URL;
+  const token = process.env.KV_REST_API_TOKEN || process.env.UPSTASH_REDIS_REST_TOKEN;
+  if (url && token) {
+    return createClient({ url, token });
+  }
+  return null;
 };
 
 const cleanEnvVar = (val?: string) => {
@@ -63,10 +72,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     if (generated_signature === razorpay_signature) {
       // If payment is successfully verified, persist the booking details in database
       if (booking) {
-        const useCloudKV = !!process.env.KV_REST_API_URL;
+        const kv = getKVClient();
         let bookings: any[] = [];
 
-        if (useCloudKV) {
+        if (kv) {
           const cloudData = await kv.get<any[]>('tcc_bookings');
           bookings = cloudData || [];
         } else {
@@ -88,7 +97,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           };
           bookings.push(newBooking);
 
-          if (useCloudKV) {
+          if (kv) {
             await kv.set('tcc_bookings', bookings);
           } else {
             saveLocalBookings(bookings);

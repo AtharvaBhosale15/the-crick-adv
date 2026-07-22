@@ -1,4 +1,4 @@
-import { kv } from '@vercel/kv';
+import { createClient } from '@vercel/kv';
 import fs from 'fs';
 import path from 'path';
 import type { VercelRequest, VercelResponse } from '@vercel/node';
@@ -17,17 +17,26 @@ const getLocalBookings = (): any[] => {
   return [];
 };
 
+const getKVClient = () => {
+  const url = process.env.KV_REST_API_URL || process.env.UPSTASH_REDIS_REST_URL;
+  const token = process.env.KV_REST_API_TOKEN || process.env.UPSTASH_REDIS_REST_TOKEN;
+  if (url && token) {
+    return createClient({ url, token });
+  }
+  return null;
+};
+
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method !== 'GET') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  const useCloudKV = !!process.env.KV_REST_API_URL;
+  const kv = getKVClient();
 
   try {
     let bookings: any[] = [];
 
-    if (useCloudKV) {
+    if (kv) {
       const cloudData = await kv.get<any[]>('tcc_bookings');
       bookings = cloudData || [];
     } else {

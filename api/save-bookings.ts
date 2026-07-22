@@ -1,9 +1,18 @@
-import { kv } from '@vercel/kv';
+import { createClient } from '@vercel/kv';
 import fs from 'fs';
 import path from 'path';
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 
 const LOCAL_DB_PATH = path.join(process.cwd(), 'bookings-db.json');
+
+const getKVClient = () => {
+  const url = process.env.KV_REST_API_URL || process.env.UPSTASH_REDIS_REST_URL;
+  const token = process.env.KV_REST_API_TOKEN || process.env.UPSTASH_REDIS_REST_TOKEN;
+  if (url && token) {
+    return createClient({ url, token });
+  }
+  return null;
+};
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method !== 'POST') {
@@ -22,8 +31,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   try {
-    const useCloudKV = !!process.env.KV_REST_API_URL;
-    if (useCloudKV) {
+    const kv = getKVClient();
+    if (kv) {
       await kv.set('tcc_bookings', bookings);
     } else {
       fs.writeFileSync(LOCAL_DB_PATH, JSON.stringify(bookings, null, 2), 'utf-8');
