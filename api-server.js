@@ -6,6 +6,20 @@ import fs from 'fs';
 import path from 'path';
 
 dotenv.config();
+ 
+// Fallback to load Vercel pulled development environment variables locally
+const devEnvPath = path.join(process.cwd(), '.env.development.local');
+if (fs.existsSync(devEnvPath)) {
+  try {
+    const envConfig = dotenv.parse(fs.readFileSync(devEnvPath));
+    for (const k in envConfig) {
+      process.env[k] = envConfig[k];
+    }
+    console.log('Successfully loaded environment variables from .env.development.local');
+  } catch (e) {
+    console.warn('Could not parse .env.development.local:', e);
+  }
+}
 
 const app = express();
 app.use(express.json());
