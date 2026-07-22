@@ -1,5 +1,30 @@
 import crypto from 'crypto';
+import { kv } from '@vercel/kv';
+import fs from 'fs';
+import path from 'path';
 import type { VercelRequest, VercelResponse } from '@vercel/node';
+
+const LOCAL_DB_PATH = path.join(process.cwd(), 'bookings-db.json');
+
+const getLocalBookings = (): any[] => {
+  try {
+    if (fs.existsSync(LOCAL_DB_PATH)) {
+      const data = fs.readFileSync(LOCAL_DB_PATH, 'utf-8');
+      return JSON.parse(data);
+    }
+  } catch (error) {
+    console.error('Error reading local bookings file:', error);
+  }
+  return [];
+};
+
+const saveLocalBookings = (bookings: any[]) => {
+  try {
+    fs.writeFileSync(LOCAL_DB_PATH, JSON.stringify(bookings, null, 2), 'utf-8');
+  } catch (error) {
+    console.error('Error writing local bookings file:', error);
+  }
+};
 
 const cleanEnvVar = (val?: string) => {
   if (!val) return '';
@@ -18,7 +43,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  const { razorpay_order_id, razorpay_payment_id, razorpay_signature } = req.body;
+  const { razorpay_order_id, razorpay_payment_id, razorpay_signature, booking } = req.body;
 
   if (!razorpay_order_id || !razorpay_payment_id || !razorpay_signature) {
     return res.status(400).json({ error: 'Missing required parameters for verification' });
@@ -36,6 +61,41 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const generated_signature = hmac.digest('hex');
 
     if (generated_signature === razorpay_signature) {
+      // If payment is successfully verified, persist the booking details in database
+      if (booking) {
+        const useCloudKV = !!process.env.KV_REST_API_URL;
+        let bookings: any[] = [];
+
+        if (useCloudKV) {
+          const cloudData = await kv.get<any[]>('tcc_bookings');
+          bookings = cloudData || [];
+        } else {
+          bookings = getLocalBookings();
+        }
+
+        // Avoid double booking of slots by checking date + time Slot combination
+        const isAlreadyBooked = bookings.some(
+          b => b.date === booking.date && b.timeSlot === booking.timeSlot
+        );
+
+        if (!isAlreadyBooked) {
+          const newBooking = {
+            ...booking,
+            paymentMethod: 'Razorpay',
+            paymentStatus: 'Paid',
+            bookingStatus: 'Approved',
+            createdAt: new Date().toISOString()
+          };
+          bookings.push(newBooking);
+
+          if (useCloudKV) {
+            await kv.set('tcc_bookings', bookings);
+          } else {
+            saveLocalBookings(bookings);
+          }
+        }
+      }
+
       return res.status(200).json({ status: 'success', message: 'Payment verified successfully' });
     } else {
       return res.status(400).json({ status: 'failed', message: 'Signature verification failed' });

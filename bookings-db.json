@@ -1,0 +1,22 @@
+[
+  {
+    "id": "BK-7882",
+    "fullName": "Atharva Bhosale",
+    "email": "atharvabhosale007@gmail.com",
+    "whatsApp": "+91 1234567987",
+    "country": "india",
+    "playingLevel": "Player",
+    "packageId": "pkg-1",
+    "packageName": "Overseas Cricket Career Consultation",
+    "price": 999,
+    "date": "2026-07-22",
+    "timeSlot": "11:00 AM - 12:00 PM IST",
+    "purpose": "Cricket Tour Planning (Payment ID: pay_TGaUjQ5DbvZbXk)",
+    "paymentMethod": "Razorpay",
+    "paymentStatus": "Paid",
+    "bookingStatus": "Approved",
+    "zoomLink": "https://zoom.us/j/751571607?pwd=WHGJ82IL",
+    "meetingId": "751 571 607",
+    "createdAt": "2026-07-22T14:51:30.686Z"
+  }
+]

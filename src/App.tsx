@@ -165,6 +165,7 @@ export default function App() {
   const [players, setPlayers] = useState<Player[]>([]);
   const [packages, setPackages] = useState<ConsultationPackage[]>([]);
   const [bookings, setBookings] = useState<Booking[]>([]);
+  const [bookedSlots, setBookedSlots] = useState<{ date: string; timeSlot: string; packageName?: string }[]>([]);
   const [blockedDates, setBlockedDates] = useState<string[]>([]);
   const [blockedSlots, setBlockedSlots] = useState<string[]>([]);
   const [bankDetails, setBankDetails] = useState<BankDetails>(defaultBankDetails);
@@ -310,10 +311,12 @@ END:VCALENDAR`;
     email: '',
     whatsApp: '',
     country: '',
-    playingLevel: 'Club Cricket',
+    playingLevel: 'Player',
     purpose: ''
   });
-  const [selectedPaymentGateway, setSelectedPaymentGateway] = useState('card');
+  const [whatsAppCountryCode, setWhatsAppCountryCode] = useState('+91');
+  const [whatsAppMobileNumber, setWhatsAppMobileNumber] = useState('');
+  const [selectedPaymentGateway, setSelectedPaymentGateway] = useState('razorpay');
   const [isProcessingPayment, setIsProcessingPayment] = useState(false);
   const [confirmedBooking, setConfirmedBooking] = useState<Booking | null>(null);
 
@@ -383,6 +386,22 @@ END:VCALENDAR`;
     window.scrollTo(0, 0);
   }, [activeTab, bookingStep]);
 
+  // Fetch global booked slots from backend database
+  useEffect(() => {
+    const fetchGlobalSlots = async () => {
+      try {
+        const response = await fetch('/api/get-bookings');
+        if (response.ok) {
+          const slots = await response.json();
+          setBookedSlots(slots);
+        }
+      } catch (err) {
+        console.error('Failed to load global booked slots:', err);
+      }
+    };
+    fetchGlobalSlots();
+  }, []);
+
   // --- LOCALSTORAGE INITIALIZATION ---
   useEffect(() => {
     // 1. Initial Players
@@ -433,10 +452,10 @@ END:VCALENDAR`;
       },
       {
         id: 'pkg-3',
-        title: 'Overseas Placement Consultation',
+        title: 'Player/Franchise Social Media Handling',
         price: 999,
         duration: '60 Mins',
-        description: 'Deep dive into specific leagues, contract negotiation techniques, living costs abroad, and matching with the perfect league tier.'
+        description: 'A detailed roadmap for managing and growing social media presence for individual players or franchise clubs to maximize brand deals, fan engagement, and sponsorships.'
       },
       {
         id: 'pkg-4',
@@ -462,9 +481,9 @@ END:VCALENDAR`;
     ];
 
     const packageVersion = localStorage.getItem('tcc_packages_ver');
-    if (!savedPackages || !Array.isArray(loadedPackages) || loadedPackages.length === 0 || packageVersion !== 'v3') {
+    if (!savedPackages || !Array.isArray(loadedPackages) || loadedPackages.length === 0 || packageVersion !== 'v4') {
       localStorage.setItem('tcc_packages', JSON.stringify(initialPackages));
-      localStorage.setItem('tcc_packages_ver', 'v3');
+      localStorage.setItem('tcc_packages_ver', 'v4');
       setPackages(initialPackages);
     } else {
       setPackages(loadedPackages);
@@ -478,24 +497,24 @@ END:VCALENDAR`;
     if (bookingsNeedReset) {
       const initialBookings: Booking[] = [
         {
-          id: 'BK-8902',
-          fullName: 'Marcus Finch',
-          email: 'marcus.finch@gmail.com',
-          whatsApp: '+44 7911 123456',
+          id: 'BK-9921',
+          fullName: 'Alexander Wright',
+          email: 'alex.wright99@gmail.com',
+          whatsApp: '+44 7700 900077',
           country: 'United Kingdom',
           playingLevel: 'County 2nd XI',
           packageId: 'pkg-1',
           packageName: 'Overseas Cricket Career Consultation',
-          price: 1999,
-          date: '2026-08-10',
-          timeSlot: '02:00 PM - 03:00 PM IST',
-          purpose: 'Looking for winter placement opportunities in Mumbai / India to train in subcontinental conditions.',
-          paymentMethod: 'Razorpay',
+          price: 1499,
+          date: '2026-08-01',
+          timeSlot: '11:00 AM - 12:00 PM IST',
+          purpose: 'Guidance on dynamic contract negotiation, structuring of cricket profile/CV, and matching with the perfect Australian Premier Cricket league tier.',
+          paymentMethod: 'CARD',
           paymentStatus: 'Paid',
           bookingStatus: 'Approved',
-          zoomLink: 'https://zoom.us/j/9876543210?pwd=TCCCONSULTATIONSECRETKEY01',
-          meetingId: '987 654 3210',
-          createdAt: '2026-07-15T10:30:00Z'
+          zoomLink: 'https://zoom.us/j/449102845?pwd=MOCKPWDWRIGHT',
+          meetingId: '449 102 845',
+          createdAt: new Date(Date.now() - 86400000 * 2).toISOString()
         },
         {
           id: 'BK-5612',
@@ -505,7 +524,7 @@ END:VCALENDAR`;
           country: 'India',
           playingLevel: 'A Division League',
           packageId: 'pkg-3',
-          packageName: 'Overseas Placement Consultation',
+          packageName: 'Player/Franchise Social Media Handling',
           price: 1999,
           date: '2026-08-12',
           timeSlot: '04:00 PM - 05:00 PM IST',
@@ -608,9 +627,25 @@ END:VCALENDAR`;
     setPackages(updatedPackages);
   };
 
-  const saveBookingsToStorage = (updatedBookings: Booking[]) => {
+  const saveBookingsToStorage = async (updatedBookings: Booking[]) => {
     localStorage.setItem('tcc_bookings', JSON.stringify(updatedBookings));
     setBookings(updatedBookings);
+
+    // If admin is logged in, sync changes to database
+    if (isAdminLoggedIn) {
+      try {
+        await fetch('/api/save-bookings', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            secret: adminPassword,
+            bookings: updatedBookings
+          })
+        });
+      } catch (err) {
+        console.error('Failed to sync bookings to cloud database:', err);
+      }
+    }
   };
 
   const saveBlockedDatesToStorage = (updatedDates: string[]) => {
@@ -804,12 +839,37 @@ END:VCALENDAR`;
         key: razorpayKeyId,
         amount: orderData.amount,
         currency: orderData.currency || 'INR',
-        name: 'The Independent Cricket Consultant',
+        name: 'The Cricket Advisor',
         description: `${selectedPackage.title} - Booking`,
         order_id: orderData.id,
         handler: async function (response: any) {
           setIsProcessingPayment(true);
           try {
+            const bookingId = `BK-${Math.floor(1000 + Math.random() * 9000)}`;
+            const meetingId = generateMeetingId();
+            const pwd = Math.random().toString(36).substring(2, 10).toUpperCase();
+
+            const newBooking: Booking = {
+              id: bookingId,
+              fullName: bookingForm.fullName,
+              email: bookingForm.email,
+              whatsApp: bookingForm.whatsApp,
+              country: bookingForm.country,
+              playingLevel: bookingForm.playingLevel,
+              packageId: selectedPackage.id,
+              packageName: selectedPackage.title,
+              price: selectedPackage.price,
+              date: bookingDate,
+              timeSlot: bookingTimeSlot,
+              purpose: bookingForm.purpose + ` (Payment ID: ${response.razorpay_payment_id})`,
+              paymentMethod: 'RAZORPAY',
+              paymentStatus: 'Paid',
+              bookingStatus: 'Approved',
+              zoomLink: `https://zoom.us/j/${meetingId.replace(/\s/g, '')}?pwd=${pwd}`,
+              meetingId: meetingId,
+              createdAt: new Date().toISOString()
+            };
+
             // 4. Verify payment signature on backend
             const verifyResponse = await fetch('/api/verify-payment', {
               method: 'POST',
@@ -818,12 +878,17 @@ END:VCALENDAR`;
                 razorpay_order_id: response.razorpay_order_id,
                 razorpay_payment_id: response.razorpay_payment_id,
                 razorpay_signature: response.razorpay_signature,
+                booking: newBooking
               }),
             });
 
             const verifyData = await verifyResponse.json();
             if (verifyData.status === 'success') {
-              finalizeBookingAfterPayment(response.razorpay_payment_id);
+              const updatedBookings = [newBooking, ...bookings];
+              saveBookingsToStorage(updatedBookings);
+              setConfirmedBooking(newBooking);
+              setBookedSlots(prev => [...prev, { date: bookingDate, timeSlot: bookingTimeSlot, packageName: selectedPackage.title }]);
+              setBookingStep(4); // Success Screen
             } else {
               setPaymentFormError('Payment verification failed. Please contact support.');
               setIsProcessingPayment(false);
@@ -889,12 +954,21 @@ END:VCALENDAR`;
   };
 
   // --- ADMIN LOGIN LOGIC ---
-  const handleAdminLogin = (e: React.FormEvent) => {
+  const handleAdminLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     const activePassword = adminSettings.adminPassword || 'cricket2026';
     if (adminUsername.trim() === 'admin' && (adminPassword === activePassword || adminPassword === 'cricket2026' || adminPassword === 'admin123')) {
       setIsAdminLoggedIn(true);
       setAdminError('');
+      try {
+        const response = await fetch(`/api/get-bookings?secret=${encodeURIComponent(adminPassword)}`);
+        if (response.ok) {
+          const cloudBookings = await response.json();
+          setBookings(cloudBookings);
+        }
+      } catch (err) {
+        console.error('Error fetching bookings for admin:', err);
+      }
     } else {
       setAdminError(`Invalid username or password. Default password is: cricket2026`);
     }
@@ -985,10 +1059,10 @@ END:VCALENDAR`;
         },
         {
           id: 'pkg-3',
-          title: 'Overseas Placement Consultation',
+          title: 'Player/Franchise Social Media Handling',
           price: 999,
           duration: '60 Mins',
-          description: 'Deep dive into specific leagues, contract negotiation techniques, living costs abroad, and matching with the perfect league tier.'
+          description: 'A detailed roadmap for managing and growing social media presence for individual players or franchise clubs to maximize brand deals, fan engagement, and sponsorships.'
         },
         {
           id: 'pkg-4',
@@ -1543,7 +1617,7 @@ END:VCALENDAR`;
                     </h2>
                     
                     <p className="text-slate-700 text-sm leading-relaxed">
-                      I am Prakash Palande, an Independent Cricket Consultant and Advisor with extensive experience in cricket administration, player management, overseas placements, and cricket operations.
+                      I am Prakash Palande, an Independent Cricket Advisor with extensive experience in cricket administration, player management, overseas placements, and cricket operations.
                     </p>
                     
                     <p className="text-slate-700 text-sm leading-relaxed">
@@ -2010,7 +2084,10 @@ END:VCALENDAR`;
                           <div className="grid grid-cols-1 gap-2">
                             {defaultTimeSlots.map((slot) => {
                               const isSlotBlocked = bookingDate && blockedSlots.includes(`${bookingDate}|${slot}`);
-                              const isAlreadyBooked = bookingDate && bookings.some(b => b.date === bookingDate && b.timeSlot === slot && b.bookingStatus !== 'Cancelled');
+                              const isAlreadyBooked = bookingDate && (
+                                bookedSlots.some(s => s.date === bookingDate && s.timeSlot === slot) ||
+                                bookings.some(b => b.date === bookingDate && b.timeSlot === slot && b.bookingStatus !== 'Cancelled')
+                              );
                               const isUnavailable = isSlotBlocked || isAlreadyBooked;
 
                               return (
@@ -2065,7 +2142,7 @@ END:VCALENDAR`;
                   {/* STEP 3: FILL DETAILS & PAY */}
                   {bookingStep === 3 && (
                     <div className="space-y-6">
-                      <h3 className="text-xl font-bold text-navy-900 font-display">Client Details & Sandbox Payment</h3>
+                      <h3 className="text-xl font-bold text-navy-900 font-display">Client Details & Payment</h3>
                       
                       <div className="space-y-4">
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -2096,14 +2173,41 @@ END:VCALENDAR`;
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                           <div>
                             <label className="block text-xs font-semibold text-slate-700 uppercase mb-1">WhatsApp Number *</label>
-                            <input 
-                              type="text" 
-                              required
-                              value={bookingForm.whatsApp}
-                              onChange={(e) => setBookingForm({ ...bookingForm, whatsApp: e.target.value })}
-                              className="w-full px-4 py-2.5 bg-white border border-slate-250 rounded text-sm focus:outline-none focus:border-gold-500"
-                              placeholder="+91 98900 XXXXX"
-                            />
+                            <div className="flex space-x-1.5 min-w-0">
+                              <select 
+                                value={whatsAppCountryCode}
+                                onChange={(e) => {
+                                  const code = e.target.value;
+                                  setWhatsAppCountryCode(code);
+                                  setBookingForm({ ...bookingForm, whatsApp: `${code} ${whatsAppMobileNumber}` });
+                                }}
+                                className="px-1 py-2.5 bg-white border border-slate-250 rounded text-xs focus:outline-none focus:border-gold-500 w-20 cursor-pointer flex-shrink-0"
+                              >
+                                <option value="+91">+91 (IN)</option>
+                                <option value="+44">+44 (UK)</option>
+                                <option value="+61">+61 (AU)</option>
+                                <option value="+971">+971 (AE)</option>
+                                <option value="+1">+1 (US/CA)</option>
+                                <option value="+27">+27 (ZA)</option>
+                                <option value="+64">+64 (NZ)</option>
+                                <option value="+94">+94 (LK)</option>
+                                <option value="+880">+880 (BD)</option>
+                                <option value="+92">+92 (PK)</option>
+                                <option value="+968">+968 (OM)</option>
+                              </select>
+                              <input 
+                                type="tel" 
+                                required
+                                value={whatsAppMobileNumber}
+                                onChange={(e) => {
+                                  const num = e.target.value.replace(/[^0-9]/g, '');
+                                  setWhatsAppMobileNumber(num);
+                                  setBookingForm({ ...bookingForm, whatsApp: `${whatsAppCountryCode} ${num}` });
+                                }}
+                                className="flex-1 min-w-0 px-3 py-2.5 bg-white border border-slate-250 rounded text-sm focus:outline-none focus:border-gold-500"
+                                placeholder="98900 XXXXX"
+                              />
+                            </div>
                           </div>
                           <div>
                             <label className="block text-xs font-semibold text-slate-700 uppercase mb-1">Country of Residence *</label>
@@ -2120,30 +2224,36 @@ END:VCALENDAR`;
 
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                           <div>
-                            <label className="block text-xs font-semibold text-slate-700 uppercase mb-1">Current Playing Level</label>
+                            <label className="block text-xs font-semibold text-slate-700 uppercase mb-1">Select Role *</label>
                             <select 
                               value={bookingForm.playingLevel}
                               onChange={(e) => setBookingForm({ ...bookingForm, playingLevel: e.target.value })}
-                              className="w-full px-4 py-2.5 bg-white border border-slate-250 rounded text-sm focus:outline-none focus:border-gold-500"
+                              className="w-full px-4 py-2.5 bg-white border border-slate-250 rounded text-sm focus:outline-none focus:border-gold-500 cursor-pointer"
                             >
-                              <option>Aspiring Junior (U16/U19)</option>
-                              <option>Club Cricket</option>
-                              <option>A-Division League</option>
-                              <option>First-Class / Ranji Trophy</option>
-                              <option>Associate International</option>
-                              <option>Academy Coach / Representative</option>
+                              <option>Player</option>
+                              <option>Parents</option>
+                              <option>Coach</option>
+                              <option>Club Representative</option>
+                              <option>League Representative</option>
+                              <option>T20 Franchise Representative</option>
                             </select>
                           </div>
                           <div>
                             <label className="block text-xs font-semibold text-slate-700 uppercase mb-1">Purpose of Session *</label>
-                            <input 
-                              type="text" 
+                            <select 
                               required
                               value={bookingForm.purpose}
                               onChange={(e) => setBookingForm({ ...bookingForm, purpose: e.target.value })}
-                              className="w-full px-4 py-2.5 bg-white border border-slate-250 rounded text-sm focus:outline-none focus:border-gold-500"
-                              placeholder="Overseas club options, career transition advice, etc."
-                            />
+                              className="w-full px-4 py-2.5 bg-white border border-slate-250 rounded text-sm focus:outline-none focus:border-gold-500 cursor-pointer"
+                            >
+                              <option value="">Select Service / Purpose</option>
+                              <option>Overseas Cricket Career Consultation</option>
+                              <option>Cricket Career Guidance</option>
+                              <option>Player/Franchise Social Media Handling</option>
+                              <option>Cricket Club Consultation</option>
+                              <option>Cricket Operations Consultation</option>
+                              <option>Cricket Tour Planning</option>
+                            </select>
                           </div>
                         </div>
                       </div>
@@ -2151,17 +2261,13 @@ END:VCALENDAR`;
                       {/* Payment Gateway Select */}
                       <div className="bg-slate-50 p-6 rounded-2xl border border-slate-200 space-y-5">
                         <div>
-                          <h4 className="text-sm font-bold font-display text-navy-900 uppercase tracking-wider">Select Payment Method</h4>
-                          <p className="text-xs text-slate-500 mt-0.5">Choose your preferred payment gateway or direct transfer below to enter payment details.</p>
+                          <h4 className="text-sm font-bold font-display text-navy-900 uppercase tracking-wider text-center">Payment Method</h4>
+                          <p className="text-xs text-slate-500 mt-0.5 text-center">Payments are securely processed via Razorpay.</p>
                         </div>
                         
-                        <div className="grid grid-cols-2 sm:grid-cols-5 gap-2.5">
+                        <div className="grid grid-cols-1 max-w-xs mx-auto gap-2.5">
                           {[
-                            { id: 'card', name: 'Credit / Debit', icon: CreditCard },
-                            { id: 'upi', name: 'UPI / GPay', icon: Smartphone },
-                            { id: 'razorpay', name: 'Razorpay', icon: ShieldCheck },
-                            { id: 'stripe', name: 'Stripe', icon: Lock },
-                            { id: 'paypal', name: 'PayPal', icon: Globe }
+                            { id: 'razorpay', name: 'Razorpay Secure Checkout', icon: ShieldCheck }
                           ].map((gw) => {
                             const GwIcon = gw.icon;
                             return (
@@ -2172,9 +2278,9 @@ END:VCALENDAR`;
                                   setSelectedPaymentGateway(gw.id);
                                   setPaymentFormError('');
                                 }}
-                                className={`p-3 text-xs font-bold rounded-xl border-2 text-center transition flex flex-col items-center justify-center space-y-1.5 cursor-pointer ${selectedPaymentGateway === gw.id ? 'border-gold-500 bg-gold-500/10 text-navy-950 shadow-sm' : 'border-slate-200 bg-white hover:border-slate-300 text-slate-700'}`}
+                                className={`p-3.5 text-xs font-bold rounded-xl border-2 text-center transition flex flex-col items-center justify-center space-y-1.5 cursor-pointer ${selectedPaymentGateway === gw.id ? 'border-gold-500 bg-gold-500/10 text-navy-950 shadow-sm' : 'border-slate-200 bg-white hover:border-slate-300 text-slate-700'}`}
                               >
-                                <GwIcon className={`h-5 w-5 ${selectedPaymentGateway === gw.id ? 'text-gold-600' : 'text-slate-400'}`} />
+                                <GwIcon className={`h-6 w-6 ${selectedPaymentGateway === gw.id ? 'text-gold-600' : 'text-slate-400'}`} />
                                 <span className="uppercase text-[10px] tracking-wider font-extrabold">{gw.name}</span>
                               </button>
                             );
@@ -2184,225 +2290,7 @@ END:VCALENDAR`;
                         {/* Interactive Payment Fields Based on Selected Gateway */}
                         <div className="bg-white p-5 sm:p-6 rounded-xl border border-slate-200 shadow-sm space-y-4">
                           
-                          {/* 1. CREDIT / DEBIT CARD INPUTS */}
-                          {selectedPaymentGateway === 'card' && (
-                            <div className="space-y-4 animate-fade-in">
-                              <div className="flex justify-between items-center border-b border-slate-150 pb-3">
-                                <div className="flex items-center space-x-2">
-                                  <CreditCard className="h-5 w-5 text-gold-600" />
-                                  <span className="font-bold text-navy-900 text-xs uppercase tracking-wider">Credit / Debit Card Portal</span>
-                                </div>
-                                <div className="flex space-x-1.5">
-                                  <span className="px-2 py-0.5 bg-slate-100 text-slate-600 font-bold text-[9px] rounded border border-slate-200 uppercase">Visa</span>
-                                  <span className="px-2 py-0.5 bg-slate-100 text-slate-600 font-bold text-[9px] rounded border border-slate-200 uppercase">Mastercard</span>
-                                  <span className="px-2 py-0.5 bg-slate-100 text-slate-600 font-bold text-[9px] rounded border border-slate-200 uppercase">RuPay</span>
-                                </div>
-                              </div>
-
-                              {/* Live Graphic Card Preview */}
-                              <div className="relative bg-gradient-to-tr from-navy-950 via-navy-900 to-navy-800 text-white p-5 rounded-xl shadow-lg border border-gold-500/30 overflow-hidden space-y-4">
-                                <div className="absolute top-0 right-0 transform translate-x-4 -translate-y-4 w-32 h-32 bg-gold-500/10 rounded-full blur-2xl pointer-events-none"></div>
-                                <div className="flex justify-between items-start">
-                                  <div className="flex items-center space-x-2">
-                                    <div className="w-9 h-7 bg-amber-400/80 rounded flex items-center justify-center shadow-inner">
-                                      <div className="w-7 h-5 border border-amber-600/50 rounded-sm"></div>
-                                    </div>
-                                    <span className="text-[10px] tracking-widest text-gold-300 font-mono">3D SECURE</span>
-                                  </div>
-                                  <span className="text-xs font-black font-display italic tracking-widest text-slate-300 uppercase">DEBIT / CREDIT</span>
-                                </div>
-
-                                <div className="font-mono text-lg font-bold tracking-widest pt-2 text-gold-100">
-                                  {cardForm.cardNumber || '•••• •••• •••• ••••'}
-                                </div>
-
-                                <div className="flex justify-between items-end pt-1">
-                                  <div>
-                                    <span className="text-[8px] text-slate-400 uppercase font-bold tracking-wider block">CARDHOLDER NAME</span>
-                                    <span className="text-xs font-bold text-white uppercase tracking-wider font-mono">
-                                      {cardForm.cardName || (bookingForm.fullName ? bookingForm.fullName.toUpperCase() : 'YOUR NAME')}
-                                    </span>
-                                  </div>
-                                  <div className="text-right">
-                                    <span className="text-[8px] text-slate-400 uppercase font-bold tracking-wider block">EXPIRES</span>
-                                    <span className="text-xs font-bold text-gold-300 font-mono">{cardForm.expiry || 'MM/YY'}</span>
-                                  </div>
-                                </div>
-                              </div>
-
-                              {/* Card Inputs */}
-                              <div className="space-y-3 pt-2">
-                                <div>
-                                  <label className="block text-xs font-semibold text-slate-700 uppercase mb-1">Cardholder Name *</label>
-                                  <input 
-                                    type="text"
-                                    required
-                                    value={cardForm.cardName}
-                                    onChange={(e) => setCardForm({ ...cardForm, cardName: e.target.value })}
-                                    placeholder={bookingForm.fullName || "Prakash Palande"}
-                                    className="w-full px-3.5 py-2 bg-slate-50 border border-slate-250 rounded text-xs focus:outline-none focus:border-gold-500 font-medium"
-                                  />
-                                </div>
-
-                                <div>
-                                  <label className="block text-xs font-semibold text-slate-700 uppercase mb-1">Card Number *</label>
-                                  <input 
-                                    type="text"
-                                    required
-                                    maxLength={19}
-                                    value={cardForm.cardNumber}
-                                    onChange={(e) => setCardForm({ ...cardForm, cardNumber: formatCardNumber(e.target.value) })}
-                                    placeholder="4532 8901 2234 5678"
-                                    className="w-full px-3.5 py-2 bg-slate-50 border border-slate-250 rounded text-xs focus:outline-none focus:border-gold-500 font-mono font-bold text-navy-900"
-                                  />
-                                </div>
-
-                                <div className="grid grid-cols-2 gap-3">
-                                  <div>
-                                    <label className="block text-xs font-semibold text-slate-700 uppercase mb-1">Expiry Date (MM/YY) *</label>
-                                    <input 
-                                      type="text"
-                                      required
-                                      maxLength={5}
-                                      value={cardForm.expiry}
-                                      onChange={(e) => setCardForm({ ...cardForm, expiry: formatExpiry(e.target.value) })}
-                                      placeholder="08/28"
-                                      className="w-full px-3.5 py-2 bg-slate-50 border border-slate-250 rounded text-xs focus:outline-none focus:border-gold-500 font-mono font-bold"
-                                    />
-                                  </div>
-                                  <div>
-                                    <label className="block text-xs font-semibold text-slate-700 uppercase mb-1">CVV / Security Code *</label>
-                                    <input 
-                                      type="password"
-                                      required
-                                      maxLength={4}
-                                      value={cardForm.cvv}
-                                      onChange={(e) => setCardForm({ ...cardForm, cvv: e.target.value.replace(/[^0-9]/g, '') })}
-                                      placeholder="321"
-                                      className="w-full px-3.5 py-2 bg-slate-50 border border-slate-250 rounded text-xs focus:outline-none focus:border-gold-500 font-mono font-bold tracking-widest"
-                                    />
-                                  </div>
-                                </div>
-                              </div>
-                            </div>
-                          )}
-
-                          {/* 2. UPI / GPAY / PHONEPE INPUTS */}
-                          {(selectedPaymentGateway === 'upi' || selectedPaymentGateway === 'gpay') && (
-                            <div className="space-y-4 animate-fade-in">
-                              <div className="flex justify-between items-center border-b border-slate-150 pb-3">
-                                <div className="flex items-center space-x-2">
-                                  <Smartphone className="h-5 w-5 text-emerald-600" />
-                                  <span className="font-bold text-navy-900 text-xs uppercase tracking-wider">UPI & Mobile Payment Gateway</span>
-                                </div>
-                                <div className="flex space-x-1">
-                                  {['GPay', 'PhonePe', 'Paytm', 'BHIM'].map(app => (
-                                    <span key={app} className="px-2 py-0.5 bg-emerald-50 text-emerald-800 font-bold text-[9px] rounded border border-emerald-200">{app}</span>
-                                  ))}
-                                </div>
-                              </div>
-
-                              {/* Sub-tabs for UPI ID vs QR Code */}
-                              <div className="flex border-b border-slate-200 text-xs">
-                                <button
-                                  type="button"
-                                  onClick={() => setUpiForm({ ...upiForm, tab: 'upi' })}
-                                  className={`px-4 py-2 font-bold border-b-2 transition ${upiForm.tab === 'upi' ? 'border-navy-900 text-navy-900 bg-slate-50' : 'border-transparent text-slate-500 hover:text-slate-800'}`}
-                                >
-                                  Enter Virtual Payment Address (UPI ID)
-                                </button>
-                                <button
-                                  type="button"
-                                  onClick={() => setUpiForm({ ...upiForm, tab: 'qr' })}
-                                  className={`px-4 py-2 font-bold border-b-2 transition ${upiForm.tab === 'qr' ? 'border-navy-900 text-navy-900 bg-slate-50' : 'border-transparent text-slate-500 hover:text-slate-800'}`}
-                                >
-                                  Scan UPI QR Code
-                                </button>
-                              </div>
-
-                              {upiForm.tab === 'upi' ? (
-                                <div className="space-y-3 pt-1">
-                                  <label className="block text-xs font-semibold text-slate-700 uppercase mb-1">Enter your VPA / UPI ID *</label>
-                                  <div className="flex space-x-2">
-                                    <input 
-                                      type="text"
-                                      value={upiForm.upiId}
-                                      onChange={(e) => setUpiForm({ ...upiForm, upiId: e.target.value, verified: false })}
-                                      placeholder="8591105966@upi or username@okaxis"
-                                      className="flex-1 px-3.5 py-2.5 bg-slate-50 border border-slate-250 rounded text-xs focus:outline-none focus:border-navy-500 font-mono font-bold text-navy-900"
-                                    />
-                                    <button
-                                      type="button"
-                                      onClick={() => {
-                                        if (upiForm.upiId.trim()) {
-                                          setUpiForm({ ...upiForm, verified: true });
-                                        } else {
-                                          alert('Please enter a UPI ID first.');
-                                        }
-                                      }}
-                                      className="px-4 py-2.5 bg-navy-900 text-white font-bold text-xs rounded hover:bg-navy-950 transition uppercase tracking-wider cursor-pointer"
-                                    >
-                                      Verify VPA
-                                    </button>
-                                  </div>
-
-                                  {/* Quick Provider Chips */}
-                                  <div className="flex flex-wrap items-center gap-1.5 pt-1">
-                                    <span className="text-[10px] text-slate-400 font-bold uppercase">Quick Handles:</span>
-                                    {['@okaxis', '@ybl', '@paytm', '@upi', '@icici'].map(suffix => (
-                                      <button
-                                        key={suffix}
-                                        type="button"
-                                        onClick={() => {
-                                          const prefix = upiForm.upiId.split('@')[0] || (bookingForm.whatsApp ? bookingForm.whatsApp.replace(/[^0-9]/g, '') : '8591105966');
-                                          setUpiForm({ ...upiForm, upiId: `${prefix}${suffix}`, verified: true });
-                                        }}
-                                        className="px-2 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 text-[10px] font-mono font-bold rounded border border-slate-200 cursor-pointer transition"
-                                      >
-                                        {suffix}
-                                      </button>
-                                    ))}
-                                  </div>
-
-                                  {upiForm.verified && (
-                                    <div className="p-3 bg-emerald-50 border border-emerald-200 text-emerald-800 rounded-lg text-xs flex items-center space-x-2 animate-fade-in">
-                                      <CheckCircle className="h-4 w-4 text-emerald-600 flex-shrink-0" />
-                                      <div>
-                                        <span className="font-bold block">UPI ID Verified Successfully</span>
-                                        <span className="text-[11px] text-emerald-700">Recipient Name: <strong>Prakash Palande (The Cricket Solutions)</strong></span>
-                                      </div>
-                                    </div>
-                                  )}
-                                </div>
-                              ) : (
-                                <div className="text-center py-4 space-y-3 bg-slate-50 rounded-xl border border-slate-200">
-                                  <div className="inline-block p-4 bg-white rounded-xl shadow-md border-2 border-navy-900 relative">
-                                    {/* Simulated QR Code Box */}
-                                    <div className="w-40 h-40 bg-slate-900 rounded flex flex-col items-center justify-center p-2 text-white relative">
-                                      <div className="grid grid-cols-6 gap-1.5 w-full h-full opacity-90">
-                                        {Array.from({ length: 36 }).map((_, idx) => (
-                                          <div key={idx} className={`rounded-sm ${idx % 2 === 0 || idx % 5 === 0 ? 'bg-gold-400' : 'bg-slate-100'}`}></div>
-                                        ))}
-                                      </div>
-                                      <div className="absolute inset-0 flex items-center justify-center">
-                                        <div className="bg-navy-950 text-gold-400 px-2.5 py-1 rounded border border-gold-400 font-black text-[10px] tracking-widest font-display shadow-lg">
-                                          TCC PAY
-                                        </div>
-                                      </div>
-                                    </div>
-                                  </div>
-
-                                  <div>
-                                    <p className="text-xs font-bold text-navy-900 font-display uppercase tracking-wider">Scan QR with any UPI App</p>
-                                    <p className="text-[11px] text-slate-600 font-mono mt-0.5">UPI ID: <strong>{bankDetails.upiId}</strong></p>
-                                    <p className="text-xs font-extrabold text-orange-600 font-display mt-1">Amount to Pay: {selectedPackage && formatPrice(selectedPackage.price)}</p>
-                                  </div>
-                                </div>
-                              )}
-                            </div>
-                          )}
-
-                          {/* 3. RAZORPAY DEMO PORTAL */}
+                          {/* 3. RAZORPAY GATEWAY PANEL */}
                           {selectedPaymentGateway === 'razorpay' && (
                             <div className="space-y-3 animate-fade-in">
                               <div className="flex justify-between items-center border-b border-slate-150 pb-2">
@@ -2410,93 +2298,12 @@ END:VCALENDAR`;
                                   <ShieldCheck className="h-5 w-5 text-blue-600" />
                                   <span className="font-bold text-navy-900 text-xs uppercase tracking-wider">Razorpay Secure Checkout</span>
                                 </div>
-                                <span className="text-[10px] bg-blue-50 text-blue-800 font-extrabold px-2 py-0.5 rounded border border-blue-200 uppercase">Razorpay Verified</span>
+                                <span className="text-[10px] bg-blue-50 text-blue-800 font-extrabold px-2 py-0.5 rounded border border-blue-200 uppercase">Verified Gateway</span>
                               </div>
 
-                              <p className="text-xs text-slate-600 leading-relaxed">
-                                You will be redirected to the official Razorpay payment portal to complete payment using UPI, Credit/Debit Cards, Netbanking (HDFC, ICICI, SBI, Axis), or Wallets.
+                              <p className="text-xs text-slate-600 leading-relaxed text-center">
+                                You will be redirected to the secure Razorpay payment gateway overlay to complete your transaction using Cards, UPI, Netbanking, or Wallets.
                               </p>
-
-                              <div className="p-3 bg-slate-50 rounded-lg border border-slate-200 text-xs space-y-2">
-                                <span className="font-semibold text-slate-700 block uppercase text-[10px]">Select Preferred Bank for Netbanking / Direct Transfer:</span>
-                                <select 
-                                  value={netbankingBank}
-                                  onChange={(e) => setNetbankingBank(e.target.value)}
-                                  className="w-full px-3 py-2 bg-white border border-slate-300 rounded font-medium text-xs focus:outline-none focus:border-navy-500"
-                                >
-                                  <option>Indian Bank</option>
-                                  <option>HDFC Bank</option>
-                                  <option>ICICI Bank</option>
-                                  <option>State Bank of India (SBI)</option>
-                                  <option>Axis Bank</option>
-                                  <option>Kotak Mahindra Bank</option>
-                                </select>
-                              </div>
-                            </div>
-                          )}
-
-                          {/* 4. STRIPE DEMO PORTAL */}
-                          {selectedPaymentGateway === 'stripe' && (
-                            <div className="space-y-3 animate-fade-in">
-                              <div className="flex justify-between items-center border-b border-slate-150 pb-2">
-                                <div className="flex items-center space-x-2">
-                                  <Lock className="h-5 w-5 text-indigo-600" />
-                                  <span className="font-bold text-navy-900 text-xs uppercase tracking-wider">Stripe International Gateway</span>
-                                </div>
-                                <span className="text-[10px] bg-indigo-50 text-indigo-800 font-extrabold px-2 py-0.5 rounded border border-indigo-200 uppercase">Stripe Global</span>
-                              </div>
-
-                              <p className="text-xs text-slate-600 leading-relaxed">
-                                Securely process payments worldwide in 135+ currencies with Stripe 256-bit SSL encrypted card processing.
-                              </p>
-
-                              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
-                                <div>
-                                  <label className="block text-[10px] font-bold text-slate-600 uppercase mb-1">Billing Email Address</label>
-                                  <input 
-                                    type="email"
-                                    value={bookingForm.email}
-                                    onChange={(e) => setBookingForm({ ...bookingForm, email: e.target.value })}
-                                    className="w-full px-3 py-2 bg-slate-50 border border-slate-250 rounded font-medium text-xs"
-                                    placeholder="client@gmail.com"
-                                  />
-                                </div>
-                                <div>
-                                  <label className="block text-[10px] font-bold text-slate-600 uppercase mb-1">Card / Postal ZIP Code</label>
-                                  <input 
-                                    type="text"
-                                    defaultValue="400001"
-                                    className="w-full px-3 py-2 bg-slate-50 border border-slate-250 rounded font-medium text-xs font-mono"
-                                  />
-                                </div>
-                              </div>
-                            </div>
-                          )}
-
-                          {/* 5. PAYPAL DEMO PORTAL */}
-                          {selectedPaymentGateway === 'paypal' && (
-                            <div className="space-y-3 animate-fade-in">
-                              <div className="flex justify-between items-center border-b border-slate-150 pb-2">
-                                <div className="flex items-center space-x-2">
-                                  <Globe className="h-5 w-5 text-blue-700" />
-                                  <span className="font-bold text-navy-900 text-xs uppercase tracking-wider">PayPal Express Checkout</span>
-                                </div>
-                                <span className="text-[10px] bg-blue-50 text-blue-900 font-extrabold px-2 py-0.5 rounded border border-blue-200 uppercase">PayPal Express</span>
-                              </div>
-
-                              <p className="text-xs text-slate-600 leading-relaxed">
-                                Pay securely with your PayPal account or linked overseas bank accounts with buyer protection.
-                              </p>
-
-                              <div>
-                                <label className="block text-[10px] font-bold text-slate-600 uppercase mb-1">PayPal Account Email</label>
-                                <input 
-                                  type="email"
-                                  value={bookingForm.email}
-                                  onChange={(e) => setBookingForm({ ...bookingForm, email: e.target.value })}
-                                  className="w-full px-3.5 py-2 bg-slate-50 border border-slate-250 rounded text-xs font-medium"
-                                />
-                              </div>
                             </div>
                           )}
 
@@ -2511,33 +2318,6 @@ END:VCALENDAR`;
                           <div className="pt-2 text-[11px] text-slate-500 flex items-center space-x-1.5 border-t border-slate-150">
                             <Lock className="h-3.5 w-3.5 text-slate-400" />
                             <span>100% Encrypted Payment &bull; Instant Zoom Link & Receipt Generation upon authorization.</span>
-                          </div>
-                        </div>
-
-                        {/* Display Official Bank & UPI Transfer Reference Details */}
-                        <div className="p-4 bg-white rounded-xl border border-gold-500/30 text-xs space-y-2">
-                          <div className="flex justify-between items-center border-b border-slate-100 pb-2">
-                            <span className="font-bold text-navy-900 uppercase tracking-wider text-[11px]">Direct Bank Account & UPI Details</span>
-                            <span className="text-[10px] text-emerald-600 bg-emerald-50 font-bold px-2 py-0.5 rounded border border-emerald-200">Official Beneficiary</span>
-                          </div>
-                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-slate-700 pt-1">
-                            <div><strong>Account Name:</strong> {bankDetails.accountName}</div>
-                            <div><strong>Bank Name:</strong> {bankDetails.bankName}</div>
-                            <div><strong>Account No:</strong> <span className="font-mono font-bold text-slate-900">{bankDetails.accountNumber}</span></div>
-                            <div><strong>IFSC / Code:</strong> <span className="font-mono font-bold text-slate-900">{bankDetails.ifscCode}</span></div>
-                            <div className="sm:col-span-2 flex items-center justify-between bg-slate-50 p-2.5 rounded border border-slate-200 mt-1">
-                              <div><strong>UPI ID:</strong> <span className="font-mono font-bold text-navy-900">{bankDetails.upiId}</span></div>
-                              <button 
-                                type="button"
-                                onClick={() => {
-                                  navigator.clipboard.writeText(bankDetails.upiId);
-                                  alert('UPI ID copied to clipboard!');
-                                }}
-                                className="px-2.5 py-1 bg-orange-600 text-white text-[10px] font-bold rounded hover:bg-orange-700 transition uppercase tracking-wider cursor-pointer"
-                              >
-                                Copy UPI ID
-                              </button>
-                            </div>
                           </div>
                         </div>
                       </div>
@@ -4402,8 +4182,8 @@ END:VCALENDAR`;
 
       {/* Tax Invoice Modal */}
       {selectedInvoiceBooking && (
-        <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto animate-fade-in">
-          <div className="bg-white rounded-2xl shadow-2xl border border-slate-200 max-w-2xl w-full p-6 sm:p-8 space-y-6 relative text-slate-800">
+        <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-start justify-center p-4 overflow-y-auto animate-fade-in">
+          <div className="bg-white rounded-2xl shadow-2xl border border-slate-200 max-w-2xl w-full p-6 sm:p-8 space-y-6 relative text-slate-800 my-8">
             
             {/* Modal Actions */}
             <div className="flex justify-between items-center border-b border-slate-200 pb-4 print:hidden">
@@ -4427,7 +4207,7 @@ END:VCALENDAR`;
                 </button>
               </div>
             </div>
-
+ 
             {/* Printable Invoice Document */}
             <div className="p-6 bg-slate-50 border border-slate-200 rounded-2xl space-y-6">
               
@@ -4440,7 +4220,7 @@ END:VCALENDAR`;
                   <p className="text-[11px] text-slate-400 mt-1">Email: thecricketadvisor@gmail.com | Web: www.thecricketsolutions.com</p>
                   <p className="text-[11px] text-slate-400">GST / SAC Code: 998311 (Management Advisory & Coaching Services)</p>
                 </div>
-
+ 
                 <div className="text-left sm:text-right font-mono text-xs space-y-1 bg-white p-3 rounded-lg border border-slate-200">
                   <p className="text-[10px] font-bold text-slate-400 uppercase">Invoice Number</p>
                   <p className="font-extrabold text-navy-900 text-sm">INV-{selectedInvoiceBooking.id}</p>
@@ -4450,7 +4230,7 @@ END:VCALENDAR`;
                   </div>
                 </div>
               </div>
-
+ 
               {/* Client & Booking Info */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 text-xs border-b border-slate-200 pb-6">
                 <div className="space-y-1.5">
@@ -4461,20 +4241,20 @@ END:VCALENDAR`;
                   <p className="text-slate-600"><strong>Country:</strong> {selectedInvoiceBooking.country}</p>
                   <p className="text-slate-600"><strong>Playing Level:</strong> {selectedInvoiceBooking.playingLevel}</p>
                 </div>
-
+ 
                 <div className="space-y-1.5 bg-white p-4 rounded-xl border border-slate-200">
                   <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">CONSULTATION SCHEDULE</p>
                   <p className="font-bold text-navy-900">Date: {selectedInvoiceBooking.date}</p>
                   <p className="font-bold text-navy-900">Slot: {selectedInvoiceBooking.timeSlot}</p>
                   <p className="text-slate-600">Payment Method: <strong className="uppercase">{selectedInvoiceBooking.paymentMethod}</strong></p>
-                  <p className="text-slate-600 truncate">Zoom Link: <a href={selectedInvoiceBooking.zoomLink} target="_blank" rel="noopener noreferrer" className="text-blue-600 font-semibold underline">{selectedInvoiceBooking.zoomLink}</a></p>
+                  <p className="text-slate-600 break-words"><strong>Zoom Link:</strong> <a href={selectedInvoiceBooking.zoomLink} target="_blank" rel="noopener noreferrer" className="text-blue-600 font-semibold underline break-all">{selectedInvoiceBooking.zoomLink}</a></p>
                   <p className="text-slate-600">Passcode: <strong>TCC2026</strong></p>
                 </div>
               </div>
-
+ 
               {/* Itemized Services Table */}
-              <div>
-                <table className="w-full text-left text-xs border-collapse">
+              <div className="overflow-x-auto">
+                <table className="w-full text-left text-xs border-collapse min-w-[550px]">
                   <thead>
                     <tr className="bg-navy-950 text-white font-bold uppercase text-[10px] tracking-wider">
                       <th className="p-3 rounded-l-lg">Service Description</th>
