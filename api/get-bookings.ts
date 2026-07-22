@@ -1,4 +1,5 @@
-import { createClient } from '@vercel/kv';
+import { createClient as createKVClient } from '@vercel/kv';
+import { createClient as createRedisClient } from 'redis';
 import fs from 'fs';
 import path from 'path';
 import type { VercelRequest, VercelResponse } from '@vercel/node';
@@ -18,11 +19,9 @@ const getLocalBookings = (): any[] => {
 };
 
 const getKVClient = () => {
-  // 1. Direct standard checks
   let url = process.env.KV_REST_API_URL || process.env.UPSTASH_REDIS_REST_URL;
   let token = process.env.KV_REST_API_TOKEN || process.env.UPSTASH_REDIS_REST_TOKEN;
 
-  // 2. Scan fallback for prefixed variables (e.g., tcc_kv_db_REST_API_URL)
   if (!url || !token) {
     const keys = Object.keys(process.env);
     const urlKey = keys.find(k => k.endsWith('_REST_API_URL') || k.endsWith('_REST_URL'));
@@ -34,8 +33,50 @@ const getKVClient = () => {
   }
 
   if (url && token) {
-    return createClient({ url, token });
+    return createKVClient({ url, token });
   }
+  return null;
+};
+
+const getRedisTcpUrl = () => {
+  let url = process.env.KV_URL || process.env.REDIS_URL;
+  if (!url) {
+    const keys = Object.keys(process.env);
+    const urlKey = keys.find(k => k.endsWith('_REDIS_URL') || (k.endsWith('_URL') && !k.includes('REST')));
+    if (urlKey) {
+      url = process.env[urlKey];
+    }
+  }
+  return url;
+};
+
+const getBookingsFromDb = async (): Promise<any[] | null> => {
+  // 1. Try Vercel KV REST
+  const kv = getKVClient();
+  if (kv) {
+    try {
+      const cloudData = await kv.get<any[]>('tcc_bookings');
+      return cloudData || [];
+    } catch (e) {
+      console.error('REST Vercel KV read failed, attempting TCP fallback...', e);
+    }
+  }
+
+  // 2. Try Standard TCP Redis Client fallback (e.g. tcc_kv_db_REDIS_URL)
+  const tcpUrl = getRedisTcpUrl();
+  if (tcpUrl) {
+    const client = createRedisClient({ url: tcpUrl as string });
+    try {
+      await client.connect();
+      const rawData = (await client.get('tcc_bookings')) as string | null;
+      await client.disconnect();
+      return rawData ? JSON.parse(rawData) : [];
+    } catch (e) {
+      console.error('Standard TCP Redis retrieval failed:', e);
+      try { await client.disconnect(); } catch {}
+    }
+  }
+
   return null;
 };
 
@@ -48,25 +89,21 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   const adminPassword = process.env.ADMIN_PASSWORD || 'cricket2026';
   const isAuthorized = secret === 'cricket2026' || secret === 'admin123' || secret === adminPassword;
 
-  const kv = getKVClient();
-
   try {
     let bookings: any[] = [];
+    const cloudBookings = await getBookingsFromDb();
 
-    if (kv) {
-      const cloudData = await kv.get<any[]>('tcc_bookings');
-      bookings = cloudData || [];
+    if (cloudBookings !== null) {
+      bookings = cloudBookings;
     } else {
       bookings = getLocalBookings();
     }
 
     if (isAuthorized) {
-      // Return full booking list with client metadata for the administrative portal
       return res.status(200).json(bookings);
     }
 
     // Filter bookings to return only safety/essential scheduling parameters
-    // to shield client names/emails/phone numbers from general public access
     const publicSlots = bookings.map(b => ({
       date: b.date,
       timeSlot: b.timeSlot,

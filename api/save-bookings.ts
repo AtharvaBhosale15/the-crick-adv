@@ -1,4 +1,5 @@
-import { createClient } from '@vercel/kv';
+import { createClient as createKVClient } from '@vercel/kv';
+import { createClient as createRedisClient } from 'redis';
 import fs from 'fs';
 import path from 'path';
 import type { VercelRequest, VercelResponse } from '@vercel/node';
@@ -6,11 +7,9 @@ import type { VercelRequest, VercelResponse } from '@vercel/node';
 const LOCAL_DB_PATH = path.join(process.cwd(), 'bookings-db.json');
 
 const getKVClient = () => {
-  // 1. Direct standard checks
   let url = process.env.KV_REST_API_URL || process.env.UPSTASH_REDIS_REST_URL;
   let token = process.env.KV_REST_API_TOKEN || process.env.UPSTASH_REDIS_REST_TOKEN;
 
-  // 2. Scan fallback for prefixed variables (e.g., tcc_kv_db_REST_API_URL)
   if (!url || !token) {
     const keys = Object.keys(process.env);
     const urlKey = keys.find(k => k.endsWith('_REST_API_URL') || k.endsWith('_REST_URL'));
@@ -22,9 +21,49 @@ const getKVClient = () => {
   }
 
   if (url && token) {
-    return createClient({ url, token });
+    return createKVClient({ url, token });
   }
   return null;
+};
+
+const getRedisTcpUrl = () => {
+  let url = process.env.KV_URL || process.env.REDIS_URL;
+  if (!url) {
+    const keys = Object.keys(process.env);
+    const urlKey = keys.find(k => k.endsWith('_REDIS_URL') || (k.endsWith('_URL') && !k.includes('REST')));
+    if (urlKey) {
+      url = process.env[urlKey];
+    }
+  }
+  return url;
+};
+
+const saveBookingsToDb = async (bookings: any[]): Promise<boolean> => {
+  const kv = getKVClient();
+  if (kv) {
+    try {
+      await kv.set('tcc_bookings', bookings);
+      return true;
+    } catch (e) {
+      console.error('REST Vercel KV write failed, attempting TCP fallback...', e);
+    }
+  }
+
+  const tcpUrl = getRedisTcpUrl();
+  if (tcpUrl) {
+    const client = createRedisClient({ url: tcpUrl as string });
+    try {
+      await client.connect();
+      await client.set('tcc_bookings', JSON.stringify(bookings));
+      await client.disconnect();
+      return true;
+    } catch (e) {
+      console.error('Standard TCP Redis write failed:', e);
+      try { await client.disconnect(); } catch {}
+    }
+  }
+
+  return false;
 };
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
@@ -44,10 +83,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   try {
-    const kv = getKVClient();
-    if (kv) {
-      await kv.set('tcc_bookings', bookings);
-    } else {
+    const savedInCloud = await saveBookingsToDb(bookings);
+    if (!savedInCloud) {
       fs.writeFileSync(LOCAL_DB_PATH, JSON.stringify(bookings, null, 2), 'utf-8');
     }
     return res.status(200).json({ status: 'success', message: 'Bookings saved successfully' });

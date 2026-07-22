@@ -1,5 +1,6 @@
 import crypto from 'crypto';
-import { createClient } from '@vercel/kv';
+import { createClient as createKVClient } from '@vercel/kv';
+import { createClient as createRedisClient } from 'redis';
 import fs from 'fs';
 import path from 'path';
 import type { VercelRequest, VercelResponse } from '@vercel/node';
@@ -27,11 +28,9 @@ const saveLocalBookings = (bookings: any[]) => {
 };
 
 const getKVClient = () => {
-  // 1. Direct standard checks
   let url = process.env.KV_REST_API_URL || process.env.UPSTASH_REDIS_REST_URL;
   let token = process.env.KV_REST_API_TOKEN || process.env.UPSTASH_REDIS_REST_TOKEN;
 
-  // 2. Scan fallback for prefixed variables (e.g., tcc_kv_db_REST_API_URL)
   if (!url || !token) {
     const keys = Object.keys(process.env);
     const urlKey = keys.find(k => k.endsWith('_REST_API_URL') || k.endsWith('_REST_URL'));
@@ -43,9 +42,77 @@ const getKVClient = () => {
   }
 
   if (url && token) {
-    return createClient({ url, token });
+    return createKVClient({ url, token });
   }
   return null;
+};
+
+const getRedisTcpUrl = () => {
+  let url = process.env.KV_URL || process.env.REDIS_URL;
+  if (!url) {
+    const keys = Object.keys(process.env);
+    const urlKey = keys.find(k => k.endsWith('_REDIS_URL') || (k.endsWith('_URL') && !k.includes('REST')));
+    if (urlKey) {
+      url = process.env[urlKey];
+    }
+  }
+  return url;
+};
+
+const getBookingsFromDb = async (): Promise<any[] | null> => {
+  const kv = getKVClient();
+  if (kv) {
+    try {
+      const cloudData = await kv.get<any[]>('tcc_bookings');
+      return cloudData || [];
+    } catch (e) {
+      console.error('REST Vercel KV read failed, attempting TCP fallback...', e);
+    }
+  }
+
+  const tcpUrl = getRedisTcpUrl();
+  if (tcpUrl) {
+    const client = createRedisClient({ url: tcpUrl as string });
+    try {
+      await client.connect();
+      const rawData = (await client.get('tcc_bookings')) as string | null;
+      await client.disconnect();
+      return rawData ? JSON.parse(rawData) : [];
+    } catch (e) {
+      console.error('Standard TCP Redis retrieval failed:', e);
+      try { await client.disconnect(); } catch {}
+    }
+  }
+
+  return null;
+};
+
+const saveBookingsToDb = async (bookings: any[]): Promise<boolean> => {
+  const kv = getKVClient();
+  if (kv) {
+    try {
+      await kv.set('tcc_bookings', bookings);
+      return true;
+    } catch (e) {
+      console.error('REST Vercel KV write failed, attempting TCP fallback...', e);
+    }
+  }
+
+  const tcpUrl = getRedisTcpUrl();
+  if (tcpUrl) {
+    const client = createRedisClient({ url: tcpUrl as string });
+    try {
+      await client.connect();
+      await client.set('tcc_bookings', JSON.stringify(bookings));
+      await client.disconnect();
+      return true;
+    } catch (e) {
+      console.error('Standard TCP Redis write failed:', e);
+      try { await client.disconnect(); } catch {}
+    }
+  }
+
+  return false;
 };
 
 const cleanEnvVar = (val?: string) => {
@@ -83,19 +150,16 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const generated_signature = hmac.digest('hex');
 
     if (generated_signature === razorpay_signature) {
-      // If payment is successfully verified, persist the booking details in database
       if (booking) {
-        const kv = getKVClient();
         let bookings: any[] = [];
+        const cloudBookings = await getBookingsFromDb();
 
-        if (kv) {
-          const cloudData = await kv.get<any[]>('tcc_bookings');
-          bookings = cloudData || [];
+        if (cloudBookings !== null) {
+          bookings = cloudBookings;
         } else {
           bookings = getLocalBookings();
         }
 
-        // Avoid double booking of slots by checking date + time Slot combination
         const isAlreadyBooked = bookings.some(
           b => b.date === booking.date && b.timeSlot === booking.timeSlot
         );
@@ -110,9 +174,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           };
           bookings.push(newBooking);
 
-          if (kv) {
-            await kv.set('tcc_bookings', bookings);
-          } else {
+          const savedInCloud = await saveBookingsToDb(bookings);
+          if (!savedInCloud) {
             saveLocalBookings(bookings);
           }
         }
