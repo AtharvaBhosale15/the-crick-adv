@@ -19,10 +19,17 @@ app.use((req, res, next) => {
   next();
 });
 
-const razorpay = new Razorpay({
-  key_id: process.env.RAZORPAY_KEY_ID || '',
-  key_secret: process.env.RAZORPAY_KEY_SECRET || '',
-});
+const cleanEnvVar = (val) => {
+  if (!val) return '';
+  let cleaned = val.trim();
+  if (cleaned.startsWith('"') && cleaned.endsWith('"')) {
+    cleaned = cleaned.slice(1, -1);
+  }
+  if (cleaned.startsWith("'") && cleaned.endsWith("'")) {
+    cleaned = cleaned.slice(1, -1);
+  }
+  return cleaned.trim();
+};
 
 app.post('/api/create-order', async (req, res) => {
   const { amount } = req.body;
@@ -30,14 +37,22 @@ app.post('/api/create-order', async (req, res) => {
     return res.status(400).json({ error: 'Invalid or missing amount parameter' });
   }
   
-  // Validate minimum amount is 100 paise
   if (amount < 100) {
     return res.status(400).json({ error: 'Amount must be at least 100 paise' });
   }
 
+  const key_id = cleanEnvVar(process.env.RAZORPAY_KEY_ID);
+  const key_secret = cleanEnvVar(process.env.RAZORPAY_KEY_SECRET);
+
+  if (!key_id || !key_secret) {
+    console.error('Razorpay credentials are not configured.');
+    return res.status(500).json({ error: 'Server configuration error: missing Razorpay credentials' });
+  }
+
   try {
+    const razorpay = new Razorpay({ key_id, key_secret });
     const options = {
-      amount: Math.round(amount), // Amount in paise
+      amount: Math.round(amount),
       currency: 'INR',
       receipt: `receipt_order_${Date.now()}`,
     };
@@ -46,7 +61,6 @@ app.post('/api/create-order', async (req, res) => {
     return res.status(200).json(order);
   } catch (error) {
     console.error('Error creating Razorpay order:', error);
-    // If auth credentials fail
     if (error.statusCode === 401) {
       return res.status(401).json({ error: 'Unauthorized: Invalid Razorpay API credentials' });
     }
@@ -61,10 +75,10 @@ app.post('/api/verify-payment', async (req, res) => {
     return res.status(400).json({ error: 'Missing required parameters for verification' });
   }
 
-  const key_secret = process.env.RAZORPAY_KEY_SECRET;
+  const key_secret = cleanEnvVar(process.env.RAZORPAY_KEY_SECRET);
   if (!key_secret) {
     console.error('RAZORPAY_KEY_SECRET is not configured on the server.');
-    return res.status(500).json({ error: 'Server configuration error' });
+    return res.status(500).json({ error: 'Server configuration error: missing Razorpay secret' });
   }
 
   try {

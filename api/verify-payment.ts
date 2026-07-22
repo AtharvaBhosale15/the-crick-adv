@@ -1,6 +1,18 @@
 import crypto from 'crypto';
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 
+const cleanEnvVar = (val?: string) => {
+  if (!val) return '';
+  let cleaned = val.trim();
+  if (cleaned.startsWith('"') && cleaned.endsWith('"')) {
+    cleaned = cleaned.slice(1, -1);
+  }
+  if (cleaned.startsWith("'") && cleaned.endsWith("'")) {
+    cleaned = cleaned.slice(1, -1);
+  }
+  return cleaned.trim();
+};
+
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
@@ -12,10 +24,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(400).json({ error: 'Missing required parameters for verification' });
   }
 
-  const key_secret = process.env.RAZORPAY_KEY_SECRET;
+  const key_secret = cleanEnvVar(process.env.RAZORPAY_KEY_SECRET);
   if (!key_secret) {
     console.error('RAZORPAY_KEY_SECRET is not configured.');
-    return res.status(500).json({ error: 'Server configuration error' });
+    return res.status(500).json({ error: 'Server configuration error: missing Razorpay secret' });
   }
 
   try {
