@@ -57,6 +57,18 @@ const getKVClient = () => {
   return null;
 };
 
+const getRedisTcpUrl = () => {
+  let url = process.env.KV_URL || process.env.REDIS_URL;
+  if (!url) {
+    const keys = Object.keys(process.env);
+    const urlKey = keys.find(k => k.endsWith('_REDIS_URL') || (k.endsWith('_URL') && !k.includes('REST')));
+    if (urlKey) {
+      url = process.env[urlKey];
+    }
+  }
+  return url;
+};
+
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   const envKeys = Object.keys(process.env).filter(key => 
     key.toLowerCase().includes('kv') || 
@@ -71,6 +83,38 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   let restConnectionStatus = 'Not Configured';
   let restError = '';
+  
+  let tcpUrlVal = '';
+  let parsedHost = '';
+  let parsedSuccess = false;
+  let startsWithRedis = false;
+
+  const tcpUrl = getRedisTcpUrl();
+  if (tcpUrl) {
+    tcpUrlVal = tcpUrl.substring(0, 15) + '... (len: ' + tcpUrl.length + ')';
+    startsWithRedis = tcpUrl.startsWith('redis');
+    if (startsWithRedis) {
+      try {
+        const cleanUrl = tcpUrl.replace(/^rediss?:\/\//, '');
+        const parts = cleanUrl.split('@');
+        
+        if (parts.length === 2) {
+          const credentials = parts[0].split(':');
+          const hostPort = parts[1].split(':');
+          
+          const password = credentials[1] || credentials[0];
+          const host = hostPort[0];
+          
+          parsedHost = host;
+          if (host && password) {
+            parsedSuccess = true;
+          }
+        }
+      } catch (e: any) {
+        restError = 'Parser error: ' + e.message;
+      }
+    }
+  }
 
   // Test REST client
   const kv = getKVClient();
@@ -88,6 +132,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   return res.status(200).json({
     message: 'Database Environment & Connection Diagnostics (REST-only Client)',
     envStatus,
+    parserMetadata: {
+      hasTcpUrl: !!tcpUrl,
+      tcpUrlVal,
+      startsWithRedis,
+      parsedHost,
+      parsedSuccess
+    },
     connectionTests: {
       rest: { status: restConnectionStatus, error: restError }
     },
