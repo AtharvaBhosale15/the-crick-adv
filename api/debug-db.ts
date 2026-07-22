@@ -1,11 +1,12 @@
 import { createClient as createKVClient } from '@vercel/kv';
-import { createClient as createRedisClient } from 'redis';
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 
 const getKVClient = () => {
+  // 1. Direct standard checks
   let url = process.env.KV_REST_API_URL || process.env.UPSTASH_REDIS_REST_URL;
   let token = process.env.KV_REST_API_TOKEN || process.env.UPSTASH_REDIS_REST_TOKEN;
 
+  // 2. Scan fallback for REST prefixed variables (e.g. tcc_kv_db_REST_API_URL)
   if (!url || !token) {
     const keys = Object.keys(process.env);
     const urlKey = keys.find(k => k.endsWith('_REST_API_URL') || k.endsWith('_REST_URL'));
@@ -16,22 +17,44 @@ const getKVClient = () => {
     }
   }
 
+  // 3. Fallback: Parse Redis TCP URL to REST credentials
+  if (!url || !token) {
+    let tcpUrl = process.env.KV_URL || process.env.REDIS_URL;
+    if (!tcpUrl) {
+      const keys = Object.keys(process.env);
+      const urlKey = keys.find(k => k.endsWith('_REDIS_URL') || (k.endsWith('_URL') && !k.includes('REST')));
+      if (urlKey) {
+        tcpUrl = process.env[urlKey];
+      }
+    }
+
+    if (tcpUrl && tcpUrl.startsWith('redis')) {
+      try {
+        const cleanUrl = tcpUrl.replace(/^rediss?:\/\//, '');
+        const parts = cleanUrl.split('@');
+        
+        if (parts.length === 2) {
+          const credentials = parts[0].split(':');
+          const hostPort = parts[1].split(':');
+          
+          const password = credentials[1] || credentials[0];
+          const host = hostPort[0];
+          
+          if (host && password) {
+            url = `https://${host}`;
+            token = password;
+          }
+        }
+      } catch (e) {
+        console.error('Failed to parse TCP Redis URL to REST credentials:', e);
+      }
+    }
+  }
+
   if (url && token) {
     return createKVClient({ url, token });
   }
   return null;
-};
-
-const getRedisTcpUrl = () => {
-  let url = process.env.KV_URL || process.env.REDIS_URL;
-  if (!url) {
-    const keys = Object.keys(process.env);
-    const urlKey = keys.find(k => k.endsWith('_REDIS_URL') || (k.endsWith('_URL') && !k.includes('REST')));
-    if (urlKey) {
-      url = process.env[urlKey];
-    }
-  }
-  return url;
 };
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
@@ -48,10 +71,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   let restConnectionStatus = 'Not Configured';
   let restError = '';
-  let tcpConnectionStatus = 'Not Configured';
-  let tcpError = '';
 
-  // 1. Test REST client
+  // Test REST client
   const kv = getKVClient();
   if (kv) {
     try {
@@ -64,29 +85,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
   }
 
-  // 2. Test TCP client
-  const tcpUrl = getRedisTcpUrl();
-  if (tcpUrl) {
-    const client = createRedisClient({ url: tcpUrl as string });
-    try {
-      await client.connect();
-      await client.set('tcc_debug_test', 'working_tcp');
-      const val = await client.get('tcc_debug_test');
-      await client.disconnect();
-      tcpConnectionStatus = val === 'working_tcp' ? 'SUCCESS' : 'FAILED_VALUE_MISMATCH';
-    } catch (e: any) {
-      tcpConnectionStatus = 'ERROR';
-      tcpError = e.message || String(e);
-      try { await client.disconnect(); } catch {}
-    }
-  }
-
   return res.status(200).json({
-    message: 'Database Environment & Connection Diagnostics',
+    message: 'Database Environment & Connection Diagnostics (REST-only Client)',
     envStatus,
     connectionTests: {
-      rest: { status: restConnectionStatus, error: restError },
-      tcp: { status: tcpConnectionStatus, error: tcpError }
+      rest: { status: restConnectionStatus, error: restError }
     },
     nodeEnv: process.env.NODE_ENV,
     processCwd: process.cwd()
