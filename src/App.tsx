@@ -42,7 +42,7 @@ import {
 } from 'lucide-react';
 
 // Import images
-import logoImg from './assets/images/the_cricket_advisor_logo.svg';
+import logoImg from './assets/images/the_cricket_advisor_logo.jpg';
 import profileImg from './assets/images/prakash_palande_gym_1784639281865.jpg';
 import stadiumBg from './assets/images/stadium_background_1784636094892.jpg';
 import globalNetworkImg from './assets/images/global_network_1784638057795.jpg';
