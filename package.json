@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite --port=3000 --host=0.0.0.0",
+    "server": "node api-server.js",
     "build": "vite build",
     "preview": "vite preview",
     "clean": "rm -rf dist server.js",
@@ -20,7 +21,8 @@
     "vite": "^6.2.3",
     "express": "^4.21.2",
     "dotenv": "^17.2.3",
-    "motion": "^12.23.24"
+    "motion": "^12.23.24",
+    "razorpay": "^2.9.4"
   },
   "devDependencies": {
     "@types/node": "^22.14.0",
@@ -30,6 +32,7 @@
     "tsx": "^4.21.0",
     "typescript": "~5.8.2",
     "vite": "^6.2.3",
-    "@types/express": "^4.17.21"
+    "@types/express": "^4.17.21",
+    "@vercel/node": "^3.2.26"
   }
 }
