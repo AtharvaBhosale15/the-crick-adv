@@ -242,7 +242,7 @@ If you need to reschedule or update your information, please reply to this email
 Best regards,
 Prakash Palande Cricket Consultancy
 thecricketadvisor@gmail.com
-www.thecricketsolutions.com`;
+www.thecricketadvisor.com`;
 
     return `mailto:${b.email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
   };
@@ -4217,7 +4217,7 @@ END:VCALENDAR`;
                   <span className="text-[10px] font-black tracking-widest text-gold-600 uppercase">OFFICIAL TAX INVOICE</span>
                   <h2 className="text-xl font-black font-display text-navy-950 uppercase tracking-tight">Prakash Palande Cricket Consultancy</h2>
                   <p className="text-xs text-slate-500 font-medium mt-0.5">Global Player Placements, Board Advisory & Professional Coaching</p>
-                  <p className="text-[11px] text-slate-400 mt-1">Email: thecricketadvisor@gmail.com | Web: www.thecricketsolutions.com</p>
+                  <p className="text-[11px] text-slate-400 mt-1">Email: thecricketadvisor@gmail.com | Web: www.thecricketadvisor.com</p>
                   <p className="text-[11px] text-slate-400">GST / SAC Code: 998311 (Management Advisory & Coaching Services)</p>
                 </div>
  
