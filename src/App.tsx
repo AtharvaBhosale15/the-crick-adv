@@ -799,7 +799,7 @@ END:VCALENDAR`;
       }
 
       // 3. Open Razorpay Checkout overlay
-      const razorpayKeyId = (import.meta as any).env.VITE_RAZORPAY_KEY_ID || 'rzp_test_exampleid123';
+      const razorpayKeyId = import.meta.env.VITE_RAZORPAY_KEY_ID || '';
       const options = {
         key: razorpayKeyId,
         amount: orderData.amount,
