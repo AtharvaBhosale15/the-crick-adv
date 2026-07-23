@@ -919,6 +919,24 @@ END:VCALENDAR`;
     const updatedBookings = [newBooking, ...bookings];
     saveBookingsToStorage(updatedBookings);
     setConfirmedBooking(newBooking);
+    setBookedSlots(prev => [...prev, { date: bookingDate, timeSlot: bookingTimeSlot, packageName: selectedPackage.title }]);
+
+    // Sync non-Razorpay (simulated card/UPI) bookings to backend database
+    if (newBooking.paymentMethod !== 'RAZORPAY') {
+      const syncBooking = async () => {
+        try {
+          await fetch('/api/add-booking', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ booking: newBooking })
+          });
+        } catch (err) {
+          console.error('Failed to sync booking to database:', err);
+        }
+      };
+      syncBooking();
+    }
+
     setBookingStep(4); // Success Screen
   };
 

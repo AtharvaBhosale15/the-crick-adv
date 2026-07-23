@@ -225,6 +225,33 @@ app.post('/api/save-bookings', (req, res) => {
   }
 });
 
+app.post('/api/add-booking', (req, res) => {
+  const { booking } = req.body;
+
+  if (!booking || !booking.date || !booking.timeSlot) {
+    return res.status(400).json({ error: 'Missing booking details' });
+  }
+
+  try {
+    const bookings = getLocalBookings();
+    const isAlreadyBooked = bookings.some(
+      b => b.date === booking.date && b.timeSlot === booking.timeSlot
+    );
+
+    if (!isAlreadyBooked) {
+      bookings.push(booking);
+      saveLocalBookings(bookings);
+      console.log(`Saved new booking: ${booking.id} for slot: ${booking.date} ${booking.timeSlot}`);
+      return res.status(200).json({ status: 'success', message: 'Booking saved successfully' });
+    } else {
+      return res.status(400).json({ error: 'Slot is already booked' });
+    }
+  } catch (error) {
+    console.error('Error adding booking:', error);
+    return res.status(500).json({ error: error.message || 'Failed to save booking' });
+  }
+});
+
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
   console.log(`Local API Server running on http://localhost:${PORT}`);
