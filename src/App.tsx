@@ -250,6 +250,70 @@ const RefundPolicyContent = () => (
   </div>
 );
 
+const getISTTime = () => {
+  const options = { timeZone: 'Asia/Kolkata', hour12: false };
+  const formatter = new Intl.DateTimeFormat('en-US', {
+    ...options,
+    year: 'numeric',
+    month: 'numeric',
+    day: 'numeric',
+    hour: 'numeric',
+    minute: 'numeric',
+    second: 'numeric'
+  });
+  const parts = formatter.formatToParts(new Date());
+  
+  const getValue = (type: string) => parts.find(p => p.type === type)?.value || '';
+  
+  const year = parseInt(getValue('year'), 10);
+  const month = parseInt(getValue('month'), 10) - 1;
+  const day = parseInt(getValue('day'), 10);
+  const hour = parseInt(getValue('hour'), 10);
+  const minute = parseInt(getValue('minute'), 10);
+  
+  return { year, month, day, hour, minute };
+};
+
+const getTodayISTDateString = () => {
+  const { year, month, day } = getISTTime();
+  const mm = String(month + 1).padStart(2, '0');
+  const dd = String(day).padStart(2, '0');
+  return `${year}-${mm}-${dd}`;
+};
+
+const isSlotPastInIST = (slot: string, selectedDate: string) => {
+  const todayIST = getTodayISTDateString();
+  
+  if (selectedDate < todayIST) {
+    return true;
+  }
+  if (selectedDate > todayIST) {
+    return false;
+  }
+
+  const { hour: currentHour, minute: currentMinute } = getISTTime();
+
+  const startPart = slot.split(' - ')[0]; // "09:00 AM"
+  const [time, modifier] = startPart.split(' '); // "09:00", "AM"
+  const [hourStr, minuteStr] = time.split(':'); // "09", "00"
+  
+  let hour = parseInt(hourStr, 10);
+  const minute = parseInt(minuteStr, 10);
+
+  if (modifier === 'PM' && hour !== 12) {
+    hour += 12;
+  }
+  if (modifier === 'AM' && hour === 12) {
+    hour = 0;
+  }
+
+  if (currentHour > hour || (currentHour === hour && currentMinute > minute)) {
+    return true;
+  }
+
+  return false;
+};
+
 export default function App() {
   // --- CORE STATE ---
   const [activeTab, setActiveTab] = useState<'main' | 'book' | 'admin'>('main');
@@ -2222,7 +2286,7 @@ END:VCALENDAR`;
                           <input 
                             type="date" 
                             required
-                            min="2026-07-21"
+                            min={getTodayISTDateString()}
                             max="2026-12-31"
                             value={bookingDate}
                             onChange={(e) => {
@@ -2251,7 +2315,8 @@ END:VCALENDAR`;
                                 bookedSlots.some(s => s.date === bookingDate && s.timeSlot === slot) ||
                                 bookings.some(b => b.date === bookingDate && b.timeSlot === slot && b.bookingStatus !== 'Cancelled')
                               );
-                              const isUnavailable = isSlotBlocked || isAlreadyBooked;
+                              const isPastSlot = bookingDate && isSlotPastInIST(slot, bookingDate);
+                              const isUnavailable = isSlotBlocked || isAlreadyBooked || isPastSlot;
 
                               return (
                                 <button 
@@ -2270,6 +2335,7 @@ END:VCALENDAR`;
                                   <span>{slot}</span>
                                   {isAlreadyBooked && <span className="text-[10px] bg-amber-100 text-amber-800 px-2 py-0.5 rounded font-bold">Already Booked</span>}
                                   {isSlotBlocked && <span className="text-[10px] bg-red-100 text-red-800 px-2 py-0.5 rounded font-bold">Blocked by Consultant</span>}
+                                  {isPastSlot && <span className="text-[10px] bg-slate-200 text-slate-500 px-2 py-0.5 rounded font-bold">Time Slot Passed</span>}
                                 </button>
                               );
                             })}
