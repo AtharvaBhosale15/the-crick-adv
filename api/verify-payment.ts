@@ -3,7 +3,7 @@ import { sql } from '@vercel/postgres';
 import fs from 'fs';
 import path from 'path';
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { sendBookingEmail } from './utils/mailer';
+import { sendBookingEmail } from './utils/mailer.js';
 
 const LOCAL_DB_PATH = path.join(process.cwd(), 'bookings-db.json');
 
