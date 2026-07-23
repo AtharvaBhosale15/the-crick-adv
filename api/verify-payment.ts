@@ -3,6 +3,7 @@ import { sql } from '@vercel/postgres';
 import fs from 'fs';
 import path from 'path';
 import type { VercelRequest, VercelResponse } from '@vercel/node';
+import { sendBookingEmail } from './utils/mailer';
 
 const LOCAL_DB_PATH = path.join(process.cwd(), 'bookings-db.json');
 
@@ -119,6 +120,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             saveLocalBookings(bookings);
           }
         }
+
+        // Send automatic booking confirmation email via Gmail SMTP
+        await sendBookingEmail(verifiedBooking);
       }
 
       return res.status(200).json({ status: 'success', message: 'Payment verified successfully' });

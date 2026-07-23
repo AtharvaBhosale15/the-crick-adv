@@ -2,6 +2,7 @@ import { sql } from '@vercel/postgres';
 import fs from 'fs';
 import path from 'path';
 import type { VercelRequest, VercelResponse } from '@vercel/node';
+import { sendBookingEmail } from './utils/mailer';
 
 const LOCAL_DB_PATH = path.join(process.cwd(), 'bookings-db.json');
 
@@ -41,6 +42,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   try {
+    let success = false;
+    let errorMsg = '';
+
     if (hasPostgres()) {
       try {
         // Check if slot is already booked
@@ -68,7 +72,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             ${booking.zoomLink || ''}, ${booking.meetingId || ''}, ${booking.createdAt || new Date().toISOString()}
           )
         `;
-        return res.status(200).json({ status: 'success', message: 'Booking saved successfully' });
+        success = true;
       } catch (dbError: any) {
         console.error('Postgres database insert failed, falling back to local file:', dbError);
         // Fallback to local file sync
@@ -79,9 +83,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         if (!isAlreadyBooked) {
           bookings.push(booking);
           saveLocalBookings(bookings);
-          return res.status(200).json({ status: 'success', message: 'Booking saved successfully' });
+          success = true;
         } else {
-          return res.status(400).json({ error: 'Slot is already booked' });
+          errorMsg = 'Slot is already booked';
         }
       }
     } else {
@@ -92,10 +96,18 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       if (!isAlreadyBooked) {
         bookings.push(booking);
         saveLocalBookings(bookings);
-        return res.status(200).json({ status: 'success', message: 'Booking saved successfully' });
+        success = true;
       } else {
-        return res.status(400).json({ error: 'Slot is already booked' });
+        errorMsg = 'Slot is already booked';
       }
+    }
+
+    if (success) {
+      // Send automatic confirmation email via Gmail SMTP
+      await sendBookingEmail(booking);
+      return res.status(200).json({ status: 'success', message: 'Booking saved successfully' });
+    } else {
+      return res.status(400).json({ error: errorMsg || 'Slot is already booked' });
     }
   } catch (error: any) {
     console.error('Error in add-booking handler:', error);
