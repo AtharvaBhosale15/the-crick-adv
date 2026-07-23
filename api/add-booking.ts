@@ -1,4 +1,4 @@
-import { createClient as createKVClient } from '@vercel/kv';
+import { sql } from '@vercel/postgres';
 import fs from 'fs';
 import path from 'path';
 import type { VercelRequest, VercelResponse } from '@vercel/node';
@@ -25,50 +25,8 @@ const saveLocalBookings = (bookings: any[]) => {
   }
 };
 
-const getKVClient = () => {
-  let url = process.env.KV_REST_API_URL || process.env.UPSTASH_REDIS_REST_URL;
-  let token = process.env.KV_REST_API_TOKEN || process.env.UPSTASH_REDIS_REST_TOKEN;
-
-  if (!url || !token) {
-    const keys = Object.keys(process.env);
-    const urlKey = keys.find(k => k.endsWith('_REST_API_URL') || k.endsWith('_REST_URL'));
-    const tokenKey = keys.find(k => k.endsWith('_REST_API_TOKEN') || k.endsWith('_REST_TOKEN'));
-    if (urlKey && tokenKey) {
-      url = process.env[urlKey];
-      token = process.env[tokenKey];
-    }
-  }
-
-  if (url && token) {
-    return createKVClient({ url, token });
-  }
-  return null;
-};
-
-const getBookingsFromDb = async (): Promise<any[] | null> => {
-  const kv = getKVClient();
-  if (kv) {
-    try {
-      const cloudData = await kv.get<any[]>('tcc_bookings');
-      return cloudData || [];
-    } catch (e) {
-      console.error('REST Vercel KV read failed:', e);
-    }
-  }
-  return null;
-};
-
-const saveBookingsToDb = async (bookings: any[]): Promise<boolean> => {
-  const kv = getKVClient();
-  if (kv) {
-    try {
-      await kv.set('tcc_bookings', bookings);
-      return true;
-    } catch (e) {
-      console.error('REST Vercel KV write failed:', e);
-    }
-  }
-  return false;
+const hasPostgres = () => {
+  return !!(process.env.POSTGRES_URL || process.env.POSTGRES_PRISMA_URL);
 };
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
@@ -83,28 +41,61 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   try {
-    let bookings: any[] = [];
-    const cloudBookings = await getBookingsFromDb();
+    if (hasPostgres()) {
+      try {
+        // Check if slot is already booked
+        const { rows } = await sql`
+          SELECT id FROM bookings 
+          WHERE booking_date = ${booking.date} AND time_slot = ${booking.timeSlot}
+          LIMIT 1
+        `;
 
-    if (cloudBookings !== null) {
-      bookings = cloudBookings;
-    } else {
-      bookings = getLocalBookings();
-    }
+        if (rows.length > 0) {
+          return res.status(400).json({ error: 'Slot is already booked' });
+        }
 
-    const isAlreadyBooked = bookings.some(
-      b => b.date === booking.date && b.timeSlot === booking.timeSlot
-    );
-
-    if (!isAlreadyBooked) {
-      bookings.push(booking);
-      const savedInCloud = await saveBookingsToDb(bookings);
-      if (!savedInCloud) {
-        saveLocalBookings(bookings);
+        // Insert booking
+        await sql`
+          INSERT INTO bookings (
+            id, full_name, email, whatsapp, country, playing_level,
+            package_id, package_name, price, booking_date, time_slot,
+            purpose, payment_method, payment_status, booking_status,
+            zoom_link, meeting_id, created_at
+          ) VALUES (
+            ${booking.id}, ${booking.fullName}, ${booking.email}, ${booking.whatsApp}, ${booking.country}, ${booking.playingLevel},
+            ${booking.packageId}, ${booking.packageName}, ${booking.price}, ${booking.date}, ${booking.timeSlot},
+            ${booking.purpose || ''}, ${booking.paymentMethod}, ${booking.paymentStatus}, ${booking.bookingStatus},
+            ${booking.zoomLink || ''}, ${booking.meetingId || ''}, ${booking.createdAt || new Date().toISOString()}
+          )
+        `;
+        return res.status(200).json({ status: 'success', message: 'Booking saved successfully' });
+      } catch (dbError: any) {
+        console.error('Postgres database insert failed, falling back to local file:', dbError);
+        // Fallback to local file sync
+        const bookings = getLocalBookings();
+        const isAlreadyBooked = bookings.some(
+          b => b.date === booking.date && b.timeSlot === booking.timeSlot
+        );
+        if (!isAlreadyBooked) {
+          bookings.push(booking);
+          saveLocalBookings(bookings);
+          return res.status(200).json({ status: 'success', message: 'Booking saved successfully' });
+        } else {
+          return res.status(400).json({ error: 'Slot is already booked' });
+        }
       }
-      return res.status(200).json({ status: 'success', message: 'Booking saved successfully' });
     } else {
-      return res.status(400).json({ error: 'Slot is already booked' });
+      const bookings = getLocalBookings();
+      const isAlreadyBooked = bookings.some(
+        b => b.date === booking.date && b.timeSlot === booking.timeSlot
+      );
+      if (!isAlreadyBooked) {
+        bookings.push(booking);
+        saveLocalBookings(bookings);
+        return res.status(200).json({ status: 'success', message: 'Booking saved successfully' });
+      } else {
+        return res.status(400).json({ error: 'Slot is already booked' });
+      }
     }
   } catch (error: any) {
     console.error('Error in add-booking handler:', error);

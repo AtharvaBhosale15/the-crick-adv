@@ -1,5 +1,5 @@
 import crypto from 'crypto';
-import { createClient as createKVClient } from '@vercel/kv';
+import { sql } from '@vercel/postgres';
 import fs from 'fs';
 import path from 'path';
 import type { VercelRequest, VercelResponse } from '@vercel/node';
@@ -26,86 +26,8 @@ const saveLocalBookings = (bookings: any[]) => {
   }
 };
 
-const getKVClient = () => {
-  // 1. Direct standard checks
-  let url = process.env.KV_REST_API_URL || process.env.UPSTASH_REDIS_REST_URL;
-  let token = process.env.KV_REST_API_TOKEN || process.env.UPSTASH_REDIS_REST_TOKEN;
-
-  // 2. Scan fallback for REST prefixed variables (e.g. tcc_kv_db_REST_API_URL)
-  if (!url || !token) {
-    const keys = Object.keys(process.env);
-    const urlKey = keys.find(k => k.endsWith('_REST_API_URL') || k.endsWith('_REST_URL'));
-    const tokenKey = keys.find(k => k.endsWith('_REST_API_TOKEN') || k.endsWith('_REST_TOKEN'));
-    if (urlKey && tokenKey) {
-      url = process.env[urlKey];
-      token = process.env[tokenKey];
-    }
-  }
-
-  // 3. Fallback: Parse Redis TCP URL to REST credentials
-  if (!url || !token) {
-    let tcpUrl = process.env.KV_URL || process.env.REDIS_URL;
-    if (!tcpUrl) {
-      const keys = Object.keys(process.env);
-      const urlKey = keys.find(k => k.endsWith('_REDIS_URL') || (k.endsWith('_URL') && !k.includes('REST')));
-      if (urlKey) {
-        tcpUrl = process.env[urlKey];
-      }
-    }
-
-    if (tcpUrl && tcpUrl.startsWith('redis')) {
-      try {
-        const cleanUrl = tcpUrl.replace(/^rediss?:\/\//, '');
-        const parts = cleanUrl.split('@');
-        
-        if (parts.length === 2) {
-          const credentials = parts[0].split(':');
-          const hostPort = parts[1].split(':');
-          
-          const password = credentials[1] || credentials[0];
-          const host = hostPort[0];
-          
-          if (host && password) {
-            url = `https://${host}`;
-            token = password;
-          }
-        }
-      } catch (e) {
-        console.error('Failed to parse TCP Redis URL to REST credentials:', e);
-      }
-    }
-  }
-
-  if (url && token) {
-    return createKVClient({ url, token });
-  }
-  return null;
-};
-
-const getBookingsFromDb = async (): Promise<any[] | null> => {
-  const kv = getKVClient();
-  if (kv) {
-    try {
-      const cloudData = await kv.get<any[]>('tcc_bookings');
-      return cloudData || [];
-    } catch (e) {
-      console.error('REST Vercel KV read failed:', e);
-    }
-  }
-  return null;
-};
-
-const saveBookingsToDb = async (bookings: any[]): Promise<boolean> => {
-  const kv = getKVClient();
-  if (kv) {
-    try {
-      await kv.set('tcc_bookings', bookings);
-      return true;
-    } catch (e) {
-      console.error('REST Vercel KV write failed:', e);
-    }
-  }
-  return false;
+const hasPostgres = () => {
+  return !!(process.env.POSTGRES_URL || process.env.POSTGRES_PRISMA_URL);
 };
 
 const cleanEnvVar = (val?: string) => {
@@ -144,31 +66,56 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     if (generated_signature === razorpay_signature) {
       if (booking) {
-        let bookings: any[] = [];
-        const cloudBookings = await getBookingsFromDb();
+        const verifiedBooking = {
+          ...booking,
+          paymentMethod: 'Razorpay',
+          paymentStatus: 'Paid',
+          bookingStatus: 'Approved',
+          createdAt: new Date().toISOString()
+        };
 
-        if (cloudBookings !== null) {
-          bookings = cloudBookings;
+        if (hasPostgres()) {
+          try {
+            // Check if already booked
+            const { rows } = await sql`
+              SELECT id FROM bookings 
+              WHERE booking_date = ${verifiedBooking.date} AND time_slot = ${verifiedBooking.timeSlot}
+              LIMIT 1
+            `;
+
+            if (rows.length === 0) {
+              await sql`
+                INSERT INTO bookings (
+                  id, full_name, email, whatsapp, country, playing_level,
+                  package_id, package_name, price, booking_date, time_slot,
+                  purpose, payment_method, payment_status, booking_status,
+                  zoom_link, meeting_id, created_at
+                ) VALUES (
+                  ${verifiedBooking.id}, ${verifiedBooking.fullName}, ${verifiedBooking.email}, ${verifiedBooking.whatsApp}, ${verifiedBooking.country}, ${verifiedBooking.playingLevel},
+                  ${verifiedBooking.packageId}, ${verifiedBooking.packageName}, ${verifiedBooking.price}, ${verifiedBooking.date}, ${verifiedBooking.timeSlot},
+                  ${verifiedBooking.purpose || ''}, ${verifiedBooking.paymentMethod}, ${verifiedBooking.paymentStatus}, ${verifiedBooking.bookingStatus},
+                  ${verifiedBooking.zoomLink || ''}, ${verifiedBooking.meetingId || ''}, ${verifiedBooking.createdAt}
+                )
+              `;
+            }
+          } catch (dbError) {
+            console.error('Postgres write failed in verify-payment, falling back to local file:', dbError);
+            const bookings = getLocalBookings();
+            const isAlreadyBooked = bookings.some(
+              b => b.date === verifiedBooking.date && b.timeSlot === verifiedBooking.timeSlot
+            );
+            if (!isAlreadyBooked) {
+              bookings.push(verifiedBooking);
+              saveLocalBookings(bookings);
+            }
+          }
         } else {
-          bookings = getLocalBookings();
-        }
-
-        const isAlreadyBooked = bookings.some(
-          b => b.date === booking.date && b.timeSlot === booking.timeSlot
-        );
-
-        if (!isAlreadyBooked) {
-          const newBooking = {
-            ...booking,
-            paymentMethod: 'Razorpay',
-            paymentStatus: 'Paid',
-            bookingStatus: 'Approved',
-            createdAt: new Date().toISOString()
-          };
-          bookings.push(newBooking);
-
-          const savedInCloud = await saveBookingsToDb(bookings);
-          if (!savedInCloud) {
+          const bookings = getLocalBookings();
+          const isAlreadyBooked = bookings.some(
+            b => b.date === verifiedBooking.date && b.timeSlot === verifiedBooking.timeSlot
+          );
+          if (!isAlreadyBooked) {
+            bookings.push(verifiedBooking);
             saveLocalBookings(bookings);
           }
         }

@@ -1,4 +1,4 @@
-import { createClient as createKVClient } from '@vercel/kv';
+import { sql } from '@vercel/postgres';
 import fs from 'fs';
 import path from 'path';
 import type { VercelRequest, VercelResponse } from '@vercel/node';
@@ -17,74 +17,9 @@ const getLocalBookings = (): any[] => {
   return [];
 };
 
-const getKVClient = () => {
-  // 1. Direct standard checks
-  let url = process.env.KV_REST_API_URL || process.env.UPSTASH_REDIS_REST_URL;
-  let token = process.env.KV_REST_API_TOKEN || process.env.UPSTASH_REDIS_REST_TOKEN;
-
-  // 2. Scan fallback for REST prefixed variables (e.g. tcc_kv_db_REST_API_URL)
-  if (!url || !token) {
-    const keys = Object.keys(process.env);
-    const urlKey = keys.find(k => k.endsWith('_REST_API_URL') || k.endsWith('_REST_URL'));
-    const tokenKey = keys.find(k => k.endsWith('_REST_API_TOKEN') || k.endsWith('_REST_TOKEN'));
-    if (urlKey && tokenKey) {
-      url = process.env[urlKey];
-      token = process.env[tokenKey];
-    }
-  }
-
-  // 3. Fallback: Parse Redis TCP URL to REST credentials
-  if (!url || !token) {
-    let tcpUrl = process.env.KV_URL || process.env.REDIS_URL;
-    if (!tcpUrl) {
-      const keys = Object.keys(process.env);
-      const urlKey = keys.find(k => k.endsWith('_REDIS_URL') || (k.endsWith('_URL') && !k.includes('REST')));
-      if (urlKey) {
-        tcpUrl = process.env[urlKey];
-      }
-    }
-
-    if (tcpUrl && tcpUrl.startsWith('redis')) {
-      try {
-        // Format expected: redis[s]://[default:password@]host[:port]
-        const cleanUrl = tcpUrl.replace(/^rediss?:\/\//, '');
-        const parts = cleanUrl.split('@');
-        
-        if (parts.length === 2) {
-          const credentials = parts[0].split(':');
-          const hostPort = parts[1].split(':');
-          
-          const password = credentials[1] || credentials[0];
-          const host = hostPort[0];
-          
-          if (host && password) {
-            url = `https://${host}`;
-            token = password;
-          }
-        }
-      } catch (e) {
-        console.error('Failed to parse TCP Redis URL to REST credentials:', e);
-      }
-    }
-  }
-
-  if (url && token) {
-    return createKVClient({ url, token });
-  }
-  return null;
-};
-
-const getBookingsFromDb = async (): Promise<any[] | null> => {
-  const kv = getKVClient();
-  if (kv) {
-    try {
-      const cloudData = await kv.get<any[]>('tcc_bookings');
-      return cloudData || [];
-    } catch (e) {
-      console.error('REST Vercel KV read failed:', e);
-    }
-  }
-  return null;
+// Check if Postgres URL is available
+const hasPostgres = () => {
+  return !!(process.env.POSTGRES_URL || process.env.POSTGRES_PRISMA_URL);
 };
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
@@ -98,10 +33,61 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   try {
     let bookings: any[] = [];
-    const cloudBookings = await getBookingsFromDb();
 
-    if (cloudBookings !== null) {
-      bookings = cloudBookings;
+    if (hasPostgres()) {
+      try {
+        // 1. Ensure table exists
+        await sql`
+          CREATE TABLE IF NOT EXISTS bookings (
+            id VARCHAR(50) PRIMARY KEY,
+            full_name VARCHAR(255) NOT NULL,
+            email VARCHAR(255) NOT NULL,
+            whatsapp VARCHAR(100) NOT NULL,
+            country VARCHAR(100) NOT NULL,
+            playing_level VARCHAR(100) NOT NULL,
+            package_id VARCHAR(100) NOT NULL,
+            package_name VARCHAR(255) NOT NULL,
+            price DECIMAL(10, 2) NOT NULL,
+            booking_date VARCHAR(50) NOT NULL,
+            time_slot VARCHAR(150) NOT NULL,
+            purpose TEXT,
+            payment_method VARCHAR(50) NOT NULL,
+            payment_status VARCHAR(50) NOT NULL,
+            booking_status VARCHAR(50) NOT NULL,
+            zoom_link TEXT,
+            meeting_id VARCHAR(100),
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+          );
+        `;
+
+        // 2. Fetch all rows sorted by created_at DESC
+        const { rows } = await sql`SELECT * FROM bookings ORDER BY created_at DESC`;
+
+        // 3. Map database columns to camelCase frontend schema
+        bookings = rows.map(r => ({
+          id: r.id,
+          fullName: r.full_name,
+          email: r.email,
+          whatsApp: r.whatsapp,
+          country: r.country,
+          playingLevel: r.playing_level,
+          packageId: r.package_id,
+          packageName: r.package_name,
+          price: Number(r.price),
+          date: r.booking_date,
+          timeSlot: r.time_slot,
+          purpose: r.purpose || '',
+          paymentMethod: r.payment_method,
+          paymentStatus: r.payment_status,
+          bookingStatus: r.booking_status,
+          zoomLink: r.zoom_link || '',
+          meetingId: r.meeting_id || '',
+          createdAt: r.created_at ? new Date(r.created_at).toISOString() : new Date().toISOString()
+        }));
+      } catch (dbError) {
+        console.error('Failed to read from Vercel Postgres, falling back to local file:', dbError);
+        bookings = getLocalBookings();
+      }
     } else {
       bookings = getLocalBookings();
     }

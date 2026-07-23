@@ -1,77 +1,12 @@
-import { createClient as createKVClient } from '@vercel/kv';
+import { sql } from '@vercel/postgres';
 import fs from 'fs';
 import path from 'path';
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 
 const LOCAL_DB_PATH = path.join(process.cwd(), 'bookings-db.json');
 
-const getKVClient = () => {
-  // 1. Direct standard checks
-  let url = process.env.KV_REST_API_URL || process.env.UPSTASH_REDIS_REST_URL;
-  let token = process.env.KV_REST_API_TOKEN || process.env.UPSTASH_REDIS_REST_TOKEN;
-
-  // 2. Scan fallback for REST prefixed variables (e.g. tcc_kv_db_REST_API_URL)
-  if (!url || !token) {
-    const keys = Object.keys(process.env);
-    const urlKey = keys.find(k => k.endsWith('_REST_API_URL') || k.endsWith('_REST_URL'));
-    const tokenKey = keys.find(k => k.endsWith('_REST_API_TOKEN') || k.endsWith('_REST_TOKEN'));
-    if (urlKey && tokenKey) {
-      url = process.env[urlKey];
-      token = process.env[tokenKey];
-    }
-  }
-
-  // 3. Fallback: Parse Redis TCP URL to REST credentials
-  if (!url || !token) {
-    let tcpUrl = process.env.KV_URL || process.env.REDIS_URL;
-    if (!tcpUrl) {
-      const keys = Object.keys(process.env);
-      const urlKey = keys.find(k => k.endsWith('_REDIS_URL') || (k.endsWith('_URL') && !k.includes('REST')));
-      if (urlKey) {
-        tcpUrl = process.env[urlKey];
-      }
-    }
-
-    if (tcpUrl && tcpUrl.startsWith('redis')) {
-      try {
-        const cleanUrl = tcpUrl.replace(/^rediss?:\/\//, '');
-        const parts = cleanUrl.split('@');
-        
-        if (parts.length === 2) {
-          const credentials = parts[0].split(':');
-          const hostPort = parts[1].split(':');
-          
-          const password = credentials[1] || credentials[0];
-          const host = hostPort[0];
-          
-          if (host && password) {
-            url = `https://${host}`;
-            token = password;
-          }
-        }
-      } catch (e) {
-        console.error('Failed to parse TCP Redis URL to REST credentials:', e);
-      }
-    }
-  }
-
-  if (url && token) {
-    return createKVClient({ url, token });
-  }
-  return null;
-};
-
-const saveBookingsToDb = async (bookings: any[]): Promise<boolean> => {
-  const kv = getKVClient();
-  if (kv) {
-    try {
-      await kv.set('tcc_bookings', bookings);
-      return true;
-    } catch (e) {
-      console.error('REST Vercel KV write failed:', e);
-    }
-  }
-  return false;
+const hasPostgres = () => {
+  return !!(process.env.POSTGRES_URL || process.env.POSTGRES_PRISMA_URL);
 };
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
@@ -91,11 +26,37 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   try {
-    const savedInCloud = await saveBookingsToDb(bookings);
-    if (!savedInCloud) {
+    if (hasPostgres()) {
+      try {
+        // Wipe all existing bookings
+        await sql`DELETE FROM bookings`;
+
+        // Bulk insert bookings
+        for (const b of bookings) {
+          await sql`
+            INSERT INTO bookings (
+              id, full_name, email, whatsapp, country, playing_level,
+              package_id, package_name, price, booking_date, time_slot,
+              purpose, payment_method, payment_status, booking_status,
+              zoom_link, meeting_id, created_at
+            ) VALUES (
+              ${b.id}, ${b.fullName}, ${b.email}, ${b.whatsApp}, ${b.country}, ${b.playingLevel},
+              ${b.packageId}, ${b.packageName}, ${b.price}, ${b.date}, ${b.timeSlot},
+              ${b.purpose || ''}, ${b.paymentMethod}, ${b.paymentStatus}, ${b.bookingStatus},
+              ${b.zoomLink || ''}, ${b.meetingId || ''}, ${b.createdAt || new Date().toISOString()}
+            )
+          `;
+        }
+        return res.status(200).json({ status: 'success', message: 'Bookings synced to Postgres successfully' });
+      } catch (dbError) {
+        console.error('Postgres administrative sync failed, falling back to local file:', dbError);
+        fs.writeFileSync(LOCAL_DB_PATH, JSON.stringify(bookings, null, 2), 'utf-8');
+        return res.status(200).json({ status: 'success', message: 'Bookings saved locally successfully' });
+      }
+    } else {
       fs.writeFileSync(LOCAL_DB_PATH, JSON.stringify(bookings, null, 2), 'utf-8');
+      return res.status(200).json({ status: 'success', message: 'Bookings saved locally successfully' });
     }
-    return res.status(200).json({ status: 'success', message: 'Bookings saved successfully' });
   } catch (error: any) {
     console.error('Error in save-bookings handler:', error);
     return res.status(500).json({ error: error.message || 'Internal server error' });
