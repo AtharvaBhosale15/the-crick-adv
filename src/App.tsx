@@ -5,6 +5,8 @@ import {
   CheckCircle, 
   ChevronLeft, 
   ChevronRight, 
+  ChevronDown,
+  ChevronUp,
   Clock, 
   FileText, 
   Globe, 
@@ -145,6 +147,108 @@ const CURRENCIES: Record<CurrencyCode, CurrencyInfo> = {
   NZD: { code: 'NZD', symbol: 'NZ$', rate: 0.020, label: 'NZD (NZ$)' },
   GBP: { code: 'GBP', symbol: '£', rate: 0.0093, label: 'GBP (£)' }
 };
+
+const RefundPolicyContent = () => (
+  <div className="space-y-4 font-light text-slate-600 leading-relaxed text-xs">
+    <div className="text-center pb-3 border-b border-slate-100">
+      <h4 className="font-extrabold text-navy-950 text-sm uppercase tracking-wider font-display">Refund Policy</h4>
+      <p className="text-[10px] text-gold-600 font-bold uppercase tracking-widest mt-1">Effective Date: July 23, 2026</p>
+    </div>
+    
+    <p>Welcome to <span className="font-semibold text-slate-800">TheCricketAdvisor.com</span>. Please read this Refund Policy carefully before purchasing any service from our website.</p>
+    
+    <p className="bg-slate-50 p-3 rounded-lg border-l-4 border-gold-500 text-[11px] italic">
+      By accessing, booking, or purchasing any advisory, consultation, coaching, mentorship, career guidance, or related service through TheCricketAdvisor.com, you acknowledge that you have read, understood, and agreed to this Refund Policy.
+    </p>
+    
+    <div className="space-y-2 pt-2">
+      <h5 className="font-bold text-navy-900 uppercase tracking-wider text-[11px]">1. No Refund Policy</h5>
+      <p>All payments made to TheCricketAdvisor.com are final, non-cancellable, and non-refundable.</p>
+      <p>Once payment has been successfully processed, no refund, credit, adjustment, or exchange will be provided under any circumstances, including but not limited to:</p>
+      <ul className="list-disc pl-5 space-y-1 text-slate-500">
+        <li>The client changes their mind.</li>
+        <li>The client decides not to use the purchased service.</li>
+        <li>The client wishes to cancel after payment.</li>
+        <li>The client fails to attend or participate in a scheduled session.</li>
+        <li>The client is dissatisfied with the advice, consultation, recommendations, or opinions provided.</li>
+        <li>The client does not achieve their desired outcome.</li>
+        <li>The client has unrealistic expectations regarding results.</li>
+        <li>The client believes another service provider would be more suitable.</li>
+        <li>The client fails to provide requested information or cooperate during the advisory process.</li>
+      </ul>
+      <p className="bg-red-50/50 p-2.5 rounded border border-red-100 text-[11px] text-slate-600 italic">
+        As our services involve professional expertise, consultation, analysis, guidance, and time reserved exclusively for each client, all fees are considered earned immediately upon payment.
+      </p>
+    </div>
+
+    <div className="space-y-2 pt-2 border-t border-slate-100">
+      <h5 className="font-bold text-navy-900 uppercase tracking-wider text-[11px]">2. Limited Refund Exception</h5>
+      <p>A refund will only be considered if The Cricket Advisor is unable to provide the purchased service due solely to their own unavailability and no reasonable alternative arrangement or rescheduled appointment can be offered.</p>
+      <p>If approved, any refund shall be limited only to the amount paid for the specific service that could not be provided. No other circumstance shall qualify for a refund.</p>
+    </div>
+
+    <div className="space-y-2 pt-2 border-t border-slate-100">
+      <h5 className="font-bold text-navy-900 uppercase tracking-wider text-[11px]">3. No Guarantee of Results or Placement</h5>
+      <p>TheCricketAdvisor.com provides professional cricket advisory, consultation, coaching guidance, mentorship, career guidance, and related services based solely on professional knowledge and experience.</p>
+      <p className="font-semibold text-slate-800">All services are provided on a best-effort basis only.</p>
+      <p>No service offered through TheCricketAdvisor.com guarantees any result, success, placement, selection, contract, trial, scholarship, sponsorship, employment, admission, visa approval, career opportunity, financial benefit, or any other specific outcome.</p>
+      <p>Without limitation, we do not guarantee:</p>
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-1 text-slate-500 pl-2">
+        <div className="flex items-center space-x-1.5">&bull; <span>Selection to any cricket team at any level</span></div>
+        <div className="flex items-center space-x-1.5">&bull; <span>Placement with academy, club, or agency</span></div>
+        <div className="flex items-center space-x-1.5">&bull; <span>Professional playing contracts</span></div>
+        <div className="flex items-center space-x-1.5">&bull; <span>Coaching opportunities</span></div>
+        <div className="flex items-center space-x-1.5">&bull; <span>Cricket trials & sponsorships</span></div>
+        <div className="flex items-center space-x-1.5">&bull; <span>Scholarships & admissions</span></div>
+        <div className="flex items-center space-x-1.5">&bull; <span>Visa approvals or immigration</span></div>
+        <div className="flex items-center space-x-1.5">&bull; <span>Talent identification & performance</span></div>
+        <div className="flex items-center space-x-1.5">&bull; <span>Rankings or career advancement</span></div>
+        <div className="flex items-center space-x-1.5">&bull; <span>Commercial & financial success</span></div>
+      </div>
+      <p className="mt-2 text-slate-600">
+        All decisions regarding selection, recruitment, contracts, placements, admissions, employment, scholarships, sponsorships, visas, or other opportunities are made solely by the relevant clubs, academies, organizations, employers, selectors, governing bodies, educational institutions, immigration authorities, or other third parties over whom TheCricketAdvisor.com has no control.
+      </p>
+      <p className="font-medium text-slate-800 bg-amber-50 p-2.5 rounded border border-amber-100">
+        By purchasing any service, the client acknowledges that they are paying solely for professional advice, consultation, guidance, mentorship, and expertise—not for a guaranteed outcome.
+      </p>
+      <p>
+        Failure to obtain any expected result, placement, selection, contract, opportunity, or career advancement shall not constitute grounds for cancellation, refund, chargeback, compensation, or any legal claim against TheCricketAdvisor.com.
+      </p>
+    </div>
+
+    <div className="space-y-2 pt-2 border-t border-slate-100">
+      <h5 className="font-bold text-navy-900 uppercase tracking-wider text-[11px]">4. Chargebacks and Payment Disputes</h5>
+      <p>By purchasing any service from TheCricketAdvisor.com, the client expressly agrees not to initiate any chargeback, payment reversal, bank dispute, or payment dispute for services that have been booked, scheduled, delivered, partially delivered, or made available.</p>
+      <p>In the event of an unjustified chargeback or payment dispute, TheCricketAdvisor.com reserves the right to submit all relevant documentation (Refund Policy, Terms & Conditions, payment confirmation, invoice, booking records, email/chat logs) to the payment processor, bank, or dispute resolution authority.</p>
+    </div>
+
+    <div className="space-y-2 pt-2 border-t border-slate-100">
+      <h5 className="font-bold text-navy-900 uppercase tracking-wider text-[11px]">5. Client Acknowledgement</h5>
+      <p>By making payment on TheCricketAdvisor.com, the client expressly confirms that:</p>
+      <ul className="list-disc pl-5 space-y-1 text-slate-500">
+        <li>They have read and understood this Refund Policy.</li>
+        <li>They voluntarily agree to all terms contained herein and understand that all payments are final.</li>
+        <li>They understand that services do not guarantee any result or placement.</li>
+        <li>They waive any claim for a refund except as expressly provided in this policy.</li>
+      </ul>
+    </div>
+
+    <div className="space-y-2 pt-2 border-t border-slate-100">
+      <h5 className="font-bold text-navy-900 uppercase tracking-wider text-[11px]">6. Right to Refuse or Discontinue Service</h5>
+      <p>TheCricketAdvisor.com reserves the right to refuse, suspend, postpone, reschedule, or discontinue services at its sole discretion where appropriate. If a service is discontinued solely because of The Cricket Advisor's unavailability and no alternative arrangement is possible, the refund provisions described in Section 2 shall apply.</p>
+    </div>
+
+    <div className="space-y-2 pt-2 border-t border-slate-100">
+      <h5 className="font-bold text-navy-900 uppercase tracking-wider text-[11px]">7. Policy Updates</h5>
+      <p>TheCricketAdvisor.com reserves the right to modify, amend, or update this Refund Policy at any time without prior notice. The version published on the website at the time of the client's purchase shall govern that transaction.</p>
+    </div>
+
+    <div className="space-y-2 pt-2 border-t border-slate-100">
+      <h5 className="font-bold text-navy-900 uppercase tracking-wider text-[11px]">8. Contact</h5>
+      <p>If you have any questions regarding this Refund Policy, please contact us through the contact information provided on TheCricketAdvisor.com.</p>
+    </div>
+  </div>
+);
 
 export default function App() {
   // --- CORE STATE ---
@@ -319,6 +423,13 @@ END:VCALENDAR`;
   const [selectedPaymentGateway, setSelectedPaymentGateway] = useState('razorpay');
   const [isProcessingPayment, setIsProcessingPayment] = useState(false);
   const [confirmedBooking, setConfirmedBooking] = useState<Booking | null>(null);
+  
+  // Refund Policy & Terms Popup States
+  const [showTermsModal, setShowTermsModal] = useState(false);
+  const [hasAcceptedTermsPopup, setHasAcceptedTermsPopup] = useState(false);
+  const [modalCheckboxChecked, setModalCheckboxChecked] = useState(false);
+  const [isRefundPolicyOpen, setIsRefundPolicyOpen] = useState(false);
+  const [isCheckoutRefundPolicyOpen, setIsCheckoutRefundPolicyOpen] = useState(false);
 
   // Interactive Payment Demo State
   const [cardForm, setCardForm] = useState({
@@ -385,6 +496,17 @@ END:VCALENDAR`;
   useEffect(() => {
     window.scrollTo(0, 0);
   }, [activeTab, bookingStep]);
+
+  // Manage terms acceptance and modal popups based on booking steps
+  useEffect(() => {
+    if (bookingStep === 1) {
+      setHasAcceptedTermsPopup(false);
+      setModalCheckboxChecked(false);
+    }
+    if (bookingStep === 3 && !hasAcceptedTermsPopup) {
+      setShowTermsModal(true);
+    }
+  }, [bookingStep, hasAcceptedTermsPopup]);
 
   // Fetch global booked slots from backend database
   useEffect(() => {
@@ -1810,6 +1932,29 @@ END:VCALENDAR`;
                   <p>The Cricket Advisor provides independent cricket consulting, advisory, networking and support services. No guarantee is made regarding overseas placements, contracts, employment, team selection, visas, trials or any specific outcome. Advice is provided in good faith based on professional experience and industry knowledge. Final decisions always remain with the relevant clubs, cricket boards, leagues, associations, employers or governing authorities.</p>
                 </div>
 
+                {/* --- REFUND POLICY ACCORDION --- */}
+                <div className="mt-4 border border-slate-200 rounded-lg overflow-hidden bg-white shadow-sm">
+                  <button 
+                    onClick={() => setIsRefundPolicyOpen(!isRefundPolicyOpen)}
+                    className="w-full flex items-center justify-between py-4 px-6 text-left hover:bg-slate-50 transition cursor-pointer"
+                  >
+                    <div className="flex items-center space-x-2.5">
+                      <FileText className="h-5 w-5 text-gold-600" />
+                      <span className="font-display font-bold text-navy-900 text-sm uppercase tracking-wider">Refund Policy & Guarantees</span>
+                    </div>
+                    {isRefundPolicyOpen ? (
+                      <ChevronUp className="h-5 w-5 text-slate-500" />
+                    ) : (
+                      <ChevronDown className="h-5 w-5 text-slate-500" />
+                    )}
+                  </button>
+                  {isRefundPolicyOpen && (
+                    <div className="p-6 border-t border-slate-150 bg-slate-50/50 max-h-[500px] overflow-y-auto animate-fade-in">
+                      <RefundPolicyContent />
+                    </div>
+                  )}
+                </div>
+
               </div>
             </section>
 
@@ -2141,7 +2286,24 @@ END:VCALENDAR`;
 
                   {/* STEP 3: FILL DETAILS & PAY */}
                   {bookingStep === 3 && (
-                    <div className="space-y-6">
+                    <div className="space-y-6 relative">
+                      {!hasAcceptedTermsPopup && (
+                        <div className="absolute inset-0 bg-white/95 backdrop-blur-sm z-30 flex flex-col items-center justify-center text-center p-6 space-y-4 rounded-2xl min-h-[450px]">
+                          <Lock className="h-10 w-10 text-gold-600 animate-pulse" />
+                          <h4 className="font-extrabold text-navy-900 text-sm uppercase tracking-wider font-display">Checkout Form Locked</h4>
+                          <p className="text-slate-500 text-xs max-w-sm font-light">
+                            Please review and accept our mandatory booking Terms & Conditions and Refund Policy to unlock the checkout form.
+                          </p>
+                          <button
+                            type="button"
+                            onClick={() => setShowTermsModal(true)}
+                            className="px-6 py-3 bg-gold-gradient hover:scale-105 transform text-navy-950 text-xs font-bold uppercase tracking-wider rounded-xl shadow-md transition cursor-pointer"
+                          >
+                            Read & Accept Terms
+                          </button>
+                        </div>
+                      )}
+
                       <h3 className="text-xl font-bold text-navy-900 font-display">Client Details & Payment</h3>
                       
                       <div className="space-y-4">
@@ -2320,6 +2482,30 @@ END:VCALENDAR`;
                             <span>100% Encrypted Payment &bull; Instant Zoom Link & Receipt Generation upon authorization.</span>
                           </div>
                         </div>
+                      </div>
+
+                      {/* Collapsible Refund Policy in Checkout Form */}
+                      <div className="border border-slate-200 rounded-xl overflow-hidden bg-white shadow-sm mt-4">
+                        <button 
+                          type="button"
+                          onClick={() => setIsCheckoutRefundPolicyOpen(!isCheckoutRefundPolicyOpen)}
+                          className="w-full flex items-center justify-between py-3 px-4 text-left hover:bg-slate-50 transition cursor-pointer font-medium"
+                        >
+                          <div className="flex items-center space-x-2">
+                            <FileText className="h-4 w-4 text-gold-600" />
+                            <span className="font-bold text-navy-900 text-xs uppercase tracking-wider">View Refund Policy & Disclaimers</span>
+                          </div>
+                          {isCheckoutRefundPolicyOpen ? (
+                            <ChevronUp className="h-4 w-4 text-slate-500" />
+                          ) : (
+                            <ChevronDown className="h-4 w-4 text-slate-500" />
+                          )}
+                        </button>
+                        {isCheckoutRefundPolicyOpen && (
+                          <div className="p-4 border-t border-slate-150 bg-slate-50/50 max-h-[250px] overflow-y-auto text-xs font-light leading-relaxed">
+                            <RefundPolicyContent />
+                          </div>
+                        )}
                       </div>
 
                       {/* Checkout actions */}
@@ -4143,6 +4329,18 @@ END:VCALENDAR`;
               <button onClick={() => scrollToSection('services')} className="text-left hover:text-gold-500 transition">My Services</button>
               <button onClick={() => scrollToSection('faq')} className="text-left hover:text-gold-500 transition">FAQ</button>
               <button onClick={() => scrollToSection('contact')} className="text-left hover:text-gold-500 transition">Contact Prakash Palande</button>
+              <button 
+                onClick={() => {
+                  setActiveTab('main');
+                  setIsRefundPolicyOpen(true);
+                  setTimeout(() => {
+                    scrollToSection('faq');
+                  }, 100);
+                }} 
+                className="text-left text-gold-500 font-semibold hover:text-gold-400 transition"
+              >
+                Refund Policy
+              </button>
             </div>
           </div>
 
@@ -4633,6 +4831,97 @@ END:VCALENDAR`;
                 className="w-full py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl transition uppercase tracking-wider text-[11px] cursor-pointer"
               >
                 Cancel / Try Different Gateway
+              </button>
+            </div>
+
+          </div>
+        </div>
+      )}
+
+      {/* Checkout Policy Confirmation Pop-up Modal */}
+      {showTermsModal && (
+        <div className="fixed inset-0 z-50 bg-black/75 backdrop-blur-md flex items-center justify-center p-4 overflow-y-auto animate-fade-in">
+          <div className="bg-white rounded-2xl shadow-2xl border border-gold-550 max-w-xl w-full p-6 space-y-5 relative text-slate-800">
+            
+            <div className="flex justify-between items-center border-b border-slate-200 pb-3">
+              <div className="flex items-center space-x-2.5">
+                <div className="p-1.5 bg-navy-900 text-gold-400 rounded-lg animate-pulse">
+                  <FileText className="h-5 w-5" />
+                </div>
+                <div>
+                  <h3 className="font-extrabold font-display text-navy-955 text-xs uppercase tracking-wider">Mandatory Checkout Confirmation</h3>
+                  <p className="text-[10px] text-slate-500">Please review & accept policies to proceed</p>
+                </div>
+              </div>
+            </div>
+
+            <div className="text-xs text-slate-650 leading-relaxed space-y-3">
+              <p>
+                Before completing your paid online consultation booking, you must confirm that you have read and agreed to our 
+                booking terms, refund policies, and outcome disclaimers.
+              </p>
+
+              {/* Collapsible Refund Policy in Pop-up Modal */}
+              <div className="border border-slate-200 rounded-xl overflow-hidden bg-slate-50">
+                <button 
+                  type="button"
+                  onClick={() => setIsCheckoutRefundPolicyOpen(!isCheckoutRefundPolicyOpen)}
+                  className="w-full flex items-center justify-between py-2.5 px-3 hover:bg-slate-100 transition cursor-pointer text-left text-[11px] font-bold text-navy-950 uppercase"
+                >
+                  <span className="flex items-center space-x-1.5">
+                    <FileText className="h-4 w-4 text-gold-600" />
+                    <span>Read Full Refund Policy</span>
+                  </span>
+                  {isCheckoutRefundPolicyOpen ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+                </button>
+                {isCheckoutRefundPolicyOpen && (
+                  <div className="p-4 border-t border-slate-200 bg-white max-h-[220px] overflow-y-auto text-[11px] leading-relaxed">
+                    <RefundPolicyContent />
+                  </div>
+                )}
+              </div>
+
+              {/* Mandatory Statement and Checkbox */}
+              <div className="flex items-start space-x-3 bg-slate-50 p-4 rounded-xl border border-slate-150">
+                <input 
+                  type="checkbox" 
+                  id="terms-popup-checkbox"
+                  checked={modalCheckboxChecked}
+                  onChange={(e) => setModalCheckboxChecked(e.target.checked)}
+                  className="h-5 w-5 mt-0.5 rounded border-slate-300 text-gold-600 focus:ring-gold-500 cursor-pointer"
+                />
+                <label htmlFor="terms-popup-checkbox" className="text-slate-700 text-xs leading-relaxed font-semibold select-none cursor-pointer">
+                  I have read, understood, and agree to the Terms & Conditions, Privacy Policy, Disclaimer, and Refund Policy of TheCricketAdvisor.com. I understand that all payments are final and non-refundable except where The Cricket Advisor is unable to provide the purchased service.
+                </label>
+              </div>
+
+              <div className="p-3 bg-amber-50 rounded-lg border border-amber-200 text-[10px] text-amber-800 leading-relaxed font-light">
+                <strong>Outcome Disclaimer Notice:</strong> I further acknowledge that no service offered by TheCricketAdvisor.com guarantees any result, placement, selection, contract, employment, visa approval, scholarship, sponsorship, or any other specific outcome.
+              </div>
+            </div>
+
+            <div className="flex space-x-3 pt-2 border-t border-slate-150">
+              <button
+                type="button"
+                onClick={() => {
+                  setShowTermsModal(false);
+                  setBookingStep(2); // Go back to calendar step
+                }}
+                className="flex-1 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-lg uppercase tracking-wider text-xs transition cursor-pointer text-center"
+              >
+                Go Back
+              </button>
+
+              <button
+                type="button"
+                disabled={!modalCheckboxChecked}
+                onClick={() => {
+                  setHasAcceptedTermsPopup(true);
+                  setShowTermsModal(false);
+                }}
+                className="flex-1 py-2.5 bg-gold-gradient disabled:opacity-50 disabled:cursor-not-allowed text-navy-950 font-bold rounded-lg uppercase tracking-wider text-xs transition shadow-lg cursor-pointer"
+              >
+                Agree & Proceed
               </button>
             </div>
 
