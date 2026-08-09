@@ -10,6 +10,7 @@ import {
   Clock, 
   FileText, 
   Globe, 
+  Flag, 
   Mail, 
   MapPin, 
   Menu, 
@@ -54,6 +55,7 @@ import cricketOperationsImg from './assets/images/cricket_operations_17846380963
 import mediaManagementImg from './assets/images/media_management_1784638110330.jpg';
 import cricketToursImg from './assets/images/cricket_tours_1784638123336.jpg';
 import independentConsultingImg from './assets/images/independent_consulting_1784638137784.jpg';
+import harshilDoshiImg from './assets/images/harshil_doshi_placement.jpg';
 
 // --- TYPES ---
 interface Player {
@@ -129,7 +131,7 @@ const defaultAdminSettings: AdminSettings = {
   adminEmail: 'thecricketadvisor@gmail.com',
   zoomHostEmail: 'thecricketadvisor@gmail.com',
   zoomHostName: 'Prakash Palande (TCC)',
-  zoomPersonalMeetingId: '987 654 3210',
+  zoomPersonalMeetingId: 'https://us05web.zoom.us/j/6520263043?pwd=aBzQyiRAtKxPeYYPFVX9yLszp5H9fX.1',
   adminPassword: 'cricket2026',
   gstin: '27AAAAA0000A1Z5',
   businessAddress: 'Mumbai / International Cricket Consultancy Hub, India'
@@ -320,7 +322,7 @@ const isSlotPastInIST = (slot: string, selectedDate: string) => {
 
 export default function App() {
   // --- CORE STATE ---
-  const [activeTab, setActiveTab] = useState<'main' | 'book' | 'admin'>('main');
+  const [activeTab, setActiveTab] = useState<'main' | 'book' | 'admin' | 'placements'>('main');
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [currency, setCurrency] = useState<CurrencyCode>('INR');
 
@@ -612,43 +614,35 @@ END:VCALENDAR`;
       club: 'Bay of Plenty Indian Sports Club',
       season: '2026-27',
       achievement: 'Successfully placed with Bay of Plenty Indian Sports Club in New Zealand for the 2026-27 season.',
-      battingStyle: 'Left Hand Batsman',
+      battingStyle: 'Left Hand Batter',
       bowlingStyle: 'Left Arm Fast Bowler',
       playingProficiency: 'Bowling All Rounder- Seam',
-      nationality: 'Indian'
+      nationality: 'Indian',
+      imageUrl: harshilDoshiImg
     };
 
-    const hasHarshil = currentPlayers.some(p => p.name === 'Harshil Doshi');
+    let filteredPlayers = currentPlayers.filter(p => p.name !== 'Ishant Sharma' && p.name !== 'Vinayak Shukla');
+    
+    // Check if the Harshil Doshi profile needs an upgrade
+    let needsUpgrade = false;
+    filteredPlayers = filteredPlayers.map(p => {
+      if (p.name === 'Harshil Doshi' && (!p.imageUrl || p.battingStyle === 'Left Hand Batsman')) {
+        needsUpgrade = true;
+        return harshilPlayer;
+      }
+      return p;
+    });
 
-    if (!savedPlayers || currentPlayers.length === 0) {
-      const initialPlayers: Player[] = [
-        {
-          id: '1',
-          name: 'Ishant Sharma',
-          country: 'England',
-          club: 'Sussex County Cricket Club',
-          season: '2018',
-          achievement: "Successfully placed for County Cricket. Facilitated Ishant Sharma's placement with Sussex County Cricket Club during the 2018 season."
-        },
-        {
-          id: '2',
-          name: 'Vinayak Shukla',
-          country: 'Oman',
-          club: 'Oman National Team',
-          season: '2023 - Present',
-          achievement: "Successfully placed in Oman and recently appointed Captain of the Oman National Cricket Team."
-        },
-        harshilPlayer
-      ];
-      localStorage.setItem('tcc_players', JSON.stringify(initialPlayers));
-      setPlayers(initialPlayers);
-    } else if (!hasHarshil) {
-      const updated = [...currentPlayers, harshilPlayer];
-      localStorage.setItem('tcc_players', JSON.stringify(updated));
-      setPlayers(updated);
-    } else {
-      setPlayers(currentPlayers);
+    const hasHarshil = filteredPlayers.some(p => p.name === 'Harshil Doshi');
+
+    if (!hasHarshil) {
+      filteredPlayers = [...filteredPlayers, harshilPlayer];
     }
+
+    if (!savedPlayers || currentPlayers.length !== filteredPlayers.length || !hasHarshil || needsUpgrade) {
+      localStorage.setItem('tcc_players', JSON.stringify(filteredPlayers));
+    }
+    setPlayers(filteredPlayers);
 
     // 3. Initial Packages
     const savedPackages = localStorage.getItem('tcc_packages');
@@ -914,6 +908,23 @@ END:VCALENDAR`;
     return Math.floor(100000000 + Math.random() * 900000000).toString().replace(/(\d{3})(\d{3})(\d{3})/, '$1 $2 $3');
   };
 
+  const getZoomMeetingDetails = () => {
+    const personalMeeting = adminSettings.zoomPersonalMeetingId || 'https://us05web.zoom.us/j/6520263043?pwd=aBzQyiRAtKxPeYYPFVX9yLszp5H9fX.1';
+    let link = '';
+    let id = '';
+
+    if (personalMeeting.trim().startsWith('http://') || personalMeeting.trim().startsWith('https://')) {
+      link = personalMeeting.trim();
+      const match = personalMeeting.match(/\/j\/(\d+)/);
+      id = match ? match[1] : personalMeeting.trim();
+    } else {
+      const cleanId = personalMeeting.replace(/\s/g, '');
+      link = `https://zoom.us/j/${cleanId}`;
+      id = personalMeeting;
+    }
+    return { zoomLink: link, meetingId: id };
+  };
+
   const handleInitiatePayment = () => {
     setPaymentFormError('');
     if (!bookingForm.fullName || !bookingForm.email || !bookingForm.whatsApp || !bookingForm.country) {
@@ -989,8 +1000,7 @@ END:VCALENDAR`;
 
     setIsProcessingPayment(false);
     const bookingId = 'BK-' + Math.floor(1000 + Math.random() * 9000);
-    const meetingId = generateMeetingId();
-    const pwd = Math.random().toString(36).substring(2, 10).toUpperCase();
+    const { zoomLink, meetingId } = getZoomMeetingDetails();
     
     const newBooking: Booking = {
       id: bookingId,
@@ -1008,7 +1018,7 @@ END:VCALENDAR`;
       paymentMethod: selectedPaymentGateway.toUpperCase(),
       paymentStatus: 'Paid',
       bookingStatus: 'Approved',
-      zoomLink: `https://zoom.us/j/${meetingId.replace(/\s/g, '')}?pwd=${pwd}`,
+      zoomLink: zoomLink,
       meetingId: meetingId,
       createdAt: new Date().toISOString()
     };
@@ -1083,8 +1093,7 @@ END:VCALENDAR`;
           setIsProcessingPayment(true);
           try {
             const bookingId = `BK-${Math.floor(1000 + Math.random() * 9000)}`;
-            const meetingId = generateMeetingId();
-            const pwd = Math.random().toString(36).substring(2, 10).toUpperCase();
+            const { zoomLink, meetingId } = getZoomMeetingDetails();
 
             const newBooking: Booking = {
               id: bookingId,
@@ -1102,7 +1111,7 @@ END:VCALENDAR`;
               paymentMethod: 'RAZORPAY',
               paymentStatus: 'Paid',
               bookingStatus: 'Approved',
-              zoomLink: `https://zoom.us/j/${meetingId.replace(/\s/g, '')}?pwd=${pwd}`,
+              zoomLink: zoomLink,
               meetingId: meetingId,
               createdAt: new Date().toISOString()
             };
@@ -1439,13 +1448,13 @@ END:VCALENDAR`;
           </div>
 
           {/* Desktop Navigation Menu */}
-          <nav className="hidden lg:flex items-center space-x-5 xl:space-x-7 text-[13px] xl:text-[14px] font-arial font-normal tracking-wider uppercase text-slate-100">
+          <nav className="hidden lg:flex items-center space-x-3.5 xl:space-x-5 text-[11px] xl:text-[13px] font-sans font-semibold tracking-wider uppercase text-slate-100">
             <button onClick={() => scrollToSection('home')} className="hover:text-gold-400 transition cursor-pointer">Home</button>
             <button onClick={() => scrollToSection('why-choose-me')} className="hover:text-gold-400 transition cursor-pointer whitespace-nowrap">Why Choose Me</button>
             <button onClick={() => scrollToSection('about-me')} className="hover:text-gold-400 transition cursor-pointer whitespace-nowrap">About Me</button>
             <button onClick={() => scrollToSection('services')} className="hover:text-gold-400 transition cursor-pointer whitespace-nowrap">My Services</button>
-            <button onClick={() => scrollToSection('players-placed')} className="hover:text-gold-400 transition cursor-pointer whitespace-nowrap">Players Placed</button>
-            <button onClick={() => scrollToSection('client-websites')} className="hover:text-gold-400 transition cursor-pointer whitespace-nowrap">Client Websites</button>
+            <button onClick={() => { setActiveTab('placements'); }} className={`hover:text-gold-400 transition cursor-pointer whitespace-nowrap ${activeTab === 'placements' ? 'text-gold-400 font-semibold' : ''}`}>Players Placed</button>
+            <button onClick={() => scrollToSection('client-websites')} className="hover:text-gold-400 transition cursor-pointer whitespace-nowrap">Cricket Clients Website</button>
             <button onClick={() => scrollToSection('faq')} className="hover:text-gold-400 transition cursor-pointer">FAQ</button>
             <button onClick={() => scrollToSection('contact')} className="hover:text-gold-400 transition cursor-pointer">Contact</button>
           </nav>
@@ -1501,7 +1510,7 @@ END:VCALENDAR`;
                 My Services
               </button>
               <button 
-                onClick={() => scrollToSection('players-placed')} 
+                onClick={() => { setActiveTab('placements'); setMobileMenuOpen(false); }} 
                 className="text-left py-2 border-b border-navy-800/60 hover:text-gold-400 transition"
               >
                 Players Placed
@@ -1510,7 +1519,7 @@ END:VCALENDAR`;
                 onClick={() => scrollToSection('client-websites')} 
                 className="text-left py-2 border-b border-navy-800/60 hover:text-gold-400 transition"
               >
-                Client Websites
+                Cricket Clients Website
               </button>
               <button 
                 onClick={() => scrollToSection('faq')} 
@@ -2033,85 +2042,6 @@ END:VCALENDAR`;
                 </div>
 
               </div>
-            </section>            {/* --- PLAYERS PLACED SECTION --- */}
-            <section id="players-placed" className="py-20 bg-slate-50 border-t border-slate-100">
-              <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                
-                <div className="text-center max-w-3xl mx-auto mb-16 space-y-4">
-                  <span className="text-gold-600 text-xs font-bold uppercase tracking-widest block">Success Stories</span>
-                  <h2 className="text-3xl sm:text-4xl font-extrabold text-navy-900 font-display">Players Placed</h2>
-                  <p className="text-slate-600 text-sm sm:text-base font-light">
-                    Highlighting the talented cricketers who have successfully secured contracts and placements with overseas clubs and national teams through our network.
-                  </p>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                  {players.map((player) => (
-                    <div key={player.id} className="bg-white rounded-2xl shadow-lg border border-slate-100 overflow-hidden hover:shadow-xl hover:-translate-y-1 transition duration-300 flex flex-col">
-                      <div className="h-4 bg-gradient-to-r from-navy-800 to-gold-500"></div>
-                      <div className="p-6 sm:p-8 flex-grow flex flex-col justify-between space-y-6">
-                        <div>
-                          <div className="flex justify-between items-start mb-4">
-                            <div>
-                              <span className="px-2.5 py-1 text-[10px] font-bold bg-gold-50 text-gold-700 rounded-full border border-gold-200/50 uppercase tracking-wider block w-fit mb-2">
-                                {player.country}
-                              </span>
-                              <h3 className="text-xl font-bold text-navy-900 font-display">{player.name}</h3>
-                            </div>
-                            <Award className="h-6 w-6 text-gold-500 flex-shrink-0" />
-                          </div>
-
-                          <p className="text-slate-600 text-sm leading-relaxed mb-6 font-light">
-                            {player.achievement}
-                          </p>
-
-                          {/* Player specifications if available */}
-                          {(player.battingStyle || player.bowlingStyle || player.playingProficiency || player.nationality) && (
-                            <div className="border-t border-slate-100 pt-4 mt-4 space-y-2.5 text-xs text-slate-700">
-                              {player.nationality && (
-                                <div className="flex justify-between">
-                                  <span className="text-slate-400 font-light">Nationality</span>
-                                  <span className="font-semibold text-navy-900">{player.nationality}</span>
-                                </div>
-                              )}
-                              {player.playingProficiency && (
-                                <div className="flex justify-between">
-                                  <span className="text-slate-400 font-light">Role</span>
-                                  <span className="font-semibold text-navy-900">{player.playingProficiency}</span>
-                                </div>
-                              )}
-                              {player.battingStyle && (
-                                <div className="flex justify-between">
-                                  <span className="text-slate-400 font-light">Batting Style</span>
-                                  <span className="font-semibold text-navy-900">{player.battingStyle}</span>
-                                </div>
-                              )}
-                              {player.bowlingStyle && (
-                                <div className="flex justify-between">
-                                  <span className="text-slate-400 font-light">Bowling Style</span>
-                                  <span className="font-semibold text-navy-900">{player.bowlingStyle}</span>
-                                </div>
-                              )}
-                            </div>
-                          )}
-                        </div>
-
-                        <div className="border-t border-slate-100 pt-4 flex flex-col space-y-1 text-xs">
-                          <div className="flex justify-between">
-                            <span className="text-slate-400 font-light">Placed Club</span>
-                            <span className="font-bold text-navy-800">{player.club || 'N/A'}</span>
-                          </div>
-                          <div className="flex justify-between">
-                            <span className="text-slate-400 font-light">Season</span>
-                            <span className="font-medium text-slate-600">{player.season || 'N/A'}</span>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-
-              </div>
             </section>
 
             {/* --- CLIENT WEBSITES SECTION --- */}
@@ -2120,58 +2050,108 @@ END:VCALENDAR`;
                 
                 <div className="text-center max-w-3xl mx-auto mb-16 space-y-4">
                   <span className="text-gold-600 text-xs font-bold uppercase tracking-widest block">Our Work</span>
-                  <h2 className="text-3xl sm:text-4xl font-extrabold text-navy-900 font-display">Client Websites</h2>
+                  <h2 className="text-3xl sm:text-4xl font-extrabold text-navy-900 font-display">Our Cricket Clients Website</h2>
                   <p className="text-slate-600 text-sm sm:text-base font-light">
-                    Explore the digital platforms, web systems, and online portfolios designed and developed by our technical division.
+                    Explore the premium digital platforms and custom high-performance systems designed and developed by our technical division for elite clients.
                   </p>
                 </div>
 
-                <div className="max-w-2xl mx-auto">
-                  {/* Website Card */}
-                  <div className="bg-slate-50 rounded-2xl border border-slate-200 overflow-hidden shadow-lg group hover:shadow-xl hover:-translate-y-1 transition duration-300">
-                    {/* Browser Mockup Header */}
-                    <div className="bg-navy-950 px-4 py-3 flex items-center space-x-2 border-b border-navy-800">
-                      <div className="flex space-x-1.5">
-                        <span className="w-2.5 h-2.5 rounded-full bg-red-500/80 block"></span>
-                        <span className="w-2.5 h-2.5 rounded-full bg-yellow-500/80 block"></span>
-                        <span className="w-2.5 h-2.5 rounded-full bg-green-500/80 block"></span>
-                      </div>
-                      <div className="bg-navy-900/60 text-slate-400 text-[10px] sm:text-xs py-1 px-3 sm:px-6 rounded-md flex-grow text-center font-mono max-w-xs mx-auto truncate select-none border border-navy-800">
-                        harshilxperformance.com
-                      </div>
-                    </div>
-                    
-                    <div className="p-8 space-y-6">
-                      <div className="space-y-2">
-                        <h3 className="text-xl font-bold text-navy-900 font-display flex items-center space-x-2">
-                          <span>Harshil X Performance</span>
-                          <span className="px-2 py-0.5 text-[9px] font-bold bg-emerald-100 text-emerald-800 rounded uppercase">Live</span>
-                        </h3>
-                        <p className="text-slate-600 text-sm leading-relaxed font-light">
-                          A high-performance athletic coaching and physical conditioning platform, custom built to empower cricketers and athletes to reach peak physical and mental fitness.
-                        </p>
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
+                  
+                  {/* Left Column: Interactive Web Frame (7 cols) */}
+                  <div className="lg:col-span-7">
+                    <div className="bg-slate-50 rounded-3xl border border-slate-200 overflow-hidden shadow-2xl group hover:shadow-gold-500/5 hover:border-gold-500/35 transition duration-500">
+                      {/* Browser Mockup Header */}
+                      <div className="bg-navy-950 px-4 py-3 sm:py-4 flex items-center space-x-2 border-b border-navy-800">
+                        <div className="flex space-x-1.5">
+                          <span className="w-2.5 h-2.5 rounded-full bg-red-500/80 block"></span>
+                          <span className="w-2.5 h-2.5 rounded-full bg-yellow-500/80 block"></span>
+                          <span className="w-2.5 h-2.5 rounded-full bg-green-500/80 block"></span>
+                        </div>
+                        <div className="bg-navy-900/60 text-slate-300 text-[10px] sm:text-xs py-1 px-3 sm:px-6 rounded-md flex-grow text-center font-mono max-w-xs mx-auto truncate select-none border border-navy-800/80">
+                          harshilxperformance.com
+                        </div>
                       </div>
 
-                      <div className="flex flex-wrap gap-2">
-                        <span className="px-2.5 py-1 text-[10px] font-medium bg-navy-100 text-navy-800 rounded-md">Athletic Training</span>
-                        <span className="px-2.5 py-1 text-[10px] font-medium bg-navy-100 text-navy-800 rounded-md">React & Vite</span>
-                        <span className="px-2.5 py-1 text-[10px] font-medium bg-navy-100 text-navy-800 rounded-md">Responsive UI</span>
-                        <span className="px-2.5 py-1 text-[10px] font-medium bg-navy-100 text-navy-800 rounded-md">Performance Analytics</span>
-                      </div>
-
-                      <div className="border-t border-slate-200 pt-6">
-                        <a 
-                          href="https://harshilxperformance.com" 
-                          target="_blank" 
-                          rel="noopener noreferrer" 
-                          className="inline-flex items-center space-x-2 px-6 py-3 bg-navy-900 hover:bg-navy-950 text-white text-xs font-bold rounded uppercase tracking-wider transition hover:scale-105 duration-150 shadow"
-                        >
-                          <span>Visit Website</span>
-                          <ExternalLink className="h-3.5 w-3.5" />
-                        </a>
+                      {/* Mockup Preview Area */}
+                      <div className="bg-navy-950 aspect-video relative flex items-center justify-center overflow-hidden">
+                        {/* Grid background effect */}
+                        <div className="absolute inset-0 bg-[linear-gradient(to_right,#8080800d_1px,transparent_1px),linear-gradient(to_bottom,#8080800d_1px,transparent_1px)] bg-[size:24px_24px]"></div>
+                        
+                        {/* Glowing radial gradient */}
+                        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-72 h-72 bg-gold-500/10 rounded-full blur-3xl animate-pulse"></div>
+                        
+                        {/* Stylized Brand Logo / Icon inside browser */}
+                        <div className="relative z-10 text-center space-y-4 p-8">
+                          <div className="mx-auto w-16 h-16 rounded-full bg-gradient-to-br from-gold-400 to-gold-600 flex items-center justify-center shadow-lg shadow-gold-500/20 transform group-hover:scale-110 transition duration-300">
+                            <TrendingUp className="h-8 w-8 text-navy-950" />
+                          </div>
+                          <div>
+                            <h4 className="text-xl font-bold tracking-tight text-white font-display uppercase">Harshil X Performance</h4>
+                            <p className="text-slate-400 text-xs mt-1 font-mono tracking-widest">ATHLETIC DEVELOPMENT & PHYSICAL CONDITIONING</p>
+                          </div>
+                        </div>
                       </div>
                     </div>
                   </div>
+
+                  {/* Right Column: Case Study Info (5 cols) */}
+                  <div className="lg:col-span-5 space-y-6">
+                    <div className="space-y-2">
+                      <span className="px-3 py-1 text-[10px] font-bold bg-gold-100 text-gold-800 rounded-full uppercase tracking-wider inline-block">
+                        Elite Coaching Platform
+                      </span>
+                      <h3 className="text-2xl sm:text-3xl font-bold text-navy-900 font-display">Harshil X Performance</h3>
+                      <p className="text-slate-500 text-xs font-mono">
+                        URL: <a href="https://harshilxperformance.com" target="_blank" rel="noopener noreferrer" className="text-gold-600 hover:underline">harshilxperformance.com</a>
+                      </p>
+                    </div>
+
+                    <p className="text-slate-600 text-sm leading-relaxed font-light">
+                      A premium, bespoke athletic development platform designed and custom-built by our engineering division. Created specifically for elite cricket performance, fitness tracking, and athlete-coach communication.
+                    </p>
+
+                    {/* Features checklist */}
+                    <div className="space-y-3 pt-2">
+                      <h4 className="text-xs font-bold uppercase tracking-wider text-navy-900">Key Deliverables</h4>
+                      <ul className="space-y-2 text-xs text-slate-600">
+                        <li className="flex items-center space-x-2.5">
+                          <span className="w-1.5 h-1.5 rounded-full bg-gold-500 block"></span>
+                          <span><strong>Dynamic Performance Engine:</strong> Personal metrics dashboards.</span>
+                        </li>
+                        <li className="flex items-center space-x-2.5">
+                          <span className="w-1.5 h-1.5 rounded-full bg-gold-500 block"></span>
+                          <span><strong>Interactive Workout Rosters:</strong> Custom calendar schedulers.</span>
+                        </li>
+                        <li className="flex items-center space-x-2.5">
+                          <span className="w-1.5 h-1.5 rounded-full bg-gold-500 block"></span>
+                          <span><strong>Ultra-Responsive UI:</strong> Seamless loading on mobile and desktop devices.</span>
+                        </li>
+                      </ul>
+                    </div>
+
+                    {/* Tech Badges */}
+                    <div className="flex flex-wrap gap-2 pt-2">
+                      <span className="px-2.5 py-1 text-[10px] font-medium bg-slate-100 text-slate-800 rounded-md border border-slate-200">React 19</span>
+                      <span className="px-2.5 py-1 text-[10px] font-medium bg-slate-100 text-slate-800 rounded-md border border-slate-200">Vite & TS</span>
+                      <span className="px-2.5 py-1 text-[10px] font-medium bg-slate-100 text-slate-800 rounded-md border border-slate-200">TailwindCSS</span>
+                      <span className="px-2.5 py-1 text-[10px] font-medium bg-slate-100 text-slate-800 rounded-md border border-slate-200">Motion API</span>
+                    </div>
+
+                    <div className="pt-4 border-t border-slate-100 flex items-center justify-between">
+                      <a 
+                        href="https://harshilxperformance.com" 
+                        target="_blank" 
+                        rel="noopener noreferrer" 
+                        className="inline-flex items-center space-x-2 px-6 py-3 bg-navy-900 hover:bg-navy-950 text-white text-xs font-bold rounded uppercase tracking-wider transition hover:scale-105 duration-150 shadow-md"
+                      >
+                        <span>Launch Site</span>
+                        <ExternalLink className="h-3.5 w-3.5" />
+                      </a>
+                      <span className="text-[10px] text-slate-400 font-mono">EST. 2026</span>
+                    </div>
+                  </div>
+
                 </div>
 
               </div>
@@ -2350,6 +2330,76 @@ END:VCALENDAR`;
 
               </div>
             </section>
+
+          </div>
+        )}
+
+        {activeTab === 'placements' && (
+          <div className="bg-[#fafafa] min-h-screen pt-28 pb-20">
+            {/* Placements Page Header */}
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-16">
+              <div className="text-center space-y-4">
+                <span className="text-gold-600 text-xs font-bold uppercase tracking-widest block font-display">Success Stories</span>
+                <h1 className="text-4xl sm:text-6xl font-extrabold text-navy-900 font-display">Global Placements Roster</h1>
+                <p className="text-slate-650 text-sm sm:text-base font-light max-w-2xl mx-auto leading-relaxed">
+                  Celebrating the talented cricketers placed in major leagues, clubs, and academies worldwide through Prakash Palande's advisory.
+                </p>
+                <div className="w-16 h-1 bg-gold-500 mx-auto rounded-full mt-4"></div>
+              </div>
+            </div>
+
+            {/* Placements Roster Grid */}
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+              <div className="flex flex-wrap justify-center gap-10">
+                {players.map((player) => (
+                  <div 
+                    key={player.id} 
+                    className="w-full max-w-[620px] bg-white rounded-3xl shadow-xl border border-slate-100 overflow-hidden hover:shadow-2xl hover:shadow-gold-500/5 hover:-translate-y-1.5 transition duration-300"
+                  >
+                    {/* Standalone Card Image (Full view matching the user's template) */}
+                    <div className="relative aspect-[1.91/1] w-full bg-slate-50 border-b border-slate-100 overflow-hidden">
+                      {player.imageUrl ? (
+                        <img 
+                          src={player.imageUrl} 
+                          alt={`${player.name} Placement Card`} 
+                          className="w-full h-full object-contain bg-white hover:scale-[1.02] transition duration-500" 
+                        />
+                      ) : (
+                        <div className="w-full h-full bg-gradient-to-br from-navy-900 to-navy-950 flex flex-col items-center justify-center text-gold-500 p-6">
+                          <User className="h-16 w-16 mb-4 text-gold-400" />
+                          <span className="text-xl font-bold font-display uppercase tracking-widest">{player.name}</span>
+                          <span className="text-xs text-slate-400 mt-1 uppercase tracking-wider">{player.country}</span>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Description and metadata layout around the card */}
+                    <div className="p-6 sm:p-8">
+                      <div className="flex items-start justify-between">
+                        <div>
+                          <h3 className="text-xl font-black font-display text-violet-900 uppercase tracking-tight">{player.name}</h3>
+                          <p className="text-xs font-bold text-violet-600 uppercase tracking-wider mt-0.5">{player.club || 'Independent Placement'}</p>
+                        </div>
+                        <span className="px-3 py-1 text-[10px] font-bold bg-violet-900 text-white rounded-md uppercase tracking-wider">
+                          {player.country}
+                        </span>
+                      </div>
+                    </div>
+
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Back to Home CTA */}
+            <div className="text-center mt-16">
+              <button 
+                onClick={() => { setActiveTab('main'); scrollToSection('home'); }}
+                className="px-8 py-4 bg-navy-900 hover:bg-navy-950 text-white font-bold rounded uppercase tracking-wider text-xs border border-navy-800 transition hover:scale-105 duration-150 shadow-md"
+              >
+                Back to Homepage
+              </button>
+            </div>
 
           </div>
         )}
@@ -3684,10 +3734,10 @@ END:VCALENDAR`;
                             <p className="text-[10px] text-slate-500">Shown to clients on their booking receipt and Zoom calendar invitation.</p>
                           </div>
 
-                          {/* Zoom Personal Meeting ID / Link Prefix */}
+                          {/* Zoom Personal Meeting ID or Link */}
                           <div className="space-y-1.5 bg-slate-50 p-4 rounded-xl border border-slate-200">
                             <label className="block text-navy-900 font-bold uppercase text-[10px]">
-                              Zoom Personal Meeting ID / Room Code *
+                              Zoom Personal Meeting Link or ID *
                             </label>
                             <input
                               type="text"
@@ -3695,9 +3745,9 @@ END:VCALENDAR`;
                               value={adminSettings.zoomPersonalMeetingId}
                               onChange={(e) => setAdminSettings({ ...adminSettings, zoomPersonalMeetingId: e.target.value })}
                               className="w-full px-3 py-2 bg-white border border-slate-300 rounded-lg text-sm focus:outline-none focus:border-gold-500 font-mono"
-                              placeholder="987 654 3210"
+                              placeholder="https://zoom.us/j/9876543210?pwd=..."
                             />
-                            <p className="text-[10px] text-slate-500">Used to generate secure instant meeting links for each client appointment.</p>
+                            <p className="text-[10px] text-slate-500">Enter your full Zoom Meeting Link (including passcode) or your 10-digit Meeting ID. Clients will be sent this link to join the consultation.</p>
                           </div>
 
                           {/* Admin Portal Security Password */}
@@ -4650,8 +4700,8 @@ END:VCALENDAR`;
               <button onClick={() => scrollToSection('why-choose-me')} className="text-left hover:text-gold-500 transition">Why Choose Me</button>
               <button onClick={() => scrollToSection('about-me')} className="text-left hover:text-gold-500 transition">About Prakash Palande</button>
               <button onClick={() => scrollToSection('services')} className="text-left hover:text-gold-500 transition">My Services</button>
-              <button onClick={() => scrollToSection('players-placed')} className="text-left hover:text-gold-500 transition">Players Placed</button>
-              <button onClick={() => scrollToSection('client-websites')} className="text-left hover:text-gold-500 transition">Client Websites</button>
+              <button onClick={() => { setActiveTab('placements'); }} className="text-left hover:text-gold-500 transition">Players Placed</button>
+              <button onClick={() => scrollToSection('client-websites')} className="text-left hover:text-gold-500 transition">Cricket Clients Website</button>
               <button onClick={() => scrollToSection('faq')} className="text-left hover:text-gold-500 transition">FAQ</button>
               <button onClick={() => scrollToSection('contact')} className="text-left hover:text-gold-500 transition">Contact Prakash Palande</button>
               <button 
