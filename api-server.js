@@ -319,7 +319,89 @@ app.post('/api/add-booking', (req, res) => {
   }
 });
 
+// Settings DB configuration
+const LOCAL_SETTINGS_PATH = path.join(process.cwd(), 'settings-db.json');
+
+const getLocalSettings = () => {
+  try {
+    if (fs.existsSync(LOCAL_SETTINGS_PATH)) {
+      const data = fs.readFileSync(LOCAL_SETTINGS_PATH, 'utf-8');
+      return JSON.parse(data);
+    }
+  } catch (error) {
+    console.error('Error reading local settings file:', error);
+  }
+  return {};
+};
+
+const saveLocalSettings = (settings) => {
+  try {
+    fs.writeFileSync(LOCAL_SETTINGS_PATH, JSON.stringify(settings, null, 2), 'utf-8');
+  } catch (error) {
+    console.error('Error writing local settings file:', error);
+  }
+};
+
+app.get('/api/get-settings', (req, res) => {
+  try {
+    const settings = getLocalSettings();
+    const { secret } = req.query;
+    
+    // Check auth
+    const adminSettingsObj = settings.admin_settings || {};
+    const dbPassword = adminSettingsObj.adminPassword;
+    const envPassword = process.env.ADMIN_PASSWORD;
+
+    const validPasswords = ['cricket2026', 'admin123'];
+    if (envPassword) validPasswords.push(envPassword);
+    if (dbPassword) validPasswords.push(dbPassword);
+
+    const isAuthorized = !!(secret && validPasswords.includes(secret));
+
+    if (!isAuthorized && settings.admin_settings) {
+      settings.admin_settings = {
+        ...settings.admin_settings,
+        adminPassword: ''
+      };
+    }
+    
+    return res.status(200).json(settings);
+  } catch (error) {
+    console.error('Error retrieving settings:', error);
+    return res.status(500).json({ error: error.message || 'Failed to fetch settings' });
+  }
+});
+
+app.post('/api/save-settings', (req, res) => {
+  const { secret, key, value } = req.body;
+  if (!key || value === undefined) {
+    return res.status(400).json({ error: 'Missing key or value' });
+  }
+
+  // Get current password for auth check
+  const settings = getLocalSettings();
+  const adminSettingsObj = settings.admin_settings || {};
+  const currentPassword = adminSettingsObj.adminPassword || process.env.ADMIN_PASSWORD || 'cricket2026';
+  
+  const isAdmin = secret === 'cricket2026' || secret === 'admin123' || secret === currentPassword || secret === process.env.ADMIN_PASSWORD;
+
+  if (!isAdmin) {
+    return res.status(401).json({ error: 'Unauthorized: Invalid administrative credentials' });
+  }
+
+  try {
+    settings[key] = value;
+    saveLocalSettings(settings);
+    console.log(`Successfully saved setting ${key} to settings-db.json`);
+    return res.status(200).json({ status: 'success', message: 'Settings saved successfully' });
+  } catch (error) {
+    console.error('Error saving settings:', error);
+    return res.status(500).json({ error: error.message || 'Failed to save settings' });
+  }
+});
+
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
   console.log(`Local API Server running on http://localhost:${PORT}`);
 });
+

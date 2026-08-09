@@ -806,6 +806,53 @@ END:VCALENDAR`;
     }
   }, []);
 
+  // Fetch shared site settings from database on mount
+  useEffect(() => {
+    const fetchSettings = async () => {
+      try {
+        const response = await fetch('/api/get-settings');
+        if (response.ok) {
+          const settings = await response.json();
+          if (settings.blocked_dates) {
+            setBlockedDates(settings.blocked_dates);
+            localStorage.setItem('tcc_blocked_dates', JSON.stringify(settings.blocked_dates));
+          }
+          if (settings.blocked_slots) {
+            setBlockedSlots(settings.blocked_slots);
+            localStorage.setItem('tcc_blocked_slots', JSON.stringify(settings.blocked_slots));
+          }
+          if (settings.admin_settings) {
+            setAdminSettings(prev => {
+              const merged = { ...prev, ...settings.admin_settings };
+              // Keep the current password if the backend password is empty (due to public redaction)
+              if (!settings.admin_settings.adminPassword && prev.adminPassword) {
+                merged.adminPassword = prev.adminPassword;
+              }
+              localStorage.setItem('tcc_admin_settings', JSON.stringify(merged));
+              return merged;
+            });
+          }
+          if (settings.players) {
+            setPlayers(settings.players);
+            localStorage.setItem('tcc_players', JSON.stringify(settings.players));
+          }
+          if (settings.packages) {
+            setPackages(settings.packages);
+            localStorage.setItem('tcc_packages', JSON.stringify(settings.packages));
+          }
+          if (settings.bank_details) {
+            setBankDetails(settings.bank_details);
+            localStorage.setItem('tcc_bank_details', JSON.stringify(settings.bank_details));
+          }
+        }
+      } catch (err) {
+        console.error('Failed to fetch settings from server:', err);
+      }
+    };
+    fetchSettings();
+  }, []);
+
+
   // Listen for admin or consultant query parameter or hash to automatically open the admin panel
   useEffect(() => {
     const handleHashAndQueryChange = () => {
@@ -829,15 +876,36 @@ END:VCALENDAR`;
     return () => window.removeEventListener('hashchange', handleHashAndQueryChange);
   }, []);
 
+  // Sync helper to save updated state to server database
+  const saveSettingToServer = async (key: string, value: any) => {
+    if (isAdminLoggedIn) {
+      try {
+        await fetch('/api/save-settings', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            secret: adminPassword,
+            key,
+            value
+          })
+        });
+      } catch (err) {
+        console.error(`Failed to sync setting ${key} to cloud database:`, err);
+      }
+    }
+  };
+
   // Sync states with localStorage when changed
   const savePlayersToStorage = (updatedPlayers: Player[]) => {
     localStorage.setItem('tcc_players', JSON.stringify(updatedPlayers));
     setPlayers(updatedPlayers);
+    saveSettingToServer('players', updatedPlayers);
   };
 
   const savePackagesToStorage = (updatedPackages: ConsultationPackage[]) => {
     localStorage.setItem('tcc_packages', JSON.stringify(updatedPackages));
     setPackages(updatedPackages);
+    saveSettingToServer('packages', updatedPackages);
   };
 
   const saveBookingsToStorage = async (updatedBookings: Booking[]) => {
@@ -864,16 +932,19 @@ END:VCALENDAR`;
   const saveBlockedDatesToStorage = (updatedDates: string[]) => {
     localStorage.setItem('tcc_blocked_dates', JSON.stringify(updatedDates));
     setBlockedDates(updatedDates);
+    saveSettingToServer('blocked_dates', updatedDates);
   };
 
   const saveBlockedSlotsToStorage = (updatedSlots: string[]) => {
     localStorage.setItem('tcc_blocked_slots', JSON.stringify(updatedSlots));
     setBlockedSlots(updatedSlots);
+    saveSettingToServer('blocked_slots', updatedSlots);
   };
 
   const saveBankDetailsToStorage = (updated: BankDetails) => {
     localStorage.setItem('tcc_bank_details', JSON.stringify(updated));
     setBankDetails(updated);
+    saveSettingToServer('bank_details', updated);
     setBankSaveMessage('Bank & UPI details updated successfully!');
     setTimeout(() => setBankSaveMessage(''), 3000);
   };
@@ -881,6 +952,7 @@ END:VCALENDAR`;
   const saveAdminSettingsToStorage = (updated: AdminSettings) => {
     localStorage.setItem('tcc_admin_settings', JSON.stringify(updated));
     setAdminSettings(updated);
+    saveSettingToServer('admin_settings', updated);
     setAdminSettingsSaveMsg('Admin, Zoom Email & Password Settings saved successfully!');
     setTimeout(() => setAdminSettingsSaveMsg(''), 3000);
   };
@@ -1202,21 +1274,73 @@ END:VCALENDAR`;
   // --- ADMIN LOGIN LOGIC ---
   const handleAdminLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    const activePassword = adminSettings.adminPassword || 'cricket2026';
-    if (adminUsername.trim() === 'admin' && (adminPassword === activePassword || adminPassword === 'cricket2026' || adminPassword === 'admin123')) {
-      setIsAdminLoggedIn(true);
-      setAdminError('');
-      try {
-        const response = await fetch(`/api/get-bookings?secret=${encodeURIComponent(adminPassword)}`);
-        if (response.ok) {
-          const cloudBookings = await response.json();
-          setBookings(cloudBookings);
+    const typedPassword = adminPassword;
+    try {
+      // 1. Fetch settings from backend using the password as secret to see if it authorizes
+      const response = await fetch(`/api/get-settings?secret=${encodeURIComponent(typedPassword)}`);
+      if (response.ok) {
+        const settings = await response.json();
+        
+        // Check if adminSettings was returned and matches/verifies the admin password
+        const activeAdminSettings = settings.admin_settings;
+        const activePassword = activeAdminSettings?.adminPassword || 'cricket2026';
+        
+        if (adminUsername.trim() === 'admin' && (typedPassword === activePassword || typedPassword === 'cricket2026' || typedPassword === 'admin123')) {
+          setIsAdminLoggedIn(true);
+          setAdminError('');
+          
+          // Store settings locally (including the correct password)
+          if (activeAdminSettings) {
+            setAdminSettings(activeAdminSettings);
+            localStorage.setItem('tcc_admin_settings', JSON.stringify(activeAdminSettings));
+          }
+          if (settings.blocked_dates) setBlockedDates(settings.blocked_dates);
+          if (settings.blocked_slots) setBlockedSlots(settings.blocked_slots);
+          if (settings.players) setPlayers(settings.players);
+          if (settings.packages) setPackages(settings.packages);
+          if (settings.bank_details) setBankDetails(settings.bank_details);
+
+          // 3. Load bookings
+          try {
+            const bookingsResp = await fetch(`/api/get-bookings?secret=${encodeURIComponent(typedPassword)}`);
+            if (bookingsResp.ok) {
+              const cloudBookings = await bookingsResp.json();
+              setBookings(cloudBookings);
+            }
+          } catch (err) {
+            console.error('Error fetching bookings for admin:', err);
+          }
+          return;
         }
-      } catch (err) {
-        console.error('Error fetching bookings for admin:', err);
       }
-    } else {
-      setAdminError(`Invalid username or password. Default password is: cricket2026`);
+      
+      // Fallback: local comparison if backend server check failed or is offline
+      const activePassword = adminSettings.adminPassword || 'cricket2026';
+      if (adminUsername.trim() === 'admin' && (typedPassword === activePassword || typedPassword === 'cricket2026' || typedPassword === 'admin123')) {
+        setIsAdminLoggedIn(true);
+        setAdminError('');
+        try {
+          const bookingsResp = await fetch(`/api/get-bookings?secret=${encodeURIComponent(typedPassword)}`);
+          if (bookingsResp.ok) {
+            const cloudBookings = await bookingsResp.json();
+            setBookings(cloudBookings);
+          }
+        } catch (err) {
+          console.error('Error fetching bookings for admin:', err);
+        }
+      } else {
+        setAdminError(`Invalid username or password. Default password is: cricket2026`);
+      }
+    } catch (err) {
+      console.error('Failed to log in via server:', err);
+      // Fallback
+      const activePassword = adminSettings.adminPassword || 'cricket2026';
+      if (adminUsername.trim() === 'admin' && (typedPassword === activePassword || typedPassword === 'cricket2026' || typedPassword === 'admin123')) {
+        setIsAdminLoggedIn(true);
+        setAdminError('');
+      } else {
+        setAdminError(`Invalid username or password. Default password is: cricket2026`);
+      }
     }
   };
 
