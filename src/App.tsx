@@ -1448,13 +1448,13 @@ END:VCALENDAR`;
           </div>
 
           {/* Desktop Navigation Menu */}
-          <nav className="hidden lg:flex items-center space-x-3.5 xl:space-x-5 text-[11px] xl:text-[13px] font-sans font-semibold tracking-wider uppercase text-slate-100">
+          <nav className="hidden lg:flex items-center space-x-3.5 xl:space-x-5 text-[13px] xl:text-[15px] font-sans font-semibold tracking-wider uppercase text-slate-100">
             <button onClick={() => scrollToSection('home')} className="hover:text-gold-400 transition cursor-pointer">Home</button>
             <button onClick={() => scrollToSection('why-choose-me')} className="hover:text-gold-400 transition cursor-pointer whitespace-nowrap">Why Choose Me</button>
             <button onClick={() => scrollToSection('about-me')} className="hover:text-gold-400 transition cursor-pointer whitespace-nowrap">About Me</button>
             <button onClick={() => scrollToSection('services')} className="hover:text-gold-400 transition cursor-pointer whitespace-nowrap">My Services</button>
-            <button onClick={() => { setActiveTab('placements'); }} className={`hover:text-gold-400 transition cursor-pointer whitespace-nowrap ${activeTab === 'placements' ? 'text-gold-400 font-semibold' : ''}`}>Players Placed</button>
-            <button onClick={() => scrollToSection('client-websites')} className="hover:text-gold-400 transition cursor-pointer whitespace-nowrap">Cricket Clients Website</button>
+            {/* <button onClick={() => { setActiveTab('placements'); }} className={`hover:text-gold-400 transition cursor-pointer whitespace-nowrap ${activeTab === 'placements' ? 'text-gold-400 font-semibold' : ''}`}>Players Placed</button> */}
+            {/* <button onClick={() => scrollToSection('client-websites')} className="hover:text-gold-400 transition cursor-pointer whitespace-nowrap">Cricket Clients Website</button> */}
             <button onClick={() => scrollToSection('faq')} className="hover:text-gold-400 transition cursor-pointer">FAQ</button>
             <button onClick={() => scrollToSection('contact')} className="hover:text-gold-400 transition cursor-pointer">Contact</button>
           </nav>
@@ -1509,18 +1509,18 @@ END:VCALENDAR`;
               >
                 My Services
               </button>
-              <button 
+              {/* <button 
                 onClick={() => { setActiveTab('placements'); setMobileMenuOpen(false); }} 
                 className="text-left py-2 border-b border-navy-800/60 hover:text-gold-400 transition"
               >
                 Players Placed
-              </button>
-              <button 
+              </button> */}
+              {/* <button 
                 onClick={() => scrollToSection('client-websites')} 
                 className="text-left py-2 border-b border-navy-800/60 hover:text-gold-400 transition"
               >
                 Cricket Clients Website
-              </button>
+              </button> */}
               <button 
                 onClick={() => scrollToSection('faq')} 
                 className="text-left py-2 border-b border-navy-800/60 hover:text-gold-400 transition"
@@ -1700,7 +1700,7 @@ END:VCALENDAR`;
                 
                 <div className="text-center max-w-3xl mx-auto mb-16 space-y-4">
                   <span className="text-gold-600 text-xs font-bold uppercase tracking-widest block">Core Strengths</span>
-                  <h2 className="text-3xl sm:text-4xl font-extrabold text-navy-900">Why Partner With Me?</h2>
+                  <h2 className="text-3xl sm:text-4xl font-extrabold text-navy-900 font-display">Why Partner With Me?</h2>
                   <p className="text-slate-600 text-sm sm:text-base font-light">
                     Providing top-tier advice and operational solutions across all vectors of global cricket administration, management, and placement.
                   </p>
@@ -1973,7 +1973,7 @@ END:VCALENDAR`;
                 
                 <div className="text-center max-w-3xl mx-auto mb-16 space-y-4">
                   <span className="text-gold-600 text-xs font-bold uppercase tracking-widest block">Consulting Specialties</span>
-                  <h2 className="text-3xl sm:text-4xl font-extrabold text-navy-900">Professional Services Portfolio</h2>
+                  <h2 className="text-3xl sm:text-4xl font-extrabold text-navy-900 font-display">Professional Services Portfolio</h2>
                   <p className="text-slate-600 text-sm sm:text-base font-light">
                     Premium strategic services tailored to high-performing cricketers, state associations, and professional global leagues.
                   </p>
@@ -2045,7 +2045,7 @@ END:VCALENDAR`;
             </section>
 
             {/* --- CLIENT WEBSITES SECTION --- */}
-            <section id="client-websites" className="py-20 bg-white border-t border-slate-100">
+            {/* <section id="client-websites" className="py-20 bg-white border-t border-slate-100">
               <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 
                 <div className="text-center max-w-3xl mx-auto mb-16 space-y-4">
@@ -2058,10 +2058,8 @@ END:VCALENDAR`;
 
                 <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
                   
-                  {/* Left Column: Interactive Web Frame (7 cols) */}
                   <div className="lg:col-span-7">
                     <div className="bg-slate-50 rounded-3xl border border-slate-200 overflow-hidden shadow-2xl group hover:shadow-gold-500/5 hover:border-gold-500/35 transition duration-500">
-                      {/* Browser Mockup Header */}
                       <div className="bg-navy-950 px-4 py-3 sm:py-4 flex items-center space-x-2 border-b border-navy-800">
                         <div className="flex space-x-1.5">
                           <span className="w-2.5 h-2.5 rounded-full bg-red-500/80 block"></span>
@@ -2073,15 +2071,11 @@ END:VCALENDAR`;
                         </div>
                       </div>
 
-                      {/* Mockup Preview Area */}
                       <div className="bg-navy-950 aspect-video relative flex items-center justify-center overflow-hidden">
-                        {/* Grid background effect */}
                         <div className="absolute inset-0 bg-[linear-gradient(to_right,#8080800d_1px,transparent_1px),linear-gradient(to_bottom,#8080800d_1px,transparent_1px)] bg-[size:24px_24px]"></div>
                         
-                        {/* Glowing radial gradient */}
                         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-72 h-72 bg-gold-500/10 rounded-full blur-3xl animate-pulse"></div>
                         
-                        {/* Stylized Brand Logo / Icon inside browser */}
                         <div className="relative z-10 text-center space-y-4 p-8">
                           <div className="mx-auto w-16 h-16 rounded-full bg-gradient-to-br from-gold-400 to-gold-600 flex items-center justify-center shadow-lg shadow-gold-500/20 transform group-hover:scale-110 transition duration-300">
                             <TrendingUp className="h-8 w-8 text-navy-950" />
@@ -2095,7 +2089,6 @@ END:VCALENDAR`;
                     </div>
                   </div>
 
-                  {/* Right Column: Case Study Info (5 cols) */}
                   <div className="lg:col-span-5 space-y-6">
                     <div className="space-y-2">
                       <span className="px-3 py-1 text-[10px] font-bold bg-gold-100 text-gold-800 rounded-full uppercase tracking-wider inline-block">
@@ -2111,7 +2104,6 @@ END:VCALENDAR`;
                       A premium, bespoke athletic development platform designed and custom-built by our engineering division. Created specifically for elite cricket performance, fitness tracking, and athlete-coach communication.
                     </p>
 
-                    {/* Features checklist */}
                     <div className="space-y-3 pt-2">
                       <h4 className="text-xs font-bold uppercase tracking-wider text-navy-900">Key Deliverables</h4>
                       <ul className="space-y-2 text-xs text-slate-600">
@@ -2130,7 +2122,6 @@ END:VCALENDAR`;
                       </ul>
                     </div>
 
-                    {/* Tech Badges */}
                     <div className="flex flex-wrap gap-2 pt-2">
                       <span className="px-2.5 py-1 text-[10px] font-medium bg-slate-100 text-slate-800 rounded-md border border-slate-200">React 19</span>
                       <span className="px-2.5 py-1 text-[10px] font-medium bg-slate-100 text-slate-800 rounded-md border border-slate-200">Vite & TS</span>
@@ -2155,11 +2146,11 @@ END:VCALENDAR`;
                 </div>
 
               </div>
-            </section>
+            </section> */}
 
 
             {/* --- FAQ SECTION --- */}
-            <section id="faq" className="py-20 bg-slate-50 border-t border-slate-100">
+            <section id="faq" className="py-20 bg-white border-t border-slate-100">
               <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
                 
                 <div className="text-center mb-12 space-y-4">
@@ -2214,7 +2205,7 @@ END:VCALENDAR`;
             </section>
 
             {/* --- CONTACT SECTION --- */}
-            <section id="contact" className="py-20 bg-white">
+            <section id="contact" className="py-20 bg-slate-50 border-t border-slate-100">
               <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 
                 <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-start">
@@ -2334,9 +2325,8 @@ END:VCALENDAR`;
           </div>
         )}
 
-        {activeTab === 'placements' && (
+        {/* {activeTab === 'placements' && (
           <div className="bg-[#fafafa] min-h-screen pt-28 pb-20">
-            {/* Placements Page Header */}
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-16">
               <div className="text-center space-y-4">
                 <span className="text-gold-600 text-xs font-bold uppercase tracking-widest block font-display">Success Stories</span>
@@ -2348,7 +2338,6 @@ END:VCALENDAR`;
               </div>
             </div>
 
-            {/* Placements Roster Grid */}
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
               <div className="flex flex-wrap justify-center gap-10">
                 {players.map((player) => (
@@ -2356,7 +2345,6 @@ END:VCALENDAR`;
                     key={player.id} 
                     className="w-full max-w-[620px] bg-white rounded-3xl shadow-xl border border-slate-100 overflow-hidden hover:shadow-2xl hover:shadow-gold-500/5 hover:-translate-y-1.5 transition duration-300"
                   >
-                    {/* Standalone Card Image (Full view matching the user's template) */}
                     <div className="relative aspect-[1.91/1] w-full bg-slate-50 border-b border-slate-100 overflow-hidden">
                       {player.imageUrl ? (
                         <img 
@@ -2373,7 +2361,6 @@ END:VCALENDAR`;
                       )}
                     </div>
 
-                    {/* Description and metadata layout around the card */}
                     <div className="p-6 sm:p-8">
                       <div className="flex items-start justify-between">
                         <div>
@@ -2391,7 +2378,6 @@ END:VCALENDAR`;
               </div>
             </div>
 
-            {/* Back to Home CTA */}
             <div className="text-center mt-16">
               <button 
                 onClick={() => { setActiveTab('main'); scrollToSection('home'); }}
@@ -2402,7 +2388,7 @@ END:VCALENDAR`;
             </div>
 
           </div>
-        )}
+        )} */}
 
         {/* =========================================================================
             2. BOOK A PREMIUM CONSULTATION WORKSPACE TAB
@@ -4700,8 +4686,8 @@ END:VCALENDAR`;
               <button onClick={() => scrollToSection('why-choose-me')} className="text-left hover:text-gold-500 transition">Why Choose Me</button>
               <button onClick={() => scrollToSection('about-me')} className="text-left hover:text-gold-500 transition">About Prakash Palande</button>
               <button onClick={() => scrollToSection('services')} className="text-left hover:text-gold-500 transition">My Services</button>
-              <button onClick={() => { setActiveTab('placements'); }} className="text-left hover:text-gold-500 transition">Players Placed</button>
-              <button onClick={() => scrollToSection('client-websites')} className="text-left hover:text-gold-500 transition">Cricket Clients Website</button>
+              {/* <button onClick={() => { setActiveTab('placements'); }} className="text-left hover:text-gold-500 transition">Players Placed</button> */}
+              {/* <button onClick={() => scrollToSection('client-websites')} className="text-left hover:text-gold-500 transition">Cricket Clients Website</button> */}
               <button onClick={() => scrollToSection('faq')} className="text-left hover:text-gold-500 transition">FAQ</button>
               <button onClick={() => scrollToSection('contact')} className="text-left hover:text-gold-500 transition">Contact Prakash Palande</button>
               <button 
