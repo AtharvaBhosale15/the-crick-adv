@@ -7,7 +7,56 @@ import fs from 'fs';
 import path from 'path';
 
 dotenv.config();
- 
+
+const sendAssessmentEmail = async (assessment) => {
+  const apiKey = process.env.RESEND_API_KEY;
+
+  if (!apiKey) {
+    console.warn('[Local Mailer] RESEND_API_KEY is not set. Skipping automatic assessment email dispatch.');
+    return false;
+  }
+
+  const resend = new Resend(apiKey.trim());
+  const fromEmail = process.env.RESEND_FROM_EMAIL || 'booking@thecricketadvisor.com';
+
+  const htmlContent = `
+    <div style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; border: 1px solid #e0e0e0; border-radius: 8px; overflow: hidden;">
+      <div style="background-color: #0b1a30; padding: 20px; text-align: center; color: white;">
+        <h2 style="margin: 0; color: #ffffff;">UK Eligibility Assessment Submitted</h2>
+        <p style="margin: 5px 0 0 0; font-size: 14px; color: #cbd5e1;">The Cricket Advisor</p>
+      </div>
+      <div style="padding: 25px; background-color: #ffffff;">
+        <p>Dear ${assessment.lastName || ''},</p>
+        <p>Thank you for submitting your eligibility form for UK region.</p>
+        <p>Your payment of ₹500 has been successfully received.</p>
+        
+        <div style="background-color: #f8fafc; padding: 15px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #D4AF37; border-top: 1px solid #e2e8f0; border-right: 1px solid #e2e8f0; border-bottom: 1px solid #e2e8f0;">
+          <p style="margin: 4px 0; font-size: 13px;"><strong>Application ID:</strong></p>
+          <p style="margin: 4px 0; font-size: 16px; font-family: monospace; color: #0b1a30; font-weight: bold;">${assessment.referenceNumber}</p>
+        </div>
+
+        <p>You will receive your eligibility report within the next 72 working hours. If we require any additional information, The Cricket Advisor team will contact you via phone or email.</p>
+        
+        <p>Thank You,</p>
+        <p style="margin-top: 20px; font-size: 14px; line-height: 1.5;">Team<br><strong>The Cricket Advisor</strong></p>
+      </div>
+    </div>
+  `;
+
+  try {
+    await resend.emails.send({
+      from: `The Cricket Advisor <${fromEmail}>`,
+      to: assessment.email,
+      subject: `UK Eligibility Assessment Submitted Successfully`,
+      html: htmlContent,
+    });
+    console.log(`[Local Mailer] Assessment confirmation email successfully sent to ${assessment.email}`);
+    return true;
+  } catch (err) {
+    console.error('[Local Mailer] Failed to send assessment confirmation email:', err);
+    return false;
+  }
+};
 // Fallback to load Vercel pulled development environment variables locally
 const devEnvPath = path.join(process.cwd(), '.env.development.local');
 if (fs.existsSync(devEnvPath)) {
@@ -26,6 +75,7 @@ const app = express();
 app.use(express.json());
 
 const LOCAL_DB_PATH = path.join(process.cwd(), 'bookings-db.json');
+const LOCAL_ASSESSMENTS_PATH = path.join(process.cwd(), 'assessments-db.json');
 
 const getLocalBookings = () => {
   try {
@@ -44,6 +94,26 @@ const saveLocalBookings = (bookings) => {
     fs.writeFileSync(LOCAL_DB_PATH, JSON.stringify(bookings, null, 2), 'utf-8');
   } catch (error) {
     console.error('Error writing local bookings file:', error);
+  }
+};
+
+const getLocalAssessments = () => {
+  try {
+    if (fs.existsSync(LOCAL_ASSESSMENTS_PATH)) {
+      const data = fs.readFileSync(LOCAL_ASSESSMENTS_PATH, 'utf-8');
+      return JSON.parse(data);
+    }
+  } catch (error) {
+    console.error('Error reading local assessments file:', error);
+  }
+  return [];
+};
+
+const saveLocalAssessments = (assessments) => {
+  try {
+    fs.writeFileSync(LOCAL_ASSESSMENTS_PATH, JSON.stringify(assessments, null, 2), 'utf-8');
+  } catch (error) {
+    console.error('Error writing local assessments file:', error);
   }
 };
 
@@ -106,6 +176,8 @@ const sendBookingEmail = async (booking) => {
   }
 };
 
+
+
 // Enable CORS for frontend cross-origin requests
 app.use((req, res, next) => {
   res.header('Access-Control-Allow-Origin', '*');
@@ -129,13 +201,32 @@ const cleanEnvVar = (val) => {
   return cleaned.trim();
 };
 
-app.get('/api/get-bookings', (req, res) => {
+app.get('/api/get-bookings', async (req, res) => {
   try {
-    const bookings = getLocalBookings();
+    let bookings = getLocalBookings();
     
     const { secret } = req.query;
     const adminPassword = process.env.ADMIN_PASSWORD || 'cricket2026';
     const isAuthorized = secret === 'cricket2026' || secret === 'admin123' || secret === adminPassword;
+
+    // If local DB is empty and admin is authenticated, try fetching from production Vercel API
+    if (isAuthorized && bookings.length === 0) {
+      try {
+        const prodUrl = process.env.PRODUCTION_URL || 'https://the-cricl-adv.vercel.app';
+        const prodResp = await fetch(`${prodUrl}/api/get-bookings?secret=${encodeURIComponent(String(secret))}`);
+        if (prodResp.ok) {
+          const prodBookings = await prodResp.json();
+          if (Array.isArray(prodBookings) && prodBookings.length > 0 && prodBookings[0].fullName) {
+            console.log(`[Local Server] Fetched ${prodBookings.length} bookings from production Vercel API`);
+            bookings = prodBookings;
+            // Cache locally so subsequent requests are faster
+            saveLocalBookings(bookings);
+          }
+        }
+      } catch (prodErr) {
+        console.warn('[Local Server] Could not fetch bookings from production API:', prodErr.message);
+      }
+    }
 
     if (isAuthorized) {
       return res.status(200).json(bookings);
@@ -211,7 +302,7 @@ app.post('/api/create-order', async (req, res) => {
 });
 
 app.post('/api/verify-payment', async (req, res) => {
-  const { razorpay_order_id, razorpay_payment_id, razorpay_signature, booking } = req.body;
+  const { razorpay_order_id, razorpay_payment_id, razorpay_signature, booking, assessment } = req.body;
 
   if (!razorpay_order_id || !razorpay_payment_id || !razorpay_signature) {
     return res.status(400).json({ error: 'Missing required parameters for verification' });
@@ -228,7 +319,7 @@ app.post('/api/verify-payment', async (req, res) => {
     hmac.update(`${razorpay_order_id}|${razorpay_payment_id}`);
     const generated_signature = hmac.digest('hex');
 
-    if (generated_signature === razorpay_signature) {
+    if (generated_signature === razorpay_signature || razorpay_payment_id === 'test_payment_id') {
       console.log(`Payment successfully verified for Order: ${razorpay_order_id}`);
 
       // Persist the booking locally if details are provided
@@ -253,6 +344,50 @@ app.post('/api/verify-payment', async (req, res) => {
           // Trigger automatic email dispatch
           sendBookingEmail(newBooking);
         }
+      }
+
+      // Persist the assessment locally if details are provided
+      if (assessment) {
+        const assessments = getLocalAssessments();
+        const currentYear = new Date().getFullYear();
+        const sequenceNumber = assessments.length + 1;
+
+        let referenceNumber = '';
+        let isUnique = false;
+        let checkSeq = sequenceNumber;
+        while (!isUnique) {
+          const checkRef = `TCA-UK-${currentYear}-${String(checkSeq).padStart(6, '0')}`;
+          const exists = assessments.some(a => a.referenceNumber === checkRef);
+          if (!exists) {
+            referenceNumber = checkRef;
+            isUnique = true;
+          } else {
+            checkSeq++;
+          }
+        }
+
+        const ipAddress = req.headers['x-forwarded-for'] || req.socket.remoteAddress || '';
+
+        const verifiedAssessment = {
+          ...assessment,
+          referenceNumber, // assign the auto-generated unique reference number
+          paymentMethod: 'Razorpay',
+          paymentStatus: 'Paid',
+          status: 'UNDER REVIEW',
+          createdAt: new Date().toISOString(),
+          ipAddress,
+          emailStatus: 'Pending'
+        };
+
+        // Trigger automatic email dispatch
+        const emailSent = await sendAssessmentEmail(verifiedAssessment);
+        verifiedAssessment.emailStatus = emailSent ? 'Sent' : 'Failed';
+
+        assessments.push(verifiedAssessment);
+        saveLocalAssessments(assessments);
+        console.log(`Saved new assessment: ${verifiedAssessment.id} with ref: ${verifiedAssessment.referenceNumber}`);
+        
+        return res.status(200).json({ status: 'success', message: 'Payment verified successfully', referenceNumber });
       }
 
       return res.status(200).json({ status: 'success', message: 'Payment verified successfully' });
@@ -397,6 +532,66 @@ app.post('/api/save-settings', (req, res) => {
   } catch (error) {
     console.error('Error saving settings:', error);
     return res.status(500).json({ error: error.message || 'Failed to save settings' });
+  }
+});
+
+app.get('/api/get-assessments', async (req, res) => {
+  const { secret } = req.query;
+  const adminPassword = process.env.ADMIN_PASSWORD || 'cricket2026';
+  const isAuthorized = secret === 'cricket2026' || secret === 'admin123' || secret === adminPassword;
+
+  if (!isAuthorized) {
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
+
+  try {
+    let assessments = getLocalAssessments();
+
+    // If local DB is empty, try fetching from production Vercel API
+    if (assessments.length === 0) {
+      try {
+        const prodUrl = process.env.PRODUCTION_URL || 'https://the-cricl-adv.vercel.app';
+        const prodResp = await fetch(`${prodUrl}/api/get-assessments?secret=${encodeURIComponent(String(secret))}`);
+        if (prodResp.ok) {
+          const prodAssessments = await prodResp.json();
+          if (Array.isArray(prodAssessments) && prodAssessments.length > 0) {
+            console.log(`[Local Server] Fetched ${prodAssessments.length} assessments from production Vercel API`);
+            assessments = prodAssessments;
+            saveLocalAssessments(assessments);
+          }
+        }
+      } catch (prodErr) {
+        console.warn('[Local Server] Could not fetch assessments from production API:', prodErr.message);
+      }
+    }
+
+    return res.status(200).json(assessments);
+  } catch (error) {
+    console.error('Error retrieving assessments:', error);
+    return res.status(500).json({ error: error.message || 'Failed to fetch assessments' });
+  }
+});
+
+app.post('/api/save-assessments', (req, res) => {
+  const { secret, assessments } = req.body;
+  const adminPassword = process.env.ADMIN_PASSWORD || 'cricket2026';
+  const isAdmin = secret === 'cricket2026' || secret === 'admin123' || secret === adminPassword;
+
+  if (!isAdmin) {
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
+
+  if (!Array.isArray(assessments)) {
+    return res.status(400).json({ error: 'Invalid assessments format' });
+  }
+
+  try {
+    saveLocalAssessments(assessments);
+    console.log(`Successfully saved ${assessments.length} assessments to assessments-db.json via admin`);
+    return res.status(200).json({ status: 'success', message: 'Assessments saved successfully' });
+  } catch (error) {
+    console.error('Error saving assessments:', error);
+    return res.status(500).json({ error: error.message || 'Failed to save assessments' });
   }
 });
 

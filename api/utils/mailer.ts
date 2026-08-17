@@ -69,3 +69,53 @@ export const sendBookingEmail = async (booking: any): Promise<boolean> => {
     return false;
   }
 };
+
+export const sendAssessmentEmail = async (assessment: any): Promise<boolean> => {
+  const apiKey = process.env.RESEND_API_KEY;
+
+  if (!apiKey) {
+    console.warn('[Resend Mailer] RESEND_API_KEY is not set. Skipping automatic assessment email dispatch.');
+    return false;
+  }
+
+  const resend = new Resend(apiKey.trim());
+  const fromEmail = process.env.RESEND_FROM_EMAIL || 'booking@thecricketadvisor.com';
+
+  const htmlContent = `
+    <div style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; border: 1px solid #e0e0e0; border-radius: 8px; overflow: hidden;">
+      <div style="background-color: #0b1a30; padding: 20px; text-align: center; color: white;">
+        <h2 style="margin: 0; color: #ffffff;">UK Eligibility Assessment Submitted</h2>
+        <p style="margin: 5px 0 0 0; font-size: 14px; color: #cbd5e1;">The Cricket Advisor</p>
+      </div>
+      <div style="padding: 25px; background-color: #ffffff;">
+        <p>Dear ${assessment.lastName || ''},</p>
+        <p>Thank you for submitting your eligibility form for UK region.</p>
+        <p>Your payment of ₹500 has been successfully received.</p>
+        
+        <div style="background-color: #f8fafc; padding: 15px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #D4AF37; border-top: 1px solid #e2e8f0; border-right: 1px solid #e2e8f0; border-bottom: 1px solid #e2e8f0;">
+          <p style="margin: 4px 0; font-size: 13px;"><strong>Application ID:</strong></p>
+          <p style="margin: 4px 0; font-size: 16px; font-family: monospace; color: #0b1a30; font-weight: bold;">${assessment.referenceNumber}</p>
+        </div>
+
+        <p>You will receive your eligibility report within the next 72 working hours. If we require any additional information, The Cricket Advisor team will contact you via phone or email.</p>
+        
+        <p>Thank You,</p>
+        <p style="margin-top: 20px; font-size: 14px; line-height: 1.5;">Team<br><strong>The Cricket Advisor</strong></p>
+      </div>
+    </div>
+  `;
+
+  try {
+    await resend.emails.send({
+      from: `The Cricket Advisor <${fromEmail}>`,
+      to: assessment.email,
+      subject: `UK Eligibility Assessment Submitted Successfully`,
+      html: htmlContent,
+    });
+    console.log(`[Resend Mailer] Assessment confirmation email successfully sent to ${assessment.email}`);
+    return true;
+  } catch (err) {
+    console.error('[Resend Mailer] Failed to send assessment confirmation email:', err);
+    return false;
+  }
+};

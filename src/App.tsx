@@ -56,6 +56,7 @@ import mediaManagementImg from './assets/images/media_management_1784638110330.j
 import cricketToursImg from './assets/images/cricket_tours_1784638123336.jpg';
 import independentConsultingImg from './assets/images/independent_consulting_1784638137784.jpg';
 import harshilDoshiImg from './assets/images/harshil_doshi_placement.jpg';
+import ukEligibilityReportDesign from './assets/images/uk_eligibility_report_design.png';
 
 // --- TYPES ---
 interface Player {
@@ -135,6 +136,108 @@ const defaultAdminSettings: AdminSettings = {
   adminPassword: 'cricket2026',
   gstin: '27AAAAA0000A1Z5',
   businessAddress: 'Mumbai / International Cricket Consultancy Hub, India'
+};
+
+interface EligibilityForm {
+  firstName: string;
+  lastName: string;
+  isAbove18: string;
+  nationality: string;
+  hasValidPassport: string;
+  email: string;
+  mobileNumber: string;
+  
+  firstClassPlayed: string;
+  firstClassLastYear: string;
+  firstClassMatches36Months: string;
+  
+  listAPlayed: string;
+  listALastYear: string;
+  listAMatches36Months: string;
+  
+  domesticT20Played: string;
+  domesticT20LastYear: string;
+  domesticT20Matches36Months: string;
+  
+  ageGroupPlayed: string;
+  ageGroupLastYear: string;
+  
+  iccT20Played: string;
+  iccT20LastYear: string;
+  
+  universityPlayed: string;
+  universityLastYear: string;
+  
+  clubDistrictLevel: string;
+  pendingCriminalCases: string;
+  deportationHistory: string;
+  criminalConviction: string;
+  
+  acceptedDeclaration1: boolean;
+  acceptedDeclaration2: boolean;
+  acceptedDeclaration3: boolean;
+  acceptedDeclaration4: boolean;
+  acceptedDeclaration5: boolean;
+
+  id?: string;
+  referenceNumber?: string;
+  paymentAmount?: number;
+  paymentCurrency?: string;
+  paymentStatus?: string;
+  status?: string;
+  playerType?: string;
+  createdAt?: string;
+  ipAddress?: string;
+  paymentId?: string;
+  transactionId?: string;
+  emailStatus?: string;
+
+  // Legacy compatibility fields
+  currentCricketLevel?: string;
+  registeredWithTeam?: string;
+  currentTeamLevel?: string;
+  playedHigherLevel?: string;
+  higherLevelPlayed?: string;
+  hasUkOpportunity?: string;
+  ukOpportunityType?: string;
+  ukDocumentation?: string;
+  willReceiveUkPayment?: string;
+  ukPaymentType?: string;
+  visaHistory?: string;
+}
+
+const initialEligibilityForm: EligibilityForm = {
+  firstName: '',
+  lastName: '',
+  isAbove18: '',
+  nationality: '',
+  hasValidPassport: '',
+  email: '',
+  mobileNumber: '',
+  firstClassPlayed: '',
+  firstClassLastYear: '',
+  firstClassMatches36Months: '',
+  listAPlayed: '',
+  listALastYear: '',
+  listAMatches36Months: '',
+  domesticT20Played: '',
+  domesticT20LastYear: '',
+  domesticT20Matches36Months: '',
+  ageGroupPlayed: '',
+  ageGroupLastYear: '',
+  iccT20Played: '',
+  iccT20LastYear: '',
+  universityPlayed: '',
+  universityLastYear: '',
+  clubDistrictLevel: '',
+  pendingCriminalCases: '',
+  deportationHistory: '',
+  criminalConviction: '',
+  acceptedDeclaration1: false,
+  acceptedDeclaration2: false,
+  acceptedDeclaration3: false,
+  acceptedDeclaration4: false,
+  acceptedDeclaration5: false
 };
 
 type CurrencyCode = 'INR' | 'AUD' | 'USD' | 'NZD' | 'GBP';
@@ -322,9 +425,31 @@ const isSlotPastInIST = (slot: string, selectedDate: string) => {
 
 export default function App() {
   // --- CORE STATE ---
-  const [activeTab, setActiveTab] = useState<'main' | 'book' | 'admin' | 'placements'>('main');
+  // Restore from sessionStorage so React remounts (e.g., from an error boundary reset) don't lose navigation state
+  const [activeTab, setActiveTab] = useState<'main' | 'book' | 'admin' | 'placements' | 'eligibility'>(() => {
+    try { return (sessionStorage.getItem('tcc_active_tab') as any) || 'main'; } catch { return 'main'; }
+  });
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [currency, setCurrency] = useState<CurrencyCode>('INR');
+
+  // Eligibility Assessment State
+  const [eligibilityStep, setEligibilityStep] = useState<number>(() => {
+    try { const s = sessionStorage.getItem('tcc_eligibility_step'); return s ? parseInt(s, 10) : 0; } catch { return 0; }
+  });
+  const [activeSection, setActiveSection] = useState<1 | 2 | 3>(1);
+  const [eligibilityForm, setEligibilityForm] = useState<EligibilityForm>(initialEligibilityForm);
+  const [assessments, setAssessments] = useState<EligibilityForm[]>([]);
+  const [isProcessingEligibilityPayment, setIsProcessingEligibilityPayment] = useState(false);
+  const [eligibilityPaymentError, setEligibilityPaymentError] = useState('');
+  const [confirmedAssessment, setConfirmedAssessment] = useState<EligibilityForm | null>(() => {
+    try {
+      const s = sessionStorage.getItem('tcc_confirmed_assessment');
+      return s ? JSON.parse(s) : null;
+    } catch { return null; }
+  });
+  const [showLegalModal, setShowLegalModal] = useState(false);
+  const [showReceiptModal, setShowReceiptModal] = useState(false);
+  const [selectedAssessmentDetail, setSelectedAssessmentDetail] = useState<EligibilityForm | null>(null);
 
   const formatPrice = (inrPrice: number) => {
     const info = CURRENCIES[currency];
@@ -353,11 +478,393 @@ export default function App() {
   const [adminUsername, setAdminUsername] = useState('');
   const [adminPassword, setAdminPassword] = useState('');
   const [adminError, setAdminError] = useState('');
-  const [adminSubTab, setAdminSubTab] = useState<'all' | 'bank' | 'bookings' | 'prices' | 'dates' | 'players' | 'calendar' | 'settings'>('all');
+  const [adminSubTab, setAdminSubTab] = useState<'all' | 'bank' | 'bookings' | 'assessments' | 'prices' | 'dates' | 'players' | 'calendar' | 'settings'>('all');
   const [selectedInvoiceBooking, setSelectedInvoiceBooking] = useState<Booking | null>(null);
   const [editingBooking, setEditingBooking] = useState<Booking | null>(null);
   const [copiedLink, setCopiedLink] = useState(false);
   
+  const getNationalityCode = (nat: string): string => {
+    switch (nat) {
+      case 'Indian': return '+91';
+      case 'Sri Lankan': return '+94';
+      case 'New Zealander': return '+64';
+      case 'Australia': return '+61';
+      case 'South African': return '+27';
+      case 'Canadian': return '+1';
+      case 'American': return '+1';
+      default: return '';
+    }
+  };
+  
+  const isFormComplete = () => {
+    if (!eligibilityForm.firstName.trim()) return false;
+    if (!eligibilityForm.lastName.trim()) return false;
+    if (!eligibilityForm.isAbove18) return false;
+    if (!eligibilityForm.nationality) return false;
+    if (!eligibilityForm.hasValidPassport) return false;
+    
+    const emailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(eligibilityForm.email);
+    if (!emailValid) return false;
+    
+    const prefix = getNationalityCode(eligibilityForm.nationality);
+    const rawPhone = eligibilityForm.mobileNumber.replace(prefix, '').trim();
+    if (!rawPhone) return false;
+
+    if (!eligibilityForm.firstClassPlayed) return false;
+    if (eligibilityForm.firstClassPlayed === 'Yes') {
+      if (!eligibilityForm.firstClassLastYear || !eligibilityForm.firstClassMatches36Months) return false;
+    }
+
+    if (!eligibilityForm.listAPlayed) return false;
+    if (eligibilityForm.listAPlayed === 'Yes') {
+      if (!eligibilityForm.listALastYear || !eligibilityForm.listAMatches36Months) return false;
+    }
+
+    if (!eligibilityForm.domesticT20Played) return false;
+    if (eligibilityForm.domesticT20Played === 'Yes') {
+      if (!eligibilityForm.domesticT20LastYear || !eligibilityForm.domesticT20Matches36Months) return false;
+    }
+
+    if (!eligibilityForm.ageGroupPlayed) return false;
+    if (eligibilityForm.ageGroupPlayed === 'Yes') {
+      if (!eligibilityForm.ageGroupLastYear) return false;
+    }
+
+    if (!eligibilityForm.iccT20Played) return false;
+    if (eligibilityForm.iccT20Played === 'Yes') {
+      if (!eligibilityForm.iccT20LastYear) return false;
+    }
+
+    if (!eligibilityForm.universityPlayed) return false;
+    if (eligibilityForm.universityPlayed === 'Yes') {
+      if (!eligibilityForm.universityLastYear) return false;
+    }
+
+    if (!eligibilityForm.clubDistrictLevel) return false;
+    if (!eligibilityForm.pendingCriminalCases) return false;
+    if (!eligibilityForm.deportationHistory) return false;
+    if (!eligibilityForm.criminalConviction) return false;
+
+    return true;
+  };
+
+  const isSection1Complete = () => {
+    if (!eligibilityForm.firstName.trim()) return false;
+    if (!eligibilityForm.lastName.trim()) return false;
+    if (!eligibilityForm.isAbove18) return false;
+    if (!eligibilityForm.nationality) return false;
+    if (!eligibilityForm.hasValidPassport) return false;
+    
+    const emailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(eligibilityForm.email);
+    if (!emailValid) return false;
+    
+    const prefix = getNationalityCode(eligibilityForm.nationality);
+    const rawPhone = eligibilityForm.mobileNumber.replace(prefix, '').trim();
+    if (!rawPhone) return false;
+    
+    return true;
+  };
+
+  const isSection2Complete = () => {
+    if (!eligibilityForm.firstClassPlayed) return false;
+    if (eligibilityForm.firstClassPlayed === 'Yes') {
+      if (!eligibilityForm.firstClassLastYear || !eligibilityForm.firstClassMatches36Months) return false;
+    }
+
+    if (!eligibilityForm.listAPlayed) return false;
+    if (eligibilityForm.listAPlayed === 'Yes') {
+      if (!eligibilityForm.listALastYear || !eligibilityForm.listAMatches36Months) return false;
+    }
+
+    if (!eligibilityForm.domesticT20Played) return false;
+    if (eligibilityForm.domesticT20Played === 'Yes') {
+      if (!eligibilityForm.domesticT20LastYear || !eligibilityForm.domesticT20Matches36Months) return false;
+    }
+
+    if (!eligibilityForm.ageGroupPlayed) return false;
+    if (eligibilityForm.ageGroupPlayed === 'Yes') {
+      if (!eligibilityForm.ageGroupLastYear) return false;
+    }
+
+    if (!eligibilityForm.iccT20Played) return false;
+    if (eligibilityForm.iccT20Played === 'Yes') {
+      if (!eligibilityForm.iccT20LastYear) return false;
+    }
+
+    if (!eligibilityForm.universityPlayed) return false;
+    if (eligibilityForm.universityPlayed === 'Yes') {
+      if (!eligibilityForm.universityLastYear) return false;
+    }
+
+    if (!eligibilityForm.clubDistrictLevel) return false;
+    
+    return true;
+  };
+
+  const handleEligibilityChange = (field: keyof EligibilityForm, value: any) => {
+    setEligibilityForm(prev => {
+      const updated = { ...prev, [field]: value };
+
+      // Clear conditional fields on changing from Yes -> No
+      if (field === 'firstClassPlayed' && value === 'No') {
+        updated.firstClassLastYear = '';
+        updated.firstClassMatches36Months = '';
+      }
+      if (field === 'listAPlayed' && value === 'No') {
+        updated.listALastYear = '';
+        updated.listAMatches36Months = '';
+      }
+      if (field === 'domesticT20Played' && value === 'No') {
+        updated.domesticT20LastYear = '';
+        updated.domesticT20Matches36Months = '';
+      }
+      if (field === 'ageGroupPlayed' && value === 'No') {
+        updated.ageGroupLastYear = '';
+      }
+      if (field === 'iccT20Played' && value === 'No') {
+        updated.iccT20LastYear = '';
+      }
+      if (field === 'universityPlayed' && value === 'No') {
+        updated.universityLastYear = '';
+      }
+
+      // Automatically assign phone code prefix on Q6 based on Nationality in Q4
+      if (field === 'nationality') {
+        const code = getNationalityCode(value);
+        if (code) {
+          const rawPhone = prev.mobileNumber;
+          const cleanedPhone = rawPhone.replace(/^\+\d+\s?/, '');
+          updated.mobileNumber = `${code} ${cleanedPhone}`;
+        }
+      }
+
+      return updated;
+    });
+  };
+
+  const renderSelectDropdown = (field: keyof EligibilityForm, options: string[]) => {
+    return (
+      <select
+        value={eligibilityForm[field] as string || ''}
+        onChange={(e) => handleEligibilityChange(field, e.target.value)}
+        className="w-full text-xs p-3.5 border border-slate-350 rounded-xl focus:outline-none focus:ring-2 focus:ring-navy-900/10 focus:border-navy-900 bg-white text-slate-800 font-semibold transition cursor-pointer font-sans"
+      >
+        <option value="" disabled>-- Select Option --</option>
+        {options.map((opt) => (
+          <option key={opt} value={opt}>{opt}</option>
+        ))}
+      </select>
+    );
+  };
+
+  const isStepValid = (step: number) => {
+    switch (step) {
+      case 1: return eligibilityForm.firstName.trim() !== '';
+      case 2: return eligibilityForm.lastName.trim() !== '';
+      case 3: return eligibilityForm.isAbove18 !== '';
+      case 4: return eligibilityForm.nationality !== '';
+      case 5: return eligibilityForm.hasValidPassport !== '';
+      case 6: {
+        const emailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(eligibilityForm.email);
+        const prefix = getNationalityCode(eligibilityForm.nationality);
+        const rawPhone = eligibilityForm.mobileNumber.replace(prefix, '').trim();
+        return emailValid && rawPhone !== '';
+      }
+      case 7: {
+        if (eligibilityForm.firstClassPlayed === 'Yes') {
+          return eligibilityForm.firstClassLastYear !== '' && eligibilityForm.firstClassMatches36Months !== '';
+        }
+        return eligibilityForm.firstClassPlayed === 'No';
+      }
+      case 8: {
+        if (eligibilityForm.listAPlayed === 'Yes') {
+          return eligibilityForm.listALastYear !== '' && eligibilityForm.listAMatches36Months !== '';
+        }
+        return eligibilityForm.listAPlayed === 'No';
+      }
+      case 9: {
+        if (eligibilityForm.domesticT20Played === 'Yes') {
+          return eligibilityForm.domesticT20LastYear !== '' && eligibilityForm.domesticT20Matches36Months !== '';
+        }
+        return eligibilityForm.domesticT20Played === 'No';
+      }
+      case 10: {
+        if (eligibilityForm.ageGroupPlayed === 'Yes') {
+          return eligibilityForm.ageGroupLastYear !== '';
+        }
+        return eligibilityForm.ageGroupPlayed === 'No';
+      }
+      case 11: {
+        if (eligibilityForm.iccT20Played === 'Yes') {
+          return eligibilityForm.iccT20LastYear !== '';
+        }
+        return eligibilityForm.iccT20Played === 'No';
+      }
+      case 12: {
+        if (eligibilityForm.universityPlayed === 'Yes') {
+          return eligibilityForm.universityLastYear !== '';
+        }
+        return eligibilityForm.universityPlayed === 'No';
+      }
+      case 13: return eligibilityForm.clubDistrictLevel !== '';
+      case 14: return eligibilityForm.pendingCriminalCases !== '';
+      case 15: return eligibilityForm.deportationHistory !== '';
+      case 16: return eligibilityForm.criminalConviction !== '';
+      default: return true;
+    }
+  };
+
+  const renderNavigationButtons = () => {
+    const isValid = isStepValid(eligibilityStep);
+    return (
+      <div className="flex justify-between items-center pt-6 border-t border-slate-100 font-sans">
+        {eligibilityStep > 1 ? (
+          <button
+            type="button"
+            onClick={() => setEligibilityStep(prev => prev - 1)}
+            className="px-4 py-2 border border-slate-300 rounded-lg text-xs font-bold hover:bg-slate-50 transition cursor-pointer text-slate-700 bg-white"
+          >
+            Previous
+          </button>
+        ) : (
+          <div />
+        )}
+        
+        {eligibilityStep < 16 ? (
+          <button
+            type="button"
+            disabled={!isValid}
+            onClick={() => setEligibilityStep(prev => prev + 1)}
+            className="px-6 py-2.5 bg-[#0B1A30] text-white rounded-lg text-xs font-bold hover:bg-navy-950 transition disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+          >
+            Next
+          </button>
+        ) : (
+          <button
+            type="button"
+            disabled={!isValid}
+            onClick={() => setShowLegalModal(true)}
+            className="px-6 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-xs font-bold shadow-md transition disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+          >
+            Submit Form
+          </button>
+        )}
+      </div>
+    );
+  };
+
+  const handleInitiateEligibilityPayment = async () => {
+    setEligibilityPaymentError('');
+    setIsProcessingEligibilityPayment(true);
+
+    const assessmentAmount = 500;
+
+    const uniqueId = 'TCA-ASS-' + Date.now();
+
+    const assessmentPayload = {
+      ...eligibilityForm,
+      id: uniqueId,
+      paymentAmount: assessmentAmount,
+      paymentCurrency: 'INR',
+      paymentStatus: 'Paid',
+      status: 'UNDER REVIEW',
+      playerType: 'UNDER REVIEW',
+      createdAt: new Date().toISOString()
+    };
+
+    try {
+      const isLoaded = await loadRazorpayScript();
+      if (!isLoaded) {
+        setEligibilityPaymentError('Failed to load Razorpay payment SDK. Please check your internet connection.');
+        setIsProcessingEligibilityPayment(false);
+        return;
+      }
+
+      const orderResponse = await fetch('/api/create-order', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ amount: assessmentAmount * 100 })
+      });
+
+      if (!orderResponse.ok) {
+        const errorText = await orderResponse.text();
+        throw new Error(errorText || 'Failed to initialize order on server');
+      }
+
+      const orderData = await orderResponse.json();
+
+      const razorpayKeyId = import.meta.env.VITE_RAZORPAY_KEY_ID || '';
+      const options = {
+        key: razorpayKeyId,
+        amount: orderData.amount,
+        currency: orderData.currency,
+        name: 'The Cricket Advisor',
+        description: 'UK Cricket Eligibility Assessment Fee',
+        image: 'https://cdn-icons-png.flaticon.com/512/33/33308.png',
+        order_id: orderData.id,
+        prefill: {
+          name: `${eligibilityForm.firstName} ${eligibilityForm.lastName}`,
+          email: eligibilityForm.email,
+          contact: eligibilityForm.mobileNumber
+        },
+        theme: {
+          color: '#0B1A30',
+        },
+        handler: async (response: any) => {
+          try {
+            const verifyResp = await fetch('/api/verify-payment', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                razorpay_order_id: response.razorpay_order_id,
+                razorpay_payment_id: response.razorpay_payment_id,
+                razorpay_signature: response.razorpay_signature,
+                assessment: assessmentPayload
+              })
+            });
+
+            if (verifyResp.ok) {
+              const verifyResult = await verifyResp.json();
+              if (verifyResult.status === 'success') {
+                const confirmed = {
+                  ...assessmentPayload,
+                  referenceNumber: verifyResult.referenceNumber || 'TCA-UK-2026-000000',
+                  paymentId: response.razorpay_payment_id,
+                  transactionId: response.razorpay_order_id || 'N/A'
+                };
+                setConfirmedAssessment(confirmed);
+                try { sessionStorage.setItem('tcc_confirmed_assessment', JSON.stringify(confirmed)); } catch {}
+                try { sessionStorage.setItem('tcc_active_tab', 'eligibility'); } catch {}
+                try { sessionStorage.setItem('tcc_eligibility_step', '18'); } catch {}
+                setEligibilityStep(18); // Success step
+              } else {
+                setEligibilityPaymentError('Payment verification failed: ' + verifyResult.message);
+              }
+            } else {
+              setEligibilityPaymentError('Failed to verify payment on backend server.');
+            }
+          } catch (verifyErr: any) {
+            setEligibilityPaymentError('Error during payment verification: ' + verifyErr.message);
+          } finally {
+            setIsProcessingEligibilityPayment(false);
+          }
+        },
+        modal: {
+          ondismiss: () => {
+            setIsProcessingEligibilityPayment(false);
+          }
+        }
+      };
+
+      const paymentObject = new (window as any).Razorpay(options);
+      paymentObject.open();
+    } catch (err: any) {
+      console.error('Razorpay eligibility payment failed:', err);
+      setEligibilityPaymentError(err.message || 'An unexpected error occurred during checkout.');
+      setIsProcessingEligibilityPayment(false);
+    }
+  };
+
   // Helper Calendar, Zoom & Direct Messaging functions
   const generateWhatsAppUrl = (b: Booking) => {
     let cleanPhone = b.whatsApp.replace(/[^0-9]/g, '');
@@ -467,6 +974,103 @@ END:VCALENDAR`;
     a.click();
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
+  };
+
+  // Download an assessment as a formatted printable HTML document
+  const downloadAssessmentPdf = (a: EligibilityForm) => {
+    const sections = [
+      { label: 'First-Class Cricket', played: a.firstClassPlayed, lastYear: a.firstClassLastYear, matches: a.firstClassMatches36Months },
+      { label: 'List A Cricket', played: a.listAPlayed, lastYear: a.listALastYear, matches: a.listAMatches36Months },
+      { label: 'Domestic T20', played: a.domesticT20Played, lastYear: a.domesticT20LastYear, matches: a.domesticT20Matches36Months },
+      { label: 'Age Group Cricket', played: a.ageGroupPlayed, lastYear: a.ageGroupLastYear, matches: undefined },
+      { label: 'ICC/State Approved T20 League', played: a.iccT20Played, lastYear: a.iccT20LastYear, matches: undefined },
+      { label: 'University Cricket', played: a.universityPlayed, lastYear: a.universityLastYear, matches: undefined },
+    ];
+
+    const cricketRows = sections.map(s =>
+      `<tr><td style="padding:8px;border:1px solid #e2e8f0;font-weight:600">${s.label}</td>
+       <td style="padding:8px;border:1px solid #e2e8f0;text-align:center;color:${s.played === 'Yes' ? '#047857' : '#64748b'};font-weight:700">${s.played || 'N/A'}</td>
+       <td style="padding:8px;border:1px solid #e2e8f0;text-align:center">${s.lastYear || '—'}</td>
+       <td style="padding:8px;border:1px solid #e2e8f0;text-align:center">${s.matches !== undefined ? s.matches : '—'}</td></tr>`
+    ).join('');
+
+    const htmlContent = `<!DOCTYPE html><html><head><meta charset="utf-8"><title>Assessment - ${a.referenceNumber || a.id}</title>
+    <style>
+      body{font-family:'Segoe UI',Arial,sans-serif;margin:0;padding:30px;color:#1e293b;font-size:13px}
+      .header{background:#0B1A30;color:white;padding:24px 30px;border-radius:12px;margin-bottom:24px}
+      .header h1{margin:0;font-size:20px;color:#D4AF37;letter-spacing:1px}
+      .header p{margin:4px 0 0;font-size:12px;color:#94a3b8}
+      .ref{font-family:monospace;background:#D4AF37;color:#0B1A30;padding:3px 10px;border-radius:4px;font-weight:bold;font-size:11px}
+      .section{margin-bottom:20px;border:1px solid #e2e8f0;border-radius:10px;overflow:hidden}
+      .section-title{background:#f8fafc;padding:10px 16px;font-weight:700;font-size:13px;text-transform:uppercase;letter-spacing:0.5px;border-bottom:1px solid #e2e8f0;color:#0B1A30}
+      .field-grid{display:grid;grid-template-columns:1fr 1fr;gap:0}
+      .field{padding:10px 16px;border-bottom:1px solid #f1f5f9}
+      .field-label{font-size:10px;color:#64748b;text-transform:uppercase;font-weight:600;letter-spacing:0.5px}
+      .field-value{font-size:13px;font-weight:600;color:#0f172a;margin-top:2px}
+      table{width:100%;border-collapse:collapse;font-size:12px}
+      th{background:#0B1A30;color:white;padding:8px;text-align:left;font-size:10px;text-transform:uppercase;letter-spacing:0.5px}
+      .flag-danger{background:#fef2f2;color:#b91c1c;font-weight:bold;padding:2px 8px;border-radius:4px;display:inline-block}
+      .footer{margin-top:24px;text-align:center;font-size:10px;color:#94a3b8;border-top:1px solid #e2e8f0;padding-top:16px}
+      @media print{body{padding:15px}@page{margin:15mm}}
+    </style></head><body>
+    <div class="header">
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <div><h1>UK CRICKET ELIGIBILITY ASSESSMENT</h1><p>The Cricket Advisor — Confidential Player Report</p></div>
+        <span class="ref">${a.referenceNumber || a.id}</span>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-title">Personal Information</div>
+      <div class="field-grid">
+        <div class="field"><div class="field-label">Full Name</div><div class="field-value">${a.firstName || ''} ${a.lastName || ''}</div></div>
+        <div class="field"><div class="field-label">Email</div><div class="field-value">${a.email || 'N/A'}</div></div>
+        <div class="field"><div class="field-label">Mobile</div><div class="field-value">${a.mobileNumber || 'N/A'}</div></div>
+        <div class="field"><div class="field-label">Nationality</div><div class="field-value">${a.nationality || 'N/A'}</div></div>
+        <div class="field"><div class="field-label">Valid Passport</div><div class="field-value">${a.hasValidPassport || 'N/A'}</div></div>
+        <div class="field"><div class="field-label">Club / District Level</div><div class="field-value">${a.clubDistrictLevel || 'N/A'}</div></div>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-title">Cricket Playing History (Last 36 Months)</div>
+      <table>
+        <thead><tr><th>Category</th><th style="text-align:center">Played</th><th style="text-align:center">Last Year</th><th style="text-align:center">Matches (36m)</th></tr></thead>
+        <tbody>${cricketRows}</tbody>
+      </table>
+    </div>
+
+    <div class="section">
+      <div class="section-title">Background Checks</div>
+      <div class="field-grid">
+        <div class="field"><div class="field-label">Pending Criminal Cases</div><div class="field-value">${a.pendingCriminalCases === 'Yes' ? '<span class="flag-danger">Yes</span>' : (a.pendingCriminalCases || 'N/A')}</div></div>
+        <div class="field"><div class="field-label">Deportation History</div><div class="field-value">${a.deportationHistory === 'Yes' ? '<span class="flag-danger">Yes</span>' : (a.deportationHistory || 'N/A')}</div></div>
+        <div class="field"><div class="field-label">Criminal Conviction</div><div class="field-value">${a.criminalConviction === 'Yes' ? '<span class="flag-danger">Yes</span>' : (a.criminalConviction || 'N/A')}</div></div>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-title">Payment &amp; Submission</div>
+      <div class="field-grid">
+        <div class="field"><div class="field-label">Payment Status</div><div class="field-value" style="color:#047857">${a.paymentStatus || 'N/A'}</div></div>
+        <div class="field"><div class="field-label">Amount</div><div class="field-value">₹${a.paymentAmount || 500}</div></div>
+        <div class="field"><div class="field-label">Submitted On</div><div class="field-value">${a.createdAt ? new Date(a.createdAt).toLocaleString('en-IN', { dateStyle: 'medium', timeStyle: 'short' }) : 'N/A'}</div></div>
+        <div class="field"><div class="field-label">Player Type</div><div class="field-value">${a.playerType || 'UNDER REVIEW'}</div></div>
+      </div>
+    </div>
+
+    <div class="footer">
+      <p>Generated on ${new Date().toLocaleString('en-IN')} by The Cricket Advisor Admin Panel</p>
+      <p style="color:#D4AF37;font-weight:600">www.thecricketadvisor.com</p>
+    </div>
+    </body></html>`;
+
+    const printWin = window.open('', '_blank');
+    if (printWin) {
+      printWin.document.write(htmlContent);
+      printWin.document.close();
+      setTimeout(() => { printWin.print(); }, 400);
+    }
   };
 
   const handleCopyZoomLink = (zoomLink: string) => {
@@ -1310,6 +1914,17 @@ END:VCALENDAR`;
           } catch (err) {
             console.error('Error fetching bookings for admin:', err);
           }
+
+          // 4. Load assessments
+          try {
+            const assessmentsResp = await fetch(`/api/get-assessments?secret=${encodeURIComponent(typedPassword)}`);
+            if (assessmentsResp.ok) {
+              const cloudAssessments = await assessmentsResp.json();
+              setAssessments(cloudAssessments);
+            }
+          } catch (err) {
+            console.error('Error fetching assessments for admin:', err);
+          }
           return;
         }
       }
@@ -1328,6 +1943,15 @@ END:VCALENDAR`;
         } catch (err) {
           console.error('Error fetching bookings for admin:', err);
         }
+        try {
+          const assessmentsResp = await fetch(`/api/get-assessments?secret=${encodeURIComponent(typedPassword)}`);
+          if (assessmentsResp.ok) {
+            const cloudAssessments = await assessmentsResp.json();
+            setAssessments(cloudAssessments);
+          }
+        } catch (err) {
+          console.error('Error fetching assessments for admin:', err);
+        }
       } else {
         setAdminError(`Invalid username or password. Default password is: cricket2026`);
       }
@@ -1338,6 +1962,15 @@ END:VCALENDAR`;
       if (adminUsername.trim() === 'admin' && (typedPassword === activePassword || typedPassword === 'cricket2026' || typedPassword === 'admin123')) {
         setIsAdminLoggedIn(true);
         setAdminError('');
+        try {
+          const assessmentsResp = await fetch(`/api/get-assessments?secret=${encodeURIComponent(typedPassword)}`);
+          if (assessmentsResp.ok) {
+            const cloudAssessments = await assessmentsResp.json();
+            setAssessments(cloudAssessments);
+          }
+        } catch (err) {
+          console.error('Error fetching assessments for admin:', err);
+        }
       } else {
         setAdminError(`Invalid username or password. Default password is: cricket2026`);
       }
@@ -1577,17 +2210,24 @@ END:VCALENDAR`;
             <button onClick={() => scrollToSection('why-choose-me')} className="hover:text-gold-400 transition cursor-pointer whitespace-nowrap">Why Choose Me</button>
             <button onClick={() => scrollToSection('about-me')} className="hover:text-gold-400 transition cursor-pointer whitespace-nowrap">About Me</button>
             <button onClick={() => scrollToSection('services')} className="hover:text-gold-400 transition cursor-pointer whitespace-nowrap">My Services</button>
-            {/* <button onClick={() => { setActiveTab('placements'); }} className={`hover:text-gold-400 transition cursor-pointer whitespace-nowrap ${activeTab === 'placements' ? 'text-gold-400 font-semibold' : ''}`}>Players Placed</button> */}
-            {/* <button onClick={() => scrollToSection('client-websites')} className="hover:text-gold-400 transition cursor-pointer whitespace-nowrap">Cricket Clients Website</button> */}
+            {/* Removed Check Eligibility quick link to prevent overlap */}
             <button onClick={() => scrollToSection('faq')} className="hover:text-gold-400 transition cursor-pointer">FAQ</button>
             <button onClick={() => scrollToSection('contact')} className="hover:text-gold-400 transition cursor-pointer">Contact</button>
           </nav>
 
-          {/* Action buttons (Book Now) & Mobile Hamburguer */}
-          <div className="flex items-center space-x-3">
+          {/* Action buttons (Check Eligibility & Book Now) & Mobile Hamburger */}
+          <div className="flex items-center space-x-2.5">
+            <button 
+              onClick={() => { try { sessionStorage.setItem('tcc_active_tab', 'eligibility'); sessionStorage.removeItem('tcc_eligibility_step'); sessionStorage.removeItem('tcc_confirmed_assessment'); } catch {} setActiveTab('eligibility'); setEligibilityStep(0); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
+
+              className="px-3 py-2 sm:px-4 sm:py-2.5 text-xs font-bold bg-[#0B5CFF] hover:bg-[#004BD6] text-white rounded hover:scale-105 hover:shadow-lg transition transform duration-150 uppercase tracking-widest cursor-pointer font-sans"
+            >
+              Check Eligibility - UK 2027
+            </button>
+
             <button 
               onClick={() => { setActiveTab('book'); setBookingStep(1); }}
-              className="px-4 py-2 sm:px-5 sm:py-2.5 text-xs font-bold bg-gold-gradient text-navy-950 rounded border border-gold-400 hover:scale-105 hover:shadow-lg transition transform duration-150 uppercase tracking-widest"
+              className="px-3 py-2 sm:px-4 sm:py-2.5 text-xs font-bold bg-white text-[#0B1A30] hover:bg-slate-100 rounded border border-white hover:scale-105 hover:shadow-lg transition transform duration-150 uppercase tracking-widest cursor-pointer font-sans"
             >
               Book Now
             </button>
@@ -1633,6 +2273,12 @@ END:VCALENDAR`;
               >
                 My Services
               </button>
+              <button 
+                onClick={() => { setActiveTab('eligibility'); setEligibilityStep(0); setMobileMenuOpen(false); }} 
+                className="text-left py-2 border-b border-navy-800/60 hover:text-gold-400 transition"
+              >
+                Check Eligibility - UK 2027
+              </button>
               {/* <button 
                 onClick={() => { setActiveTab('placements'); setMobileMenuOpen(false); }} 
                 className="text-left py-2 border-b border-navy-800/60 hover:text-gold-400 transition"
@@ -1669,7 +2315,7 @@ END:VCALENDAR`;
           href="https://wa.me/918591133960" 
           target="_blank" 
           rel="noopener noreferrer"
-          className="bg-emerald-500 hover:bg-emerald-600 text-white p-3.5 rounded-full shadow-2xl flex items-center justify-center transform hover:scale-110 transition duration-200 border-2 border-white/20"
+          className="bg-[#25D366] hover:bg-[#20ba5a] text-white p-3.5 rounded-full shadow-2xl flex items-center justify-center transform hover:scale-110 transition duration-200 border-2 border-white/20"
           title="Contact on WhatsApp"
           id="floating-whatsapp"
         >
@@ -1709,11 +2355,9 @@ END:VCALENDAR`;
             {/* --- HERO BANNER --- */}
             <section 
               id="home" 
-              className="relative min-h-[90vh] bg-navy-950 flex items-center overflow-hidden py-16 px-4"
+              className="relative min-h-[90vh] flex items-center overflow-hidden py-16 px-4"
               style={{
-                backgroundImage: `linear-gradient(rgba(6, 13, 27, 0.88), rgba(6, 13, 27, 0.95)), url(${stadiumBg})`,
-                backgroundSize: 'cover',
-                backgroundPosition: 'center',
+                background: 'linear-gradient(135deg, #020817 0%, #0a1628 25%, #0d2240 55%, #13315c 80%, #1a3a6b 100%)',
               }}
             >
               <div className="max-w-7xl mx-auto w-full grid grid-cols-1 lg:grid-cols-12 gap-12 items-center relative z-10">
@@ -1725,20 +2369,20 @@ END:VCALENDAR`;
                     <span className="text-gold-500 text-xs font-semibold uppercase tracking-wider">Independent Global Advisor</span>
                   </div>
 
-                  <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold text-white font-display leading-tight">
+                  <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold text-[#D4AF37] font-display leading-tight">
                     Prakash Palande <br/>
                     <span className="text-gradient-gold">Cricket Consultant & Advisor</span>
                   </h1>
 
-                  <h2 className="text-xl sm:text-2xl font-semibold text-gold-200 max-w-2xl font-sans">
+                  <h2 className="text-xl sm:text-2xl font-semibold text-gold-300 max-w-2xl font-sans">
                     Confused About Your Cricket Career? Let's Build Your Path to Global Cricket Opportunities.
                   </h2>
 
-                  <p className="text-slate-300 text-sm sm:text-base max-w-2xl leading-relaxed font-light">
+                  <p className="text-gold-100/90 text-sm sm:text-base max-w-2xl leading-relaxed font-light">
                     Whether you're an aspiring cricketer looking for overseas opportunities, a cricket club seeking professional consultation, or an organisation planning international cricket tours, I provide honest, independent guidance backed by years of experience and a global cricket network.
                   </p>
 
-                  <p className="text-slate-300 text-sm sm:text-base max-w-2xl leading-relaxed font-light">
+                  <p className="text-gold-100/90 text-sm sm:text-base max-w-2xl leading-relaxed font-light">
                     My aim is to help players, clubs and cricket organisations make informed decisions through professional consulting, international networking and operational expertise.
                   </p>
 
@@ -1746,7 +2390,7 @@ END:VCALENDAR`;
                   <div className="pt-4 flex flex-wrap gap-4">
                     <button 
                       onClick={() => { setActiveTab('book'); setBookingStep(1); }}
-                      className="px-8 py-4 bg-gold-gradient text-navy-950 font-bold rounded shadow-lg hover:scale-105 transform transition duration-150 uppercase tracking-wider text-xs border border-gold-400"
+                      className="px-8 py-4 bg-white text-[#0B1A30] hover:bg-slate-100 font-bold rounded shadow-lg hover:scale-105 transform transition duration-150 uppercase tracking-wider text-xs"
                     >
                       Book a Consultation
                     </button>
@@ -1754,7 +2398,7 @@ END:VCALENDAR`;
                       href="https://wa.me/918591133960" 
                       target="_blank" 
                       rel="noopener noreferrer"
-                      className="px-6 py-4 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded flex items-center space-x-2 transition text-xs uppercase tracking-wider"
+                      className="px-6 py-4 bg-[#25D366] hover:bg-[#20ba5a] text-white font-semibold rounded flex items-center space-x-2 transition text-xs uppercase tracking-wider"
                     >
                       <Phone className="h-4 w-4 fill-current" />
                       <span>Contact on WhatsApp</span>
@@ -1781,7 +2425,7 @@ END:VCALENDAR`;
                     <div className="absolute bottom-4 left-4 right-4 bg-navy-900/90 backdrop-blur-md px-4 py-3 rounded-lg border border-gold-500/20 z-20">
                       <p className="text-gold-500 text-xs uppercase tracking-wider font-semibold">Ex-Mumbai U19 Player</p>
                       <p className="text-white font-display font-bold text-sm">Prakash Palande</p>
-                      <p className="text-slate-300 text-xs">Cricket Consultant & Advisor</p>
+                      <p className="text-gold-300 text-xs">Cricket Consultant & Advisor</p>
                     </div>
                   </div>
                 </div>
@@ -1797,7 +2441,7 @@ END:VCALENDAR`;
               <div className="bg-navy-900 rounded-2xl p-8 shadow-xl text-center flex flex-col md:flex-row items-center justify-between border border-gold-500/10">
                 <div className="text-left mb-6 md:mb-0">
                   <h3 className="text-white text-lg font-bold font-display">Are you looking for overseas cricket career guidance or a club looking for overseas player?</h3>
-                  <p className="text-slate-300 text-sm">Book a direct premium consultation and lock in your session slot instantly.</p>
+                  <p className="text-amber-100 text-sm">Book a direct premium consultation and lock in your session slot instantly.</p>
                 </div>
                 <div className="flex flex-wrap gap-3">
                   <button 
@@ -1863,6 +2507,14 @@ END:VCALENDAR`;
                         <p className="text-slate-600 text-xs leading-relaxed font-light">
                           Direct connection channels to place eligible players in foreign leagues (UK, Europe, Australia, Gulf, Americas), optimizing contract and visa logistics.
                         </p>
+                        <div className="mt-4">
+                          <button
+                            onClick={() => { setActiveTab('eligibility'); setEligibilityStep(0); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
+                            className="w-full py-2 bg-[#0B1A30] hover:bg-navy-950 text-white font-bold rounded text-xs uppercase tracking-wider transition cursor-pointer shadow-sm font-sans"
+                          >
+                            Check My Eligibility
+                          </button>
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -1969,22 +2621,22 @@ END:VCALENDAR`;
                   
                   <div className="space-y-2">
                     <p className="text-gold-500 text-4xl sm:text-5xl font-extrabold font-display">50+</p>
-                    <p className="text-xs sm:text-sm text-slate-300 uppercase tracking-widest font-medium">Overseas Placements</p>
+                    <p className="text-xs sm:text-sm text-amber-100 uppercase tracking-widest font-medium">Overseas Placements</p>
                   </div>
 
                   <div className="space-y-2 border-l border-navy-800">
                     <p className="text-gold-500 text-4xl sm:text-5xl font-extrabold font-display">6+</p>
-                    <p className="text-xs sm:text-sm text-slate-300 uppercase tracking-widest font-medium">Global Network Countries</p>
+                    <p className="text-xs sm:text-sm text-amber-100 uppercase tracking-widest font-medium">Global Network Countries</p>
                   </div>
 
                   <div className="space-y-2 border-l border-navy-800">
                     <p className="text-gold-500 text-4xl sm:text-5xl font-extrabold font-display">15+</p>
-                    <p className="text-xs sm:text-sm text-slate-300 uppercase tracking-widest font-medium">Years in Administration</p>
+                    <p className="text-xs sm:text-sm text-amber-100 uppercase tracking-widest font-medium">Years in Administration</p>
                   </div>
 
                   <div className="space-y-2 border-l border-navy-800">
                     <p className="text-gold-500 text-4xl sm:text-5xl font-extrabold font-display">7+</p>
-                    <p className="text-xs sm:text-sm text-slate-300 uppercase tracking-widest font-medium">Organisations Served</p>
+                    <p className="text-xs sm:text-sm text-amber-100 uppercase tracking-widest font-medium">Organisations Served</p>
                   </div>
 
                 </div>
@@ -2157,7 +2809,7 @@ END:VCALENDAR`;
                       href="https://wa.me/918591133960" 
                       target="_blank" 
                       rel="noopener noreferrer"
-                      className="px-6 py-4 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded flex items-center space-x-2 transition text-xs uppercase tracking-wider"
+                      className="px-6 py-4 bg-[#25D366] hover:bg-[#20ba5a] text-white font-semibold rounded flex items-center space-x-2 transition text-xs uppercase tracking-wider"
                     >
                       <Phone className="h-4 w-4 fill-current" />
                       <span>WhatsApp Inquiries</span>
@@ -2515,8 +3167,1029 @@ END:VCALENDAR`;
         )} */}
 
         {/* =========================================================================
-            2. BOOK A PREMIUM CONSULTATION WORKSPACE TAB
+            1.5. UK OVERSEAS CRICKET ELIGIBILITY ASSESSMENT WORKSPACE TAB
            ========================================================================= */}
+        {activeTab === 'eligibility' && (
+          <div className="py-12 bg-slate-50 min-h-[85vh] text-slate-800 font-sans">
+            <div className={`${eligibilityStep === 0 ? 'max-w-4xl' : 'max-w-3xl'} mx-auto px-4 sm:px-6`}>
+              
+              {/* Back Button */}
+              {eligibilityStep <= 17 && (
+                <div className="mb-6 print:hidden">
+                  <button 
+                    onClick={() => {
+                      if (eligibilityStep === 0) {
+                        try { sessionStorage.removeItem('tcc_active_tab'); } catch {}
+                        setActiveTab('main');
+                      } else if (eligibilityStep === 1) {
+                        setEligibilityStep(0);
+                      } else if (window.confirm("Are you sure you want to exit the Eligibility Assessment? Your current progress will be lost.")) {
+                        try { sessionStorage.removeItem('tcc_confirmed_assessment'); sessionStorage.removeItem('tcc_eligibility_step'); sessionStorage.removeItem('tcc_active_tab'); } catch {}
+                        setActiveTab('main');
+                        setEligibilityStep(0);
+                        setEligibilityForm(initialEligibilityForm);
+                      }
+                    }}
+                    className="flex items-center space-x-2 text-slate-600 hover:text-[#0B1A30] font-semibold text-sm transition cursor-pointer"
+                  >
+                    <ChevronLeft className="h-4 w-4" />
+                    <span>{eligibilityStep === 0 ? 'Back to Homepage' : 'Cancel & Back to Homepage'}</span>
+                  </button>
+                </div>
+              )}
+
+              {/* Step Title & Progress for the vertical form */}
+              {eligibilityStep === 1 && (
+                <div className="mb-8 text-left">
+                  <div className="flex justify-between items-center mb-2">
+                    <span className="text-[10px] font-black uppercase tracking-widest text-[#0B1A30] font-display">
+                      UK Cricket Eligibility Assessment
+                    </span>
+                    <span className="text-xs font-mono font-bold text-gold-600">
+                      Sections 1 to 3
+                    </span>
+                  </div>
+                  <div className="w-full bg-[#0B1A30]/10 h-1.5 rounded-full overflow-hidden">
+                    <div className="bg-[#0B1A30] h-full w-full" />
+                  </div>
+                </div>
+              )}
+
+              {/* STEP 0: INFOGRAPHIC PROMO */}
+              {eligibilityStep === 0 && (
+                <div className="bg-white rounded-xl shadow-lg border border-slate-200 p-6 sm:p-8 relative">
+                  <div className="space-y-6 animate-fade-in text-center">
+                    <div className="relative max-w-full rounded-xl overflow-hidden shadow-md border border-slate-200/80 mx-auto">
+                      <img 
+                        src={ukEligibilityReportDesign} 
+                        alt="UK Eligibility Report Premium Infographic" 
+                        className="w-full h-auto object-contain mx-auto"
+                      />
+                    </div>
+                    <div className="pt-4 max-w-md mx-auto">
+                      <button
+                        type="button"
+                        onClick={() => setEligibilityStep(1)}
+                        className="w-full py-4 bg-[#0B1A30] hover:bg-navy-950 text-white font-extrabold rounded-xl uppercase tracking-widest text-xs shadow-lg transition transform duration-150 hover:scale-[1.01] flex items-center justify-center space-x-2 cursor-pointer font-sans"
+                      >
+                        <span>Check My Eligibility</span>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+               {/* STEP 1: VERTICAL SCROLLABLE FORM */}
+              {eligibilityStep === 1 && (
+                <div className="space-y-8 animate-fade-in text-left">
+                  <div className="text-center pb-2">
+                    <h2 className="text-2xl font-black text-[#0B1A30] font-display uppercase tracking-tight">UK Cricket Eligibility Intake Form</h2>
+                    <p className="text-slate-500 text-xs mt-1 font-sans">Please fill out all the sections below honestly to submit your details for review.</p>
+                  </div>
+
+                  {/* Section Title & Progress Indicator */}
+                  <div className="mb-4 text-left">
+                    <div className="flex justify-between items-center text-xs font-bold text-[#0B1A30] font-display uppercase">
+                      <span>Section {activeSection} of 3</span>
+                      <span className="text-gold-600 font-mono">
+                        {activeSection === 1 ? 'Personal Details & Contact' : activeSection === 2 ? 'Cricket Credentials & Play History' : 'Background declarations'}
+                      </span>
+                    </div>
+                    <div className="w-full bg-[#0B1A30]/10 h-1.5 rounded-full overflow-hidden mt-1.5">
+                      <div 
+                        className="bg-gold-500 h-full transition-all duration-300"
+                        style={{ width: `${(activeSection / 3) * 100}%` }}
+                      />
+                    </div>
+                  </div>
+
+                  {/* SECTION 1: IDENTITY & CONTACT DETAILS */}
+                  {activeSection === 1 && (
+                    <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden animate-fade-in">
+                      <div className="bg-[#0B1A30] text-[#D4AF37] px-6 py-4 rounded-t-xl font-bold font-display uppercase text-xs tracking-wider border-b border-gold-500/20 flex items-center justify-between">
+                        <span>Section 1: Personal Details & Contact</span>
+                        <span className="text-[10px] text-gold-300/80 normal-case font-semibold font-sans">Fields 1–6</span>
+                      </div>
+                      <div className="p-6 space-y-6">
+                        {/* Q1 First Name */}
+                        <div className="space-y-2">
+                          <label className="block text-xs font-bold text-slate-700 uppercase font-sans">1. First Name *</label>
+                          <input
+                            type="text"
+                            value={eligibilityForm.firstName}
+                            onChange={(e) => handleEligibilityChange('firstName', e.target.value)}
+                            className="w-full text-xs p-3.5 border border-slate-300 rounded-xl focus:outline-none focus:border-[#D4AF37] bg-white text-slate-800 font-semibold font-sans"
+                            placeholder="Enter your first name"
+                          />
+                        </div>
+
+                        {/* Q2 Last Name */}
+                        <div className="space-y-2">
+                          <label className="block text-xs font-bold text-slate-700 uppercase font-sans">2. Last Name *</label>
+                          <input
+                            type="text"
+                            value={eligibilityForm.lastName}
+                            onChange={(e) => handleEligibilityChange('lastName', e.target.value)}
+                            className="w-full text-xs p-3.5 border border-slate-300 rounded-xl focus:outline-none focus:border-[#D4AF37] bg-white text-slate-800 font-semibold font-sans"
+                            placeholder="Enter your last name"
+                          />
+                        </div>
+
+                        {/* Q3 Age Group Check */}
+                        <div className="space-y-2">
+                          <label className="block text-xs font-bold text-slate-700 uppercase font-sans">3. Are you above 18 Years Old? *</label>
+                          {renderSelectDropdown('isAbove18', ['Yes', 'No'])}
+                        </div>
+
+                        {/* Q4 Nationality */}
+                        <div className="space-y-2">
+                          <label className="block text-xs font-bold text-slate-700 uppercase font-sans">4. Select Your Nationality *</label>
+                          {renderSelectDropdown('nationality', ['Indian', 'Sri Lankan', 'New Zealander', 'Australia', 'South African', 'Canadian', 'American'])}
+                        </div>
+
+                        {/* Q5 Passport validity */}
+                        <div className="space-y-2">
+                          <label className="block text-xs font-bold text-slate-700 uppercase font-sans">5. Do you have a valid passport for 6 or more months? *</label>
+                          {renderSelectDropdown('hasValidPassport', ['Yes', 'No'])}
+                        </div>
+
+                        {/* Q6 Contact information */}
+                        <div className="space-y-4 pt-4 border-t border-slate-100">
+                          <h4 className="text-xs font-bold text-[#0B1A30] uppercase tracking-wider font-display text-left">6. Contact Information</h4>
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                              <label className="block text-xs font-bold text-slate-500 uppercase mb-1.5 font-sans">Email ID *</label>
+                              <input
+                                type="email"
+                                value={eligibilityForm.email}
+                                onChange={(e) => handleEligibilityChange('email', e.target.value)}
+                                className="w-full text-xs p-3.5 border border-slate-300 rounded-xl focus:outline-none focus:border-[#D4AF37] bg-white text-slate-800 font-semibold font-sans"
+                                placeholder="e.g. name@example.com"
+                              />
+                            </div>
+                            <div>
+                              <label className="block text-xs font-bold text-slate-550 uppercase mb-1.5 font-sans">Mobile Number *</label>
+                              <div className="flex rounded-xl shadow-sm overflow-hidden border border-slate-300">
+                                <span className="inline-flex items-center px-4 bg-slate-100 text-slate-600 font-extrabold text-xs select-none border-r border-slate-200">
+                                  {getNationalityCode(eligibilityForm.nationality) || '+'}
+                                </span>
+                                <input
+                                  type="tel"
+                                  value={eligibilityForm.mobileNumber.replace(getNationalityCode(eligibilityForm.nationality), '').trim()}
+                                  onChange={(e) => {
+                                    const prefix = getNationalityCode(eligibilityForm.nationality);
+                                    const val = e.target.value.replace(/[^0-9]/g, '');
+                                    handleEligibilityChange('mobileNumber', prefix ? `${prefix} ${val}` : val);
+                                  }}
+                                  className="flex-1 min-w-0 block w-full px-3.5 py-3 text-xs focus:outline-none bg-white text-slate-800 font-semibold font-sans"
+                                  placeholder="Enter mobile number"
+                                />
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Navigation for Section 1 */}
+                      <div className="p-6 bg-slate-50 border-t border-slate-200 flex justify-between items-center gap-4">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            if (window.confirm("Are you sure you want to cancel and exit? Your progress will be lost.")) {
+                              setActiveTab('main');
+                              setEligibilityStep(0);
+                              setActiveSection(1);
+                              setEligibilityForm(initialEligibilityForm);
+                            }
+                          }}
+                          className="px-6 py-3 border border-slate-355 hover:bg-slate-100 text-slate-700 font-bold rounded-lg text-xs uppercase tracking-wider transition bg-white cursor-pointer font-sans"
+                        >
+                          Cancel
+                        </button>
+
+                        <button
+                          type="button"
+                          disabled={!isSection1Complete()}
+                          onClick={() => setActiveSection(2)}
+                          className="px-8 py-3 bg-[#0B1A30] hover:bg-navy-950 text-white font-bold rounded-lg text-xs uppercase tracking-wider shadow-md transition disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer font-sans"
+                        >
+                          Next Section
+                        </button>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* SECTION 2: CRICKET CREDENTIALS & PLAY HISTORY */}
+                  {activeSection === 2 && (
+                    <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden animate-fade-in">
+                      <div className="bg-[#0B1A30] text-[#D4AF37] px-6 py-4 rounded-t-xl font-bold font-display uppercase text-xs tracking-wider border-b border-gold-500/20 flex items-center justify-between">
+                        <span>Section 2: Cricket Credentials & Play History</span>
+                        <span className="text-[10px] text-gold-300/80 normal-case font-semibold font-sans">Fields 7–13</span>
+                      </div>
+                      <div className="p-6 space-y-6">
+                        
+                        {/* Q7 First-Class Cricket */}
+                        <div className="space-y-4">
+                          <label className="block text-xs font-bold text-slate-700 uppercase font-sans">7. First-Class Cricket *</label>
+                          <p className="text-slate-500 text-[11px] font-sans">Have you played First-Class cricket for the cricket board affiliated to the Test Playing Nation?</p>
+                          {renderSelectDropdown('firstClassPlayed', ['Yes', 'No'])}
+                          
+                          {eligibilityForm.firstClassPlayed === 'Yes' && (
+                            <div className="p-5 bg-slate-50 rounded-2xl border border-slate-200 space-y-4 animate-fade-in text-left">
+                              <div>
+                                <label className="block text-xs font-bold text-slate-550 uppercase mb-1.5 font-sans">Which year you played last *</label>
+                                {renderSelectDropdown('firstClassLastYear', Array.from({ length: 2026 - 2001 + 1 }, (_, i) => String(2026 - i)))}
+                              </div>
+                              <div>
+                                <label className="block text-xs font-bold text-slate-550 uppercase mb-1.5 font-sans">How many First-Class games have you played in the last 36 months? *</label>
+                                {renderSelectDropdown('firstClassMatches36Months', ['0', ...Array.from({ length: 40 }, (_, i) => String(i + 1))])}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Q8 List A Cricket */}
+                        <div className="space-y-4 pt-4 border-t border-slate-100">
+                          <label className="block text-xs font-bold text-slate-700 uppercase font-sans">8. List A Cricket *</label>
+                          <p className="text-slate-500 text-[11px] font-sans">Have you played List A cricket for the cricket board affiliated to the Test Playing Nation?</p>
+                          {renderSelectDropdown('listAPlayed', ['Yes', 'No'])}
+                          
+                          {eligibilityForm.listAPlayed === 'Yes' && (
+                            <div className="p-5 bg-slate-50 rounded-2xl border border-slate-200 space-y-4 animate-fade-in text-left">
+                              <div>
+                                <label className="block text-xs font-bold text-slate-550 uppercase mb-1.5 font-sans">Which year you played last *</label>
+                                {renderSelectDropdown('listALastYear', Array.from({ length: 2026 - 2001 + 1 }, (_, i) => String(2026 - i)))}
+                              </div>
+                              <div>
+                                <label className="block text-xs font-bold text-slate-550 uppercase mb-1.5 font-sans">List A matches in last 36 months *</label>
+                                {renderSelectDropdown('listAMatches36Months', ['0', ...Array.from({ length: 40 }, (_, i) => String(i + 1))])}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Q9 Domestic T20 Cricket */}
+                        <div className="space-y-4 pt-4 border-t border-slate-100">
+                          <label className="block text-xs font-bold text-slate-700 uppercase font-sans">9. Domestic T20 Cricket *</label>
+                          <p className="text-slate-500 text-[11px] font-sans">Have you played Domestic T20 cricket for the cricket board affiliated to the Test Playing Nation?</p>
+                          {renderSelectDropdown('domesticT20Played', ['Yes', 'No'])}
+                          
+                          {eligibilityForm.domesticT20Played === 'Yes' && (
+                            <div className="p-5 bg-slate-50 rounded-2xl border border-slate-200 space-y-4 animate-fade-in text-left">
+                              <div>
+                                <label className="block text-xs font-bold text-slate-550 uppercase mb-1.5 font-sans">Which year you played last *</label>
+                                {renderSelectDropdown('domesticT20LastYear', Array.from({ length: 2026 - 2001 + 1 }, (_, i) => String(2026 - i)))}
+                              </div>
+                              <div>
+                                <label className="block text-xs font-bold text-slate-550 uppercase mb-1.5 font-sans">T20 matches in last 36 months *</label>
+                                {renderSelectDropdown('domesticT20Matches36Months', ['0', ...Array.from({ length: 40 }, (_, i) => String(i + 1))])}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Q10 Age Group Cricket */}
+                        <div className="space-y-4 pt-4 border-t border-slate-100">
+                          <label className="block text-xs font-bold text-slate-700 uppercase font-sans">10. Age Group Cricket *</label>
+                          <p className="text-slate-500 text-[11px] font-sans">Have you played Age Group State/County/Province level cricket for the cricket board affiliated to the Test Playing Nation?</p>
+                          {renderSelectDropdown('ageGroupPlayed', ['Yes', 'No'])}
+                          
+                          {eligibilityForm.ageGroupPlayed === 'Yes' && (
+                            <div className="p-5 bg-slate-50 rounded-2xl border border-slate-200 space-y-2 animate-fade-in text-left">
+                              <label className="block text-xs font-bold text-slate-550 uppercase mb-1.5 font-sans">Which year you played last *</label>
+                              {renderSelectDropdown('ageGroupLastYear', Array.from({ length: 2026 - 2001 + 1 }, (_, i) => String(2026 - i)))}
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Q11 ICC/State Approved T20 League */}
+                        <div className="space-y-4 pt-4 border-t border-slate-100">
+                          <label className="block text-xs font-bold text-slate-700 uppercase font-sans">11. ICC/State Approved T20 League *</label>
+                          <p className="text-slate-500 text-[11px] leading-relaxed font-sans">
+                            Have you played in any T20 league approved by a Test Playing Nation or Board affiliated to ICC? <br />
+                            <span className="text-[10px] text-slate-400 italic">Examples: T20 Mumbai League, Uttar Pradesh T20 League, MP Premier League, Oman D20</span>
+                          </p>
+                          {renderSelectDropdown('iccT20Played', ['Yes', 'No'])}
+                          
+                          {eligibilityForm.iccT20Played === 'Yes' && (
+                            <div className="p-5 bg-slate-50 rounded-2xl border border-slate-200 space-y-2 animate-fade-in text-left">
+                              <label className="block text-xs font-bold text-slate-555 uppercase mb-1.5 font-sans">Which year you played last *</label>
+                              {renderSelectDropdown('iccT20LastYear', Array.from({ length: 2026 - 2001 + 1 }, (_, i) => String(2026 - i)))}
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Q12 University Cricket */}
+                        <div className="space-y-4 pt-4 border-t border-slate-100">
+                          <label className="block text-xs font-bold text-slate-700 uppercase font-sans">12. University Cricket *</label>
+                          <p className="text-slate-500 text-[11px] font-sans">Have you represented University Cricket?</p>
+                          {renderSelectDropdown('universityPlayed', ['Yes', 'No'])}
+                          
+                          {eligibilityForm.universityPlayed === 'Yes' && (
+                            <div className="p-5 bg-slate-50 rounded-2xl border border-slate-200 space-y-2 animate-fade-in text-left">
+                              <label className="block text-xs font-bold text-slate-555 uppercase mb-1.5 font-sans">Which year you played last *</label>
+                              {renderSelectDropdown('universityLastYear', Array.from({ length: 2026 - 2001 + 1 }, (_, i) => String(2026 - i)))}
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Q13 Club/District Level */}
+                        <div className="space-y-2 pt-4 border-t border-slate-100">
+                          <label className="block text-xs font-bold text-slate-700 uppercase font-sans">13. Club/District Cricket *</label>
+                          <p className="text-slate-500 text-[11px] font-sans">Are you currently playing cricket at Club or District level? *</p>
+                          {renderSelectDropdown('clubDistrictLevel', ['Yes', 'No'])}
+                        </div>
+                      </div>
+
+                      {/* Navigation for Section 2 */}
+                      <div className="p-6 bg-slate-50 border-t border-slate-200 flex justify-between items-center gap-4">
+                        <button
+                          type="button"
+                          onClick={() => setActiveSection(1)}
+                          className="px-6 py-3 border border-slate-355 hover:bg-slate-100 text-slate-700 font-bold rounded-lg text-xs uppercase tracking-wider transition bg-white cursor-pointer font-sans"
+                        >
+                          Previous Section
+                        </button>
+
+                        <button
+                          type="button"
+                          disabled={!isSection2Complete()}
+                          onClick={() => setActiveSection(3)}
+                          className="px-8 py-3 bg-[#0B1A30] hover:bg-navy-950 text-white font-bold rounded-lg text-xs uppercase tracking-wider shadow-md transition disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer font-sans"
+                        >
+                          Next Section
+                        </button>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* SECTION 3: BACKGROUND & LEGAL CLEARANCE */}
+                  {activeSection === 3 && (
+                    <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden animate-fade-in">
+                      <div className="bg-[#0B1A30] text-[#D4AF37] px-6 py-4 rounded-t-xl font-bold font-display uppercase text-xs tracking-wider border-b border-gold-500/20 flex items-center justify-between">
+                        <span>Section 3: Background Declarations</span>
+                        <span className="text-[10px] text-gold-300/80 normal-case font-semibold font-sans">Fields 14–16</span>
+                      </div>
+                      <div className="p-6 space-y-6">
+                        
+                        {/* Q14 Criminal Cases */}
+                        <div className="space-y-2">
+                          <label className="block text-xs font-bold text-slate-700 uppercase font-sans">14. Criminal Cases *</label>
+                          <p className="text-slate-500 text-[11px] font-sans">Do you currently have any criminal cases pending against you? *</p>
+                          {renderSelectDropdown('pendingCriminalCases', ['Yes', 'No'])}
+                        </div>
+
+                        {/* Q15 Deportation History */}
+                        <div className="space-y-2 pt-4 border-t border-slate-100">
+                          <label className="block text-xs font-bold text-slate-700 uppercase font-sans">15. Deportation History *</label>
+                          <p className="text-slate-500 text-[11px] font-sans">Have you ever been deported from any country? *</p>
+                          {renderSelectDropdown('deportationHistory', ['Yes', 'No'])}
+                        </div>
+
+                        {/* Q16 Criminal Conviction */}
+                        <div className="space-y-2 pt-4 border-t border-slate-100">
+                          <label className="block text-xs font-bold text-slate-700 uppercase font-sans">16. Criminal Conviction *</label>
+                          <p className="text-slate-500 text-[11px] font-sans">Have you ever been convicted in a criminal case? *</p>
+                          {renderSelectDropdown('criminalConviction', ['Yes', 'No'])}
+                        </div>
+                      </div>
+
+                      {/* Navigation for Section 3 */}
+                      <div className="p-6 bg-slate-50 border-t border-slate-200 flex justify-between items-center gap-4">
+                        <button
+                          type="button"
+                          onClick={() => setActiveSection(2)}
+                          className="px-6 py-3 border border-slate-355 hover:bg-slate-100 text-slate-700 font-bold rounded-lg text-xs uppercase tracking-wider transition bg-white cursor-pointer font-sans"
+                        >
+                          Previous Section
+                        </button>
+
+                        <button
+                          type="button"
+                          disabled={!isFormComplete()}
+                          onClick={() => setShowLegalModal(true)}
+                          className="px-8 py-3 bg-gold-gradient text-navy-950 hover:bg-gold-600 hover:text-navy-950 rounded-lg text-xs font-bold uppercase tracking-wider shadow-md transition disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer font-sans"
+                        >
+                          Submit Form
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* STEP 17: SECURE PAYMENT GATEWAY */}
+              {eligibilityStep === 17 && (
+                <div className="bg-white rounded-xl shadow-lg border border-slate-200 p-6 sm:p-8 relative animate-fade-in">
+                  <div className="space-y-6 text-center">
+                    <div className="text-center pb-4 border-b border-slate-100">
+                      <h2 className="text-xl font-extrabold text-navy-900 tracking-tight font-display uppercase">COMPLETE YOUR UK ELIGIBILITY ASSESSMENT</h2>
+                      <p className="text-slate-550 text-xs mt-1.5 max-w-md mx-auto leading-relaxed font-sans">
+                        Securely complete your professional eligibility intake fee to submit your profile for Review.
+                      </p>
+                    </div>
+
+                    <div className="p-5 bg-slate-50/80 rounded-xl border border-slate-200 space-y-4 text-left animate-fade-in">
+                      <div className="flex justify-between items-center text-xs">
+                        <span className="font-bold text-navy-900 uppercase">Assessment Intake Item</span>
+                        <span className="text-slate-650 font-semibold font-sans">UK Cricket Eligibility Assessment Fee</span>
+                      </div>
+                      <div className="flex justify-between items-center border-t border-slate-200 pt-3">
+                        <span className="font-bold text-navy-900 uppercase">Total Assessment Fee</span>
+                        <span className="text-lg font-extrabold text-[#0B1A30]">₹500 INR</span>
+                      </div>
+                    </div>
+
+                    {eligibilityPaymentError && (
+                      <div className="p-3.5 bg-red-50 border-l-4 border-red-500 text-red-800 text-xs font-semibold rounded-r flex items-start space-x-2 text-left animate-fade-in">
+                        <AlertCircle className="h-4.5 w-4.5 shrink-0 mt-0.5" />
+                        <span>{eligibilityPaymentError}</span>
+                      </div>
+                    )}
+
+                    <div className="space-y-3 pt-3 flex flex-col items-center">
+                      <button
+                        type="button"
+                        disabled={isProcessingEligibilityPayment}
+                        onClick={handleInitiateEligibilityPayment}
+                        className="w-full py-4 bg-[#0B1A30] hover:bg-navy-950 text-white font-extrabold rounded-xl uppercase tracking-widest text-xs border border-navy-900 hover:scale-[1.01] transition transform duration-150 shadow-lg disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-2 cursor-pointer font-sans"
+                      >
+                        {isProcessingEligibilityPayment ? (
+                          <>
+                            <span className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent inline-block mr-1" />
+                            <span>Processing Secure Payment...</span>
+                          </>
+                        ) : (
+                          <>
+                            <ShieldCheck className="h-4.5 w-4.5" />
+                            <span>PROCEED TO SECURE PAYMENT</span>
+                          </>
+                        )}
+                      </button>
+
+                      {/* Sandbox simulation */}
+                      <button
+                        type="button"
+                        disabled={isProcessingEligibilityPayment}
+                        onClick={async () => {
+                          setIsProcessingEligibilityPayment(true);
+                          await new Promise(resolve => setTimeout(resolve, 1000));
+                          
+                          const uniqueId = 'TCA-ASS-' + Date.now();
+                          const assessmentPayload = {
+                            ...eligibilityForm,
+                            id: uniqueId,
+                            paymentAmount: 500,
+                            paymentCurrency: 'INR',
+                            paymentStatus: 'Paid',
+                            status: 'UNDER REVIEW',
+                            playerType: 'UNDER REVIEW',
+                            createdAt: new Date().toISOString()
+                          };
+
+                          try {
+                            const verifyResp = await fetch('/api/verify-payment', {
+                              method: 'POST',
+                              headers: { 'Content-Type': 'application/json' },
+                              body: JSON.stringify({
+                                razorpay_order_id: 'test_order_id_' + Date.now(),
+                                razorpay_payment_id: 'test_payment_id',
+                                razorpay_signature: 'test_signature',
+                                assessment: assessmentPayload
+                              })
+                            });
+
+                            if (verifyResp.ok) {
+                              const verifyResult = await verifyResp.json();
+                              const confirmed = {
+                                ...assessmentPayload,
+                                referenceNumber: verifyResult.referenceNumber || 'TCA-UK-2026-000000',
+                                paymentId: 'test_payment_id',
+                                transactionId: 'test_order_id',
+                                paymentStatus: 'Paid'
+                              };
+                              setConfirmedAssessment(confirmed);
+                              try { sessionStorage.setItem('tcc_confirmed_assessment', JSON.stringify(confirmed)); } catch {}
+                              try { sessionStorage.setItem('tcc_active_tab', 'eligibility'); } catch {}
+                              try { sessionStorage.setItem('tcc_eligibility_step', '18'); } catch {}
+                              setEligibilityStep(18);
+                            } else {
+                              setEligibilityPaymentError('Direct sandbox submission failed. Please try the secure checkout button.');
+                            }
+                          } catch (err: any) {
+                            setEligibilityPaymentError('Testing submission failed: ' + err.message);
+                          } finally {
+                            setIsProcessingEligibilityPayment(false);
+                          }
+                        }}
+                        className="text-[10px] text-slate-500 hover:text-navy-955 hover:underline uppercase font-bold tracking-wider pt-2 cursor-pointer font-sans"
+                      >
+                        [ Sandbox Mode: Simulate Successful Payment ]
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* STEP 18: PAYMENT SUCCESS SCREEN */}
+              {eligibilityStep === 18 && confirmedAssessment && (
+                <div className="bg-white rounded-xl shadow-lg border border-slate-200 p-6 sm:p-8 relative animate-fade-in">
+                  <div className="space-y-6 text-center py-6 font-sans">
+                    <div className="flex justify-center">
+                      <div className="bg-emerald-50 p-4 rounded-full border border-emerald-150 animate-bounce">
+                        <CheckCircle className="h-16 w-16 text-emerald-500 shrink-0" />
+                      </div>
+                    </div>
+
+                    <div className="space-y-2">
+                      <h2 className="text-xl font-extrabold text-navy-900 tracking-tight font-display uppercase">✅ Thank You, {confirmedAssessment?.lastName}</h2>
+                      <p className="text-slate-655 text-xs max-w-md mx-auto leading-relaxed">
+                        Your UK Cricket Eligibility Assessment has been successfully submitted.
+                      </p>
+                    </div>
+
+                    <div className="p-5 bg-slate-50 border border-slate-200 rounded-xl max-w-sm mx-auto space-y-3 text-left text-xs">
+                      <div className="flex justify-between items-center">
+                        <span className="text-slate-500 font-bold uppercase tracking-wider text-[10px] font-display">Payment Status</span>
+                        <span className="font-bold text-emerald-800 font-sans">Paid Successfully – ₹500</span>
+                      </div>
+                      <div className="flex justify-between items-center border-t border-slate-150 pt-2.5">
+                        <span className="text-slate-500 font-bold uppercase tracking-wider text-[10px] font-display">Application ID</span>
+                        <span className="font-mono font-bold text-gold-800 bg-gold-50 px-2.5 py-0.5 rounded border border-gold-200">
+                          {confirmedAssessment?.referenceNumber}
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="max-w-md mx-auto text-xs text-slate-550 font-medium leading-relaxed bg-slate-50 p-4 rounded-xl border border-slate-200 text-left font-sans">
+                      You will receive your eligibility report within the next 72 working hours. If additional information is required, The Cricket Advisor team will contact you by phone or email. <br /> <br />
+                      <strong>Thank You</strong> <br />
+                      Team The Cricket Advisor
+                    </div>
+
+                    <div className="pt-4 flex flex-col sm:flex-row gap-3 items-center justify-center">
+                      <button
+                        type="button"
+                        onClick={() => setShowReceiptModal(true)}
+                        className="w-full sm:w-auto px-5 py-3 bg-[#0B1A30] hover:bg-navy-950 text-white font-bold rounded-lg uppercase tracking-wider text-xs border border-navy-850 transition duration-150 shadow flex items-center justify-center space-x-1.5 cursor-pointer font-sans"
+                      >
+                        <Download className="h-4 w-4" />
+                        <span>Download Payment Receipt</span>
+                      </button>
+                      
+                      <button
+                        type="button"
+                        onClick={() => {
+                          try { sessionStorage.removeItem('tcc_confirmed_assessment'); sessionStorage.removeItem('tcc_eligibility_step'); sessionStorage.removeItem('tcc_active_tab'); } catch {}
+                          setActiveTab('main');
+                          setEligibilityStep(0);
+                          setEligibilityForm(initialEligibilityForm);
+                          setConfirmedAssessment(null);
+                        }}
+                        className="w-full sm:w-auto px-5 py-3 border border-slate-350 hover:bg-slate-50 text-slate-700 font-bold rounded-lg uppercase tracking-wider text-xs transition duration-150 cursor-pointer font-sans"
+                      >
+                        Return to Home
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+      {/* Assessment Receipt Modal */}
+      {showReceiptModal && confirmedAssessment && (
+        <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-start justify-center p-4 overflow-y-auto animate-fade-in print:p-0 print:bg-white print:static">
+          <div className="bg-white rounded-2xl shadow-2xl border border-slate-200 max-w-2xl w-full p-6 sm:p-8 space-y-6 relative text-slate-800 my-8 print:my-0 print:border-none print:shadow-none font-sans">
+            
+            {/* Modal Actions */}
+            <div className="flex justify-between items-center border-b border-slate-200 pb-4 print:hidden">
+              <div className="flex items-center space-x-2 text-[#0B1A30] font-bold uppercase text-xs tracking-wider">
+                <FileText className="h-5 w-5 text-[#D4AF37]" />
+                <span>UK Cricket Eligibility Assessment Receipt</span>
+              </div>
+              <div className="flex items-center space-x-2">
+                <button
+                  onClick={() => window.print()}
+                  className="px-4 py-2 bg-[#0B1A30] hover:bg-navy-955 text-white font-bold text-xs rounded-lg uppercase flex items-center space-x-1.5 transition shadow cursor-pointer"
+                >
+                  <Printer className="h-4 w-4" />
+                  <span>Print / Save PDF</span>
+                </button>
+                <button
+                  onClick={() => setShowReceiptModal(false)}
+                  className="p-2 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-lg transition cursor-pointer"
+                >
+                  <X className="h-5 w-5" />
+                </button>
+              </div>
+            </div>
+
+            {/* Printable Receipt Document */}
+            <div className="p-6 bg-slate-50 border border-slate-200 rounded-2xl space-y-6 print:bg-white print:border-none print:p-0">
+              
+              {/* Header Branding */}
+              <div className="flex flex-col sm:flex-row justify-between items-start border-b-2 border-[#0B1A30] pb-6 gap-4">
+                <div className="text-left">
+                  <span className="text-[10px] font-black tracking-widest text-[#D4AF37] uppercase">OFFICIAL PAYMENT RECEIPT</span>
+                  <h2 className="text-xl font-black font-display text-navy-955 uppercase tracking-tight">The Cricket Advisor</h2>
+                  <p className="text-xs text-slate-550 font-medium mt-0.5">Professional Cricket Placements, Board Advisory & Consultancy</p>
+                  <p className="text-[11px] text-slate-400 mt-1">Email: info@thecricketadvisor.com | Web: www.thecricketadvisor.com</p>
+                </div>
+
+                <div className="text-left sm:text-right font-mono text-xs space-y-1 bg-white p-3 rounded-lg border border-slate-200 print:border-slate-300">
+                  <p className="text-[10px] font-bold text-slate-400 uppercase">Application ID</p>
+                  <p className="font-extrabold text-[#0B1A30] text-sm">{confirmedAssessment?.referenceNumber}</p>
+                  <p className="text-slate-555 text-[11px]">Date: {confirmedAssessment?.createdAt ? new Date(confirmedAssessment.createdAt).toLocaleString() : new Date().toLocaleString()}</p>
+                  <div className="inline-block px-2.5 py-0.5 bg-emerald-100 text-emerald-800 font-bold text-[10px] rounded uppercase mt-1 border border-emerald-300">
+                    Payment: PAID
+                  </div>
+                </div>
+              </div>
+
+              {/* Client & Assessment details */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 text-xs border-b border-slate-200 pb-6 print:border-slate-300 text-left">
+                <div className="space-y-1.5">
+                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">BILLED TO (PLAYER)</p>
+                  <p className="font-extrabold text-[#0B1A30] text-sm">{confirmedAssessment?.firstName} {confirmedAssessment?.lastName}</p>
+                  <p className="text-slate-650"><strong>Email:</strong> {confirmedAssessment?.email}</p>
+                  <p className="text-slate-650"><strong>Mobile:</strong> {confirmedAssessment?.mobileNumber}</p>
+                  <p className="text-slate-650"><strong>Nationality:</strong> {confirmedAssessment?.nationality}</p>
+                </div>
+
+                <div className="space-y-1.5 bg-white p-4 rounded-xl border border-slate-200 print:border-slate-300">
+                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">PAYMENT DETAILS</p>
+                  <p className="text-slate-650"><strong>Amount:</strong> ₹500 INR</p>
+                  <p className="text-slate-650"><strong>Payment Method:</strong> Razorpay Secure Gateway</p>
+                  <p className="text-slate-650 break-all"><strong>Payment ID:</strong> {confirmedAssessment?.paymentId || 'N/A'}</p>
+                  <p className="text-slate-650 break-all"><strong>Transaction Ref:</strong> {confirmedAssessment?.transactionId || 'N/A'}</p>
+                </div>
+              </div>
+
+              {/* Itemized Table */}
+              <div className="overflow-x-auto">
+                <table className="w-full text-left text-xs border-collapse min-w-[500px]">
+                  <thead>
+                    <tr className="bg-[#0B1A30] text-white font-bold uppercase text-[10px] tracking-wider">
+                      <th className="p-3 rounded-l-lg">Description</th>
+                      <th className="p-3 text-center">Service Type</th>
+                      <th className="p-3 text-right rounded-r-lg">Amount</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-200">
+                    <tr>
+                      <td className="p-3 py-4 text-left">
+                        <p className="font-bold text-navy-900 text-sm">UK Cricket Eligibility Assessment</p>
+                        <p className="text-slate-500 text-[11px] mt-0.5">Comprehensive athletic credentials intake, visa route mapping review, and administrative eligibility profile check.</p>
+                      </td>
+                      <td className="p-3 py-4 text-center font-bold text-slate-700">Intake Assessment</td>
+                      <td className="p-3 py-4 text-right font-extrabold text-[#0B1A30] font-mono text-sm">₹500.00</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+
+              {/* Total Summary */}
+              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end border-t border-slate-200 pt-4 gap-4 print:border-slate-300">
+                <div className="text-[11px] text-slate-500 space-y-1 max-w-xs text-left">
+                  <p className="font-bold text-slate-750">Receipt Verification:</p>
+                  <p>This is a computer generated confirmation receipt. The fee paid towards the assessment is strictly non-refundable as per the legal declaration accepted before submission.</p>
+                </div>
+
+                <div className="w-full sm:w-64 bg-[#0B1A30] text-white p-4 rounded-xl space-y-2 text-xs text-right font-mono border border-gold-500/20 print:text-black print:bg-white print:border-none print:p-0">
+                  <div className="flex justify-between text-slate-300 print:text-slate-650">
+                    <span>Subtotal:</span>
+                    <span>₹423.73</span>
+                  </div>
+                  <div className="flex justify-between text-slate-300 print:text-slate-650">
+                    <span>GST (18%):</span>
+                    <span>₹76.27</span>
+                  </div>
+                  <div className="flex justify-between text-[#D4AF37] font-extrabold text-base border-t border-white/20 pt-2 font-display print:text-black print:border-slate-200">
+                    <span>TOTAL PAID:</span>
+                    <span>₹500.00</span>
+                  </div>
+                </div>
+              </div>
+
+            </div>
+
+          </div>
+        </div>
+      )}
+
+      {/* Assessment Detail Modal */}
+      {selectedAssessmentDetail && (
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto animate-fade-in font-sans">
+          <div className="bg-white rounded-2xl shadow-2xl border border-slate-200 max-w-2xl w-full max-h-[90vh] flex flex-col relative text-slate-800 my-8">
+            
+            {/* Modal Header */}
+            <div className="p-6 border-b border-slate-200 text-left flex justify-between items-center bg-[#0B1A30] text-white rounded-t-2xl">
+              <div>
+                <span className="text-[9px] font-mono bg-gold-500 text-navy-950 px-2.5 py-0.5 rounded font-black uppercase">
+                  Application: {selectedAssessmentDetail.referenceNumber || 'N/A'}
+                </span>
+                <h3 className="text-xl font-bold font-display text-white uppercase tracking-tight mt-1">
+                  {selectedAssessmentDetail.firstName} {selectedAssessmentDetail.lastName}
+                </h3>
+              </div>
+              <button
+                onClick={() => setSelectedAssessmentDetail(null)}
+                className="p-2 bg-white/10 hover:bg-white/20 text-white rounded-lg transition cursor-pointer"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+
+            {/* Modal Scrollable Content */}
+            <div className="p-6 overflow-y-auto space-y-6 text-left text-xs flex-1">
+              
+              {/* Profile Details */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 bg-slate-50 p-4 rounded-xl border border-slate-200">
+                <div>
+                  <p className="text-slate-400 font-bold uppercase text-[9px]">Email Address</p>
+                  <p className="font-bold text-sm text-navy-900">{selectedAssessmentDetail.email}</p>
+                </div>
+                <div>
+                  <p className="text-slate-400 font-bold uppercase text-[9px]">Mobile Phone</p>
+                  <p className="font-bold text-sm text-navy-900 font-mono">{selectedAssessmentDetail.mobileNumber}</p>
+                </div>
+                <div>
+                  <p className="text-slate-400 font-bold uppercase text-[9px]">Nationality</p>
+                  <p className="font-bold text-sm text-navy-900">{selectedAssessmentDetail.nationality}</p>
+                </div>
+                <div>
+                  <p className="text-slate-400 font-bold uppercase text-[9px]">Passport Valid (&gt;6 months)</p>
+                  <p className="font-bold text-sm text-navy-900">{selectedAssessmentDetail.hasValidPassport}</p>
+                </div>
+              </div>
+
+              {/* Cricket Credentials */}
+              <div className="space-y-4">
+                <h4 className="text-xs font-bold text-navy-955 uppercase border-b border-slate-200 pb-2">Cricket Experience & Play History</h4>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {/* First Class */}
+                  <div className="p-3 bg-slate-50/50 rounded-lg border border-slate-150 space-y-1">
+                    <p className="text-slate-500 font-bold text-[10px]">First-Class Cricket</p>
+                    <p className="font-extrabold text-navy-900">{selectedAssessmentDetail.firstClassPlayed}</p>
+                    {selectedAssessmentDetail.firstClassPlayed === 'Yes' && (
+                      <p className="text-[11px] text-slate-550 pt-1">
+                        Last played in <strong>{selectedAssessmentDetail.firstClassLastYear}</strong> | Matches in last 36 mos: <strong>{selectedAssessmentDetail.firstClassMatches36Months}</strong>
+                      </p>
+                    )}
+                  </div>
+
+                  {/* List A */}
+                  <div className="p-3 bg-slate-50/50 rounded-lg border border-slate-150 space-y-1">
+                    <p className="text-slate-500 font-bold text-[10px]">List A Cricket</p>
+                    <p className="font-extrabold text-navy-900">{selectedAssessmentDetail.listAPlayed}</p>
+                    {selectedAssessmentDetail.listAPlayed === 'Yes' && (
+                      <p className="text-[11px] text-slate-550 pt-1">
+                        Last played in <strong>{selectedAssessmentDetail.listALastYear}</strong> | Matches in last 36 mos: <strong>{selectedAssessmentDetail.listAMatches36Months}</strong>
+                      </p>
+                    )}
+                  </div>
+
+                  {/* Domestic T20 */}
+                  <div className="p-3 bg-slate-50/50 rounded-lg border border-slate-150 space-y-1">
+                    <p className="text-slate-500 font-bold text-[10px]">Domestic T20 Cricket</p>
+                    <p className="font-extrabold text-navy-900">{selectedAssessmentDetail.domesticT20Played}</p>
+                    {selectedAssessmentDetail.domesticT20Played === 'Yes' && (
+                      <p className="text-[11px] text-slate-550 pt-1">
+                        Last played in <strong>{selectedAssessmentDetail.domesticT20LastYear}</strong> | Matches in last 36 mos: <strong>{selectedAssessmentDetail.domesticT20Matches36Months}</strong>
+                      </p>
+                    )}
+                  </div>
+
+                  {/* Age Group */}
+                  <div className="p-3 bg-slate-50/50 rounded-lg border border-slate-150 space-y-1">
+                    <p className="text-slate-500 font-bold text-[10px]">Age Group Representative</p>
+                    <p className="font-extrabold text-navy-900">{selectedAssessmentDetail.ageGroupPlayed}</p>
+                    {selectedAssessmentDetail.ageGroupPlayed === 'Yes' && (
+                      <p className="text-[11px] text-slate-550 pt-1">
+                        Last played in <strong>{selectedAssessmentDetail.ageGroupLastYear}</strong>
+                      </p>
+                    )}
+                  </div>
+
+                  {/* ICC/State Approved T20 */}
+                  <div className="p-3 bg-slate-50/50 rounded-lg border border-slate-150 space-y-1 col-span-1 md:col-span-2">
+                    <p className="text-slate-500 font-bold text-[10px]">ICC/State Approved T20 League</p>
+                    <p className="font-extrabold text-navy-900">{selectedAssessmentDetail.iccT20Played}</p>
+                    {selectedAssessmentDetail.iccT20Played === 'Yes' && (
+                      <p className="text-[11px] text-slate-550 pt-1">
+                        Last played in <strong>{selectedAssessmentDetail.iccT20LastYear}</strong>
+                      </p>
+                    )}
+                  </div>
+
+                  {/* University */}
+                  <div className="p-3 bg-slate-50/50 rounded-lg border border-slate-150 space-y-1">
+                    <p className="text-slate-500 font-bold text-[10px]">University Cricket</p>
+                    <p className="font-extrabold text-navy-900">{selectedAssessmentDetail.universityPlayed}</p>
+                    {selectedAssessmentDetail.universityPlayed === 'Yes' && (
+                      <p className="text-[11px] text-slate-550 pt-1">
+                        Last played in <strong>{selectedAssessmentDetail.universityLastYear}</strong>
+                      </p>
+                    )}
+                  </div>
+
+                  {/* Club/District */}
+                  <div className="p-3 bg-slate-50/50 rounded-lg border border-slate-150 space-y-1">
+                    <p className="text-slate-500 font-bold text-[10px]">Club/District Cricket</p>
+                    <p className="font-extrabold text-navy-900">{selectedAssessmentDetail.clubDistrictLevel}</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Background Declarations */}
+              <div className="space-y-4">
+                <h4 className="text-xs font-bold text-navy-950 uppercase border-b border-slate-200 pb-2">Background & Visa Checks</h4>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="p-3 rounded-lg border space-y-1" style={{ borderColor: selectedAssessmentDetail.pendingCriminalCases === 'Yes' ? '#ef4444' : '#cbd5e1' }}>
+                    <p className="text-slate-500 font-bold text-[10px]">Pending Criminal Cases</p>
+                    <p className="font-extrabold text-sm" style={{ color: selectedAssessmentDetail.pendingCriminalCases === 'Yes' ? '#ef4444' : '#0f172a' }}>
+                      {selectedAssessmentDetail.pendingCriminalCases}
+                    </p>
+                  </div>
+                  <div className="p-3 rounded-lg border space-y-1" style={{ borderColor: selectedAssessmentDetail.deportationHistory === 'Yes' ? '#ef4444' : '#cbd5e1' }}>
+                    <p className="text-slate-500 font-bold text-[10px]">Deportation History</p>
+                    <p className="font-extrabold text-sm" style={{ color: selectedAssessmentDetail.deportationHistory === 'Yes' ? '#ef4444' : '#0f172a' }}>
+                      {selectedAssessmentDetail.deportationHistory}
+                    </p>
+                  </div>
+                  <div className="p-3 rounded-lg border space-y-1" style={{ borderColor: selectedAssessmentDetail.criminalConviction === 'Yes' ? '#ef4444' : '#cbd5e1' }}>
+                    <p className="text-slate-500 font-bold text-[10px]">Criminal Conviction</p>
+                    <p className="font-extrabold text-sm" style={{ color: selectedAssessmentDetail.criminalConviction === 'Yes' ? '#ef4444' : '#0f172a' }}>
+                      {selectedAssessmentDetail.criminalConviction}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+            </div>
+
+            {/* Modal Footer */}
+            <div className="p-6 border-t border-slate-200 flex justify-end space-x-3">
+              <button
+                onClick={() => downloadAssessmentPdf(selectedAssessmentDetail)}
+                className="px-6 py-2 bg-emerald-700 hover:bg-emerald-800 text-white font-bold rounded-lg text-xs uppercase cursor-pointer flex items-center space-x-1.5"
+              >
+                <Download className="h-4 w-4" />
+                <span>Download Assessment</span>
+              </button>
+              <button
+                onClick={() => setSelectedAssessmentDetail(null)}
+                className="px-6 py-2 bg-slate-800 text-white font-bold rounded-lg text-xs uppercase cursor-pointer"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Legal Notice & Declaration Modal */}
+      {showLegalModal && (
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto animate-fade-in font-sans">
+          <div className="bg-white rounded-2xl shadow-2xl border border-slate-200 max-w-lg w-full max-h-[90vh] flex flex-col relative text-slate-800">
+            
+            {/* Header */}
+            <div className="p-6 border-b border-slate-200 text-left">
+              <h3 className="text-lg font-bold font-display text-navy-900 uppercase tracking-tight">
+                Important Legal Notice & Declaration
+              </h3>
+              <p className="text-[11px] text-slate-500 mt-1">Please read and acknowledge all five declarations below to proceed.</p>
+            </div>
+
+            {/* Scrollable Notice Content */}
+            <div className="p-6 overflow-y-auto space-y-5 text-left text-xs flex-1">
+              <p className="font-semibold text-slate-750 mb-2">
+                By checking the boxes below, submitting this eligibility form, and proceeding to payment, you acknowledge and agree to the following:
+              </p>
+
+              {/* Decl 1 */}
+              <div className="p-3 bg-slate-50 border border-slate-200 rounded-xl space-y-2 text-left">
+                <p className="font-bold text-[#0B1A30]">1. Non-Legal Status</p>
+                <p className="text-slate-600 leading-relaxed font-light">
+                  "The Cricket Advisor" is a sports consultancy and administrative support service. We are not qualified immigration solicitors, legal professionals, or regulated by the Office of the Immigration Services Commissioner (OISC). Our guidance is for athletic eligibility assessment only and does not constitute legal or immigration advice.
+                </p>
+                <label className="flex items-center space-x-2 pt-1 font-bold text-navy-900 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={eligibilityForm.acceptedDeclaration1}
+                    onChange={(e) => handleEligibilityChange('acceptedDeclaration1', e.target.checked)}
+                    className="h-4 w-4 text-gold-600 rounded border-slate-350 focus:ring-gold-500"
+                  />
+                  <span>I acknowledge and agree.</span>
+                </label>
+              </div>
+
+              {/* Decl 2 */}
+              <div className="p-3 bg-slate-50 border border-slate-200 rounded-xl space-y-2 text-left">
+                <p className="font-bold text-[#0B1A30]">2. No Guarantees</p>
+                <p className="text-slate-600 leading-relaxed font-light">
+                  The Cricket Advisor makes no guarantees regarding ECB registration, visa approval, Home Office decisions, or eligibility approval.
+                </p>
+                <label className="flex items-center space-x-2 pt-1 font-bold text-navy-900 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={eligibilityForm.acceptedDeclaration2}
+                    onChange={(e) => handleEligibilityChange('acceptedDeclaration2', e.target.checked)}
+                    className="h-4 w-4 text-gold-600 rounded border-slate-350 focus:ring-gold-500"
+                  />
+                  <span>I acknowledge and agree.</span>
+                </label>
+              </div>
+
+              {/* Decl 3 */}
+              <div className="p-3 bg-slate-50 border border-slate-200 rounded-xl space-y-2 text-left">
+                <p className="font-bold text-[#0B1A30]">3. Limitation of Liability</p>
+                <p className="text-slate-600 leading-relaxed font-light">
+                  The Cricket Advisor, its directors and employees shall not be liable for financial loss, application refusal, delays, or governing body decisions.
+                </p>
+                <label className="flex items-center space-x-2 pt-1 font-bold text-navy-900 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={eligibilityForm.acceptedDeclaration3}
+                    onChange={(e) => handleEligibilityChange('acceptedDeclaration3', e.target.checked)}
+                    className="h-4 w-4 text-gold-600 rounded border-slate-350 focus:ring-gold-500"
+                  />
+                  <span>I acknowledge and agree.</span>
+                </label>
+              </div>
+
+              {/* Decl 4 */}
+              <div className="p-3 bg-slate-50 border border-slate-200 rounded-xl space-y-2 text-left">
+                <p className="font-bold text-[#0B1A30]">4. Accuracy of Information</p>
+                <p className="text-slate-600 leading-relaxed font-light">
+                  I certify that every detail provided in this form is true, accurate and complete.
+                </p>
+                <label className="flex items-center space-x-2 pt-1 font-bold text-navy-900 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={eligibilityForm.acceptedDeclaration4}
+                    onChange={(e) => handleEligibilityChange('acceptedDeclaration4', e.target.checked)}
+                    className="h-4 w-4 text-gold-600 rounded border-slate-350 focus:ring-gold-500"
+                  />
+                  <span>I certify this information is accurate.</span>
+                </label>
+              </div>
+
+              {/* Decl 5 */}
+              <div className="p-3 bg-slate-50 border border-slate-200 rounded-xl space-y-2 text-left">
+                <p className="font-bold text-[#0B1A30]">5. Non-Refundable Fees</p>
+                <p className="text-slate-600 leading-relaxed font-light">
+                  I understand the assessment fee is strictly non-refundable, regardless of eligibility outcome.
+                </p>
+                <label className="flex items-center space-x-2 pt-1 font-bold text-navy-900 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={eligibilityForm.acceptedDeclaration5}
+                    onChange={(e) => handleEligibilityChange('acceptedDeclaration5', e.target.checked)}
+                    className="h-4 w-4 text-gold-600 rounded border-slate-350 focus:ring-gold-500"
+                  />
+                  <span>I acknowledge and agree.</span>
+                </label>
+              </div>
+            </div>
+
+            {/* Footer Buttons */}
+            <div className="p-6 border-t border-slate-200 flex space-x-3 bg-slate-50 rounded-b-2xl">
+              <button
+                type="button"
+                onClick={() => {
+                  setShowLegalModal(false);
+                }}
+                className="flex-1 py-3 border border-slate-300 rounded-xl font-bold text-xs hover:bg-slate-100 transition uppercase tracking-wider text-slate-700 bg-white cursor-pointer"
+              >
+                Cancel
+              </button>
+              
+              <button
+                type="button"
+                disabled={
+                  !eligibilityForm.acceptedDeclaration1 ||
+                  !eligibilityForm.acceptedDeclaration2 ||
+                  !eligibilityForm.acceptedDeclaration3 ||
+                  !eligibilityForm.acceptedDeclaration4 ||
+                  !eligibilityForm.acceptedDeclaration5
+                }
+                onClick={() => {
+                  setShowLegalModal(false);
+                  setEligibilityStep(17); // Proceed to payment page
+                }}
+                className="flex-1 py-3 bg-gold-gradient text-navy-950 font-bold rounded-xl text-xs uppercase tracking-wider transition disabled:opacity-50 disabled:cursor-not-allowed shadow-md cursor-pointer"
+              >
+                Proceed to Payment
+              </button>
+            </div>
+
+          </div>
+        </div>
+      )}
         {activeTab === 'book' && (
           <div className="py-12 bg-slate-50 min-h-[85vh]">
             <div className="max-w-4xl mx-auto px-4">
@@ -3242,56 +4915,63 @@ END:VCALENDAR`;
                   <div className="bg-white p-3 rounded-2xl shadow-sm border border-slate-200 flex flex-wrap items-center gap-2">
                     <button 
                       onClick={() => setAdminSubTab('settings')}
-                      className={`px-4 py-2 text-xs font-bold rounded-lg uppercase tracking-wider transition flex items-center space-x-1.5 cursor-pointer ${adminSubTab === 'settings' ? 'bg-gold-500 text-navy-950 shadow-md font-extrabold' : 'bg-gold-50 text-gold-900 hover:bg-gold-100 border border-gold-200'}`}
+                      className={`px-4 py-2 text-xs font-bold rounded-lg uppercase tracking-wider transition flex items-center space-x-1.5 cursor-pointer ${adminSubTab === 'settings' ? 'bg-gold-500 text-navy-950 shadow-md font-extrabold' : 'bg-gold-55 text-gold-900 hover:bg-gold-100 border border-gold-200'}`}
                     >
                       <Video className="h-4 w-4 text-gold-600" />
                       <span>Zoom Email & Admin Config</span>
                     </button>
                     <button 
                       onClick={() => setAdminSubTab('bank')}
-                      className={`px-4 py-2 text-xs font-bold rounded-lg uppercase tracking-wider transition flex items-center space-x-2 cursor-pointer ${adminSubTab === 'bank' ? 'bg-orange-600 text-white shadow-md' : 'bg-orange-50 text-orange-700 hover:bg-orange-100 border border-orange-200'}`}
+                      className={`px-4 py-2 text-xs font-bold rounded-lg uppercase tracking-wider transition flex items-center space-x-2 cursor-pointer ${adminSubTab === 'bank' ? 'bg-orange-600 text-white shadow-md font-extrabold' : 'bg-orange-50 text-orange-700 hover:bg-orange-100 border border-orange-200'}`}
                     >
                       <CreditCard className="h-4 w-4" />
                       <span>Bank Account & UPI Settings</span>
                     </button>
                     <button 
                       onClick={() => setAdminSubTab('bookings')}
-                      className={`px-4 py-2 text-xs font-bold rounded-lg uppercase tracking-wider transition flex items-center space-x-1.5 ${adminSubTab === 'bookings' ? 'bg-navy-900 text-white shadow-md' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'}`}
+                      className={`px-4 py-2 text-xs font-bold rounded-lg uppercase tracking-wider transition flex items-center space-x-1.5 cursor-pointer ${adminSubTab === 'bookings' ? 'bg-navy-900 text-white shadow-md font-extrabold' : 'bg-slate-100 text-slate-700 hover:bg-slate-200 border border-slate-200'}`}
                     >
                       <Calendar className="h-4 w-4" />
                       <span>Bookings ({bookings.length})</span>
                     </button>
                     <button 
+                      onClick={() => setAdminSubTab('assessments')}
+                      className={`px-4 py-2 text-xs font-bold rounded-lg uppercase tracking-wider transition flex items-center space-x-1.5 cursor-pointer ${adminSubTab === 'assessments' ? 'bg-navy-900 text-white shadow-md font-extrabold' : 'bg-slate-100 text-slate-700 hover:bg-slate-200 border border-slate-200'}`}
+                    >
+                      <FileText className="h-4 w-4 text-gold-500" />
+                      <span>Assessments ({assessments.length})</span>
+                    </button>
+                    <button 
                       onClick={() => setAdminSubTab('prices')}
-                      className={`px-4 py-2 text-xs font-bold rounded-lg uppercase tracking-wider transition flex items-center space-x-1.5 ${adminSubTab === 'prices' ? 'bg-navy-900 text-white shadow-md' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'}`}
+                      className={`px-4 py-2 text-xs font-bold rounded-lg uppercase tracking-wider transition flex items-center space-x-1.5 cursor-pointer ${adminSubTab === 'prices' ? 'bg-navy-900 text-white shadow-md font-extrabold' : 'bg-slate-100 text-slate-700 hover:bg-slate-200 border border-slate-200'}`}
                     >
                       <DollarSign className="h-4 w-4" />
                       <span>Rates & Pricing</span>
                     </button>
                     <button 
                       onClick={() => setAdminSubTab('dates')}
-                      className={`px-4 py-2 text-xs font-bold rounded-lg uppercase tracking-wider transition flex items-center space-x-1.5 ${adminSubTab === 'dates' ? 'bg-navy-900 text-white shadow-md' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'}`}
+                      className={`px-4 py-2 text-xs font-bold rounded-lg uppercase tracking-wider transition flex items-center space-x-1.5 cursor-pointer ${adminSubTab === 'dates' ? 'bg-navy-900 text-white shadow-md font-extrabold' : 'bg-slate-100 text-slate-700 hover:bg-slate-200 border border-slate-200'}`}
                     >
                       <Clock className="h-4 w-4" />
                       <span>Calendar Block</span>
                     </button>
                     <button 
                       onClick={() => setAdminSubTab('calendar')}
-                      className={`px-4 py-2 text-xs font-bold rounded-lg uppercase tracking-wider transition flex items-center space-x-1.5 ${adminSubTab === 'calendar' ? 'bg-navy-900 text-white shadow-md' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'}`}
+                      className={`px-4 py-2 text-xs font-bold rounded-lg uppercase tracking-wider transition flex items-center space-x-1.5 cursor-pointer ${adminSubTab === 'calendar' ? 'bg-navy-900 text-white shadow-md font-extrabold' : 'bg-slate-100 text-slate-700 hover:bg-slate-200 border border-slate-200'}`}
                     >
                       <Calendar className="h-4 w-4 text-gold-500" />
                       <span>Calendar & Zoom Sync</span>
                     </button>
                     <button 
                       onClick={() => setAdminSubTab('players')}
-                      className={`px-4 py-2 text-xs font-bold rounded-lg uppercase tracking-wider transition flex items-center space-x-1.5 ${adminSubTab === 'players' ? 'bg-navy-900 text-white shadow-md' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'}`}
+                      className={`px-4 py-2 text-xs font-bold rounded-lg uppercase tracking-wider transition flex items-center space-x-1.5 cursor-pointer ${adminSubTab === 'players' ? 'bg-navy-900 text-white shadow-md font-extrabold' : 'bg-slate-100 text-slate-700 hover:bg-slate-200 border border-slate-200'}`}
                     >
                       <Users className="h-4 w-4" />
-                      <span>Player Roster</span>
+                      <span>Player Roster ({players.length})</span>
                     </button>
                     <button 
                       onClick={() => setAdminSubTab('all')}
-                      className={`px-4 py-2 text-xs font-bold rounded-lg uppercase tracking-wider transition flex items-center space-x-1.5 ${adminSubTab === 'all' ? 'bg-navy-900 text-white shadow-md' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'}`}
+                      className={`px-4 py-2 text-xs font-bold rounded-lg uppercase tracking-wider transition flex items-center space-x-1.5 cursor-pointer ${adminSubTab === 'all' ? 'bg-navy-900 text-white shadow-md font-extrabold' : 'bg-slate-100 text-slate-700 hover:bg-slate-200 border border-slate-200'}`}
                     >
                       <span>View All Overview</span>
                     </button>
@@ -3616,6 +5296,123 @@ END:VCALENDAR`;
                                     </button>
                                   )}
                                 </div>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Dedicated Assessments View */}
+                  {adminSubTab === 'assessments' && (
+                    <div className="bg-white rounded-2xl shadow-xl border border-navy-100 p-6 sm:p-8 space-y-6 animate-fade-in">
+                      <div className="flex flex-col sm:flex-row justify-between sm:items-center border-b border-slate-150 pb-4 gap-4">
+                        <div>
+                          <div className="flex items-center space-x-2">
+                            <FileText className="h-6 w-6 text-gold-500" />
+                            <h3 className="text-xl font-bold font-display text-navy-900 uppercase">Eligibility Assessments</h3>
+                          </div>
+                          <p className="text-xs text-slate-500 mt-1">
+                            All submitted eligibility assessments from players. Click <strong>"View Details"</strong> on any row to see the full cricket background.
+                          </p>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <span className="px-3 py-1 bg-gold-100 text-gold-800 text-xs font-bold rounded-full border border-gold-300">
+                            {assessments.length} Assessments Received
+                          </span>
+                        </div>
+                      </div>
+
+                      {assessments.length === 0 ? (
+                        <div className="p-8 text-center text-slate-400 bg-slate-50 rounded-xl border border-slate-200">
+                          <FileText className="h-8 w-8 mx-auto mb-2 text-slate-300" />
+                          <p className="text-xs">No eligibility assessments submitted yet.</p>
+                        </div>
+                      ) : (
+                        <div className="space-y-3">
+                          {assessments.map((assessment) => (
+                            <div key={assessment.id} className="p-4 rounded-xl bg-slate-50 border border-slate-200 text-xs hover:border-slate-300 transition">
+                              <div className="flex justify-between items-start flex-wrap gap-3">
+                                <div className="space-y-1 flex-1">
+                                  <div className="flex items-center gap-2 flex-wrap">
+                                    <span className="font-mono text-[10px] text-slate-400 font-bold">{assessment.referenceNumber || assessment.id}</span>
+                                    <span
+                                      className="px-2 py-0.5 rounded-full text-[10px] font-bold uppercase border"
+                                      style={{
+                                        borderColor: assessment.paymentStatus === 'paid' ? '#10b981' : assessment.paymentStatus === 'failed' ? '#ef4444' : '#f59e0b',
+                                        color: assessment.paymentStatus === 'paid' ? '#047857' : assessment.paymentStatus === 'failed' ? '#b91c1c' : '#92400e',
+                                        backgroundColor: assessment.paymentStatus === 'paid' ? '#f0fdf4' : assessment.paymentStatus === 'failed' ? '#fef2f2' : '#fffbeb',
+                                      }}
+                                    >
+                                      {assessment.paymentStatus === 'paid' ? '✓ Payment Verified' : assessment.paymentStatus === 'failed' ? '✗ Payment Failed' : '⏳ Pending'}
+                                    </span>
+                                  </div>
+                                  <h4 className="font-bold text-sm text-navy-900">
+                                    {assessment.firstName} {assessment.lastName}
+                                  </h4>
+                                  <p className="text-slate-500">
+                                    <strong>Email:</strong> {assessment.email}
+                                    {assessment.mobileNumber && (
+                                      <> | <strong>Mobile:</strong> <span className="font-mono">{assessment.mobileNumber}</span></>
+                                    )}
+                                  </p>
+                                  <p className="text-slate-500">
+                                    <strong>Nationality:</strong> {assessment.nationality}
+                                    {assessment.playerType && (
+                                      <> | <strong>Type:</strong> {assessment.playerType}</>
+                                    )}
+                                  </p>
+                                  {assessment.createdAt && (
+                                    <p className="text-slate-400 text-[10px]">
+                                      Submitted: {new Date(assessment.createdAt).toLocaleString('en-IN', { dateStyle: 'medium', timeStyle: 'short' })}
+                                    </p>
+                                  )}
+                                </div>
+                                <div className="flex flex-col items-end gap-2">
+                                  {assessment.paymentAmount && (
+                                    <span className="font-bold text-navy-900 font-display text-sm">₹{assessment.paymentAmount}</span>
+                                  )}
+                                  <button
+                                    onClick={() => setSelectedAssessmentDetail(assessment)}
+                                    className="px-3 py-1.5 bg-navy-900 hover:bg-navy-950 text-gold-400 font-bold text-[10px] rounded-lg uppercase tracking-wider flex items-center space-x-1 transition cursor-pointer"
+                                  >
+                                    <FileText className="h-3.5 w-3.5" />
+                                    <span>View Details</span>
+                                  </button>
+                                  <button
+                                    onClick={() => downloadAssessmentPdf(assessment)}
+                                    className="px-3 py-1.5 bg-emerald-700 hover:bg-emerald-800 text-white font-bold text-[10px] rounded-lg uppercase tracking-wider flex items-center space-x-1 transition cursor-pointer"
+                                  >
+                                    <Download className="h-3.5 w-3.5" />
+                                    <span>Download</span>
+                                  </button>
+                                </div>
+                              </div>
+
+                              {/* Cricket summary strip */}
+                              <div className="mt-3 pt-3 border-t border-slate-200 flex flex-wrap gap-2">
+                                {assessment.firstClassPlayed === 'Yes' && (
+                                  <span className="px-2 py-0.5 bg-blue-50 text-blue-700 border border-blue-200 rounded text-[10px] font-bold">First-Class</span>
+                                )}
+                                {assessment.listAPlayed === 'Yes' && (
+                                  <span className="px-2 py-0.5 bg-purple-50 text-purple-700 border border-purple-200 rounded text-[10px] font-bold">List A</span>
+                                )}
+                                {assessment.domesticT20Played === 'Yes' && (
+                                  <span className="px-2 py-0.5 bg-orange-50 text-orange-700 border border-orange-200 rounded text-[10px] font-bold">Domestic T20</span>
+                                )}
+                                {assessment.iccT20Played === 'Yes' && (
+                                  <span className="px-2 py-0.5 bg-gold-50 text-gold-700 border border-gold-200 rounded text-[10px] font-bold">ICC/State T20</span>
+                                )}
+                                {assessment.ageGroupPlayed === 'Yes' && (
+                                  <span className="px-2 py-0.5 bg-emerald-50 text-emerald-700 border border-emerald-200 rounded text-[10px] font-bold">Age Group</span>
+                                )}
+                                {assessment.universityPlayed === 'Yes' && (
+                                  <span className="px-2 py-0.5 bg-slate-100 text-slate-600 border border-slate-200 rounded text-[10px] font-bold">University</span>
+                                )}
+                                {(assessment.firstClassPlayed === 'No' && assessment.listAPlayed === 'No' && assessment.domesticT20Played === 'No') && (
+                                  <span className="px-2 py-0.5 bg-slate-100 text-slate-500 border border-slate-200 rounded text-[10px] font-medium">Club / Amateur</span>
+                                )}
                               </div>
                             </div>
                           ))}
@@ -4777,7 +6574,7 @@ END:VCALENDAR`;
       </main>
 
       {/* --- FOOTER --- */}
-      <footer className="bg-navy-950 text-slate-400 pt-16 pb-8 border-t border-navy-900">
+      <footer className="bg-navy-950 text-stone-300 pt-16 pb-8 border-t border-navy-900">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 grid grid-cols-1 md:grid-cols-12 gap-8 mb-12">
           
           {/* Logo brand about (5 cols) */}
@@ -4841,20 +6638,20 @@ END:VCALENDAR`;
                 <Phone className="h-4 w-4 text-gold-500 fill-current flex-shrink-0" />
                 <a href="https://wa.me/918591133960" target="_blank" rel="noopener noreferrer" className="hover:text-gold-500 transition">+91 85911 33960</a>
               </p>
-              <p className="text-[10px] text-slate-500 italic mt-3">Consultations are online via secure Zoom meetings only.</p>
+              <p className="text-[10px] text-stone-500 italic mt-3">Consultations are online via secure Zoom meetings only.</p>
             </div>
           </div>
 
         </div>
 
         {/* Bottom line */}
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 border-t border-navy-900 pt-8 flex flex-col sm:flex-row items-center justify-between text-[11px] text-slate-500 font-light">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 border-t border-navy-900 pt-8 flex flex-col sm:flex-row items-center justify-between text-[11px] text-stone-400 font-light">
           <p>© 2026 Prakash Palande - Cricket Consultant & Advisor. All Rights Reserved.</p>
           <div className="flex items-center space-x-3 mt-4 sm:mt-0">
-            <span className="text-slate-600">Online Zoom Consultations</span>
+            <span className="text-stone-500">Online Zoom Consultations</span>
             <button 
               onClick={() => { setActiveTab('admin'); window.scrollTo({ top: 0, behavior: 'smooth' }); }} 
-              className="text-slate-700 hover:text-slate-400 transition"
+              className="text-stone-600 hover:text-stone-400 transition"
               title="Portal Access"
             >
               <Lock className="h-3 w-3" />
