@@ -2274,15 +2274,14 @@ END:VCALENDAR`;
           <div className="flex items-center space-x-2 sm:space-x-3">
             <button 
               onClick={() => { try { sessionStorage.setItem('tcc_active_tab', 'eligibility'); sessionStorage.removeItem('tcc_eligibility_step'); sessionStorage.removeItem('tcc_confirmed_assessment'); } catch {} setActiveTab('eligibility'); setEligibilityStep(1); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
-              className="px-2.5 sm:px-4 py-2.5 text-xs font-extrabold bg-[#F5C451] hover:bg-[#E2AF3C] text-[#0B1A30] rounded-lg shadow-sm hover:scale-105 hover:shadow transition transform duration-150 uppercase tracking-widest cursor-pointer font-sans whitespace-nowrap"
+              className="px-4 py-2.5 text-xs font-extrabold bg-[#F5C451] hover:bg-[#E2AF3C] text-[#0B1A30] rounded-lg shadow-sm hover:scale-105 hover:shadow transition transform duration-150 uppercase tracking-widest cursor-pointer font-sans whitespace-nowrap"
             >
-              <span className="inline sm:hidden">Check Eligibility</span>
-              <span className="hidden sm:inline">Check Eligibility - UK 2027</span>
+              Check Eligibility - UK 2027
             </button>
 
             <button 
               onClick={() => { setActiveTab('book'); setBookingStep(1); }}
-              className="px-2.5 sm:px-4 py-2.5 text-xs font-extrabold bg-[#0B1A30] hover:bg-[#1A2E4C] text-white rounded-lg hover:scale-105 hover:shadow-lg transition transform duration-150 uppercase tracking-widest cursor-pointer font-sans whitespace-nowrap"
+              className="hidden lg:inline-block px-4 py-2.5 text-xs font-extrabold bg-[#0B1A30] hover:bg-[#1A2E4C] text-white rounded-lg hover:scale-105 hover:shadow-lg transition transform duration-150 uppercase tracking-widest cursor-pointer font-sans whitespace-nowrap"
             >
               Book Now
             </button>
@@ -2333,6 +2332,12 @@ END:VCALENDAR`;
                 className="text-left py-2 border-b border-navy-800/60 hover:text-gold-400 transition"
               >
                 Check Eligibility - UK 2027
+              </button>
+              <button 
+                onClick={() => { setActiveTab('book'); setBookingStep(1); setMobileMenuOpen(false); }} 
+                className="text-left py-2 border-b border-navy-800/60 hover:text-gold-400 transition"
+              >
+                Book Appointment
               </button>
               <button 
                 onClick={() => scrollToSection('faq')} 
