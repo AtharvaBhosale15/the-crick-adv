@@ -427,6 +427,11 @@ export default function App() {
   // --- CORE STATE ---
   // Restore from sessionStorage so React remounts (e.g., from an error boundary reset) don't lose navigation state
   const [activeTab, setActiveTab] = useState<'main' | 'book' | 'admin' | 'placements' | 'eligibility'>(() => {
+    const hash = window.location.hash;
+    if (hash === '#eligibility') return 'eligibility';
+    if (hash === '#book') return 'book';
+    if (hash === '#admin') return 'admin';
+    if (hash === '#placements') return 'placements';
     try { return (sessionStorage.getItem('tcc_active_tab') as any) || 'main'; } catch { return 'main'; }
   });
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -434,7 +439,9 @@ export default function App() {
 
   // Eligibility Assessment State
   const [eligibilityStep, setEligibilityStep] = useState<number>(() => {
-    try { const s = sessionStorage.getItem('tcc_eligibility_step'); return s ? parseInt(s, 10) : 0; } catch { return 0; }
+    const hash = window.location.hash;
+    if (hash === '#eligibility') return 1;
+    try { const s = sessionStorage.getItem('tcc_eligibility_step'); return s ? parseInt(s, 10) : 1; } catch { return 1; }
   });
   const [activeSection, setActiveSection] = useState<1 | 2 | 3>(1);
   const [eligibilityForm, setEligibilityForm] = useState<EligibilityForm>(initialEligibilityForm);
@@ -1165,6 +1172,50 @@ END:VCALENDAR`;
     '06:00 PM - 07:00 PM IST',
     '08:00 PM - 09:00 PM IST'
   ];
+
+  // Listen for hash changes to sync tab
+  useEffect(() => {
+    const handleHashChange = () => {
+      const hash = window.location.hash;
+      if (hash === '#eligibility') {
+        setActiveTab('eligibility');
+        setEligibilityStep(prev => prev === 0 ? 1 : prev);
+      } else if (hash === '#book') {
+        setActiveTab('book');
+      } else if (hash === '#admin') {
+        setActiveTab('admin');
+      } else if (hash === '#placements') {
+        setActiveTab('placements');
+      } else if (!hash || hash === '#home') {
+        setActiveTab('main');
+      }
+    };
+
+    window.addEventListener('hashchange', handleHashChange);
+    // Sync initially on mount
+    handleHashChange();
+
+    return () => window.removeEventListener('hashchange', handleHashChange);
+  }, []);
+
+  // Sync tab state to URL hash
+  useEffect(() => {
+    try {
+      sessionStorage.setItem('tcc_active_tab', activeTab);
+    } catch {}
+
+    const targetHash = activeTab === 'main' ? '' : `#${activeTab}`;
+    if (window.location.hash !== targetHash) {
+      if (activeTab === 'main') {
+        const currentHash = window.location.hash;
+        if (['#eligibility', '#book', '#admin', '#placements'].includes(currentHash)) {
+          window.history.replaceState(null, '', window.location.pathname + window.location.search);
+        }
+      } else {
+        window.location.hash = activeTab;
+      }
+    }
+  }, [activeTab]);
 
   // Scroll to top of page whenever activeTab or bookingStep changes
   useEffect(() => {
@@ -2198,7 +2249,7 @@ END:VCALENDAR`;
               <span className="font-display tracking-tight font-bold text-[#0B1A30] text-sm sm:text-base block uppercase leading-tight">
                 Prakash Palande
               </span>
-              <span className="font-display tracking-widest text-[9px] sm:text-[10px] font-semibold text-[#D4AF37] block leading-tight">
+              <span className="hidden sm:block font-display tracking-widest text-[9px] sm:text-[10px] font-semibold text-[#D4AF37] leading-tight">
                 Cricket Consultant & Advisor
               </span>
             </div>
@@ -2222,8 +2273,8 @@ END:VCALENDAR`;
           {/* Action buttons (Check Eligibility - UK 2027 & Book Now) & Mobile Hamburger */}
           <div className="flex items-center space-x-3">
             <button 
-              onClick={() => { try { sessionStorage.setItem('tcc_active_tab', 'eligibility'); sessionStorage.removeItem('tcc_eligibility_step'); sessionStorage.removeItem('tcc_confirmed_assessment'); } catch {} setActiveTab('eligibility'); setEligibilityStep(0); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
-              className="px-4 py-2.5 text-xs font-extrabold bg-[#F5C451] hover:bg-[#E2AF3C] text-[#0B1A30] rounded-lg shadow-sm hover:scale-105 hover:shadow transition transform duration-150 uppercase tracking-widest cursor-pointer font-sans"
+              onClick={() => { try { sessionStorage.setItem('tcc_active_tab', 'eligibility'); sessionStorage.removeItem('tcc_eligibility_step'); sessionStorage.removeItem('tcc_confirmed_assessment'); } catch {} setActiveTab('eligibility'); setEligibilityStep(1); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
+              className="hidden lg:inline-block px-4 py-2.5 text-xs font-extrabold bg-[#F5C451] hover:bg-[#E2AF3C] text-[#0B1A30] rounded-lg shadow-sm hover:scale-105 hover:shadow transition transform duration-150 uppercase tracking-widest cursor-pointer font-sans"
             >
               Check Eligibility - UK 2027
             </button>
@@ -2277,7 +2328,7 @@ END:VCALENDAR`;
                 My Services
               </button>
               <button 
-                onClick={() => { setActiveTab('eligibility'); setEligibilityStep(0); setMobileMenuOpen(false); }} 
+                onClick={() => { setActiveTab('eligibility'); setEligibilityStep(1); setMobileMenuOpen(false); }} 
                 className="text-left py-2 border-b border-navy-800/60 hover:text-gold-400 transition"
               >
                 Check Eligibility - UK 2027
@@ -2303,17 +2354,7 @@ END:VCALENDAR`;
 
       {/* --- FLOATING CONTACT BUTTONS --- */}
       <div className="fixed bottom-6 right-6 z-40 flex flex-col space-y-3">
-        {/* WhatsApp Floating */}
-        <a 
-          href="https://wa.me/918591133960" 
-          target="_blank" 
-          rel="noopener noreferrer"
-          className="bg-[#25D366] hover:bg-[#20ba5a] text-white p-3.5 rounded-full shadow-2xl flex items-center justify-center transform hover:scale-110 transition duration-200 border-2 border-white/20"
-          title="Contact on WhatsApp"
-          id="floating-whatsapp"
-        >
-          <Phone className="h-6 w-6 fill-current" />
-        </a>
+
 
         {/* Email Floating */}
         <a 
@@ -2421,26 +2462,26 @@ END:VCALENDAR`;
                   </p>
 
                   {/* Quick Feature Grid */}
-                  <div className="flex flex-wrap gap-3 pt-2">
-                    <div className="flex items-center space-x-2 bg-[#FDF8E7] px-4 py-2.5 rounded-xl border border-gold-500/10">
+                  <div className="flex flex-col sm:flex-row flex-wrap gap-3 pt-2">
+                    <div className="flex items-center space-x-2 bg-[#FDF8E7] px-4 py-2.5 rounded-xl border border-black w-full sm:w-auto justify-start">
                       <Globe className="h-4 w-4 text-[#0B1A30]" />
                       <span className="text-[#0B1A30] text-xs font-bold">Global Cricket Network</span>
                     </div>
-                    <div className="flex items-center space-x-2 bg-[#FDF8E7] px-4 py-2.5 rounded-xl border border-gold-500/10">
+                    <div className="flex items-center space-x-2 bg-[#FDF8E7] px-4 py-2.5 rounded-xl border border-black w-full sm:w-auto justify-start">
                       <Users className="h-4 w-4 text-[#0B1A30]" />
                       <span className="text-[#0B1A30] text-xs font-bold">Independent Consultation</span>
                     </div>
-                    <div className="flex items-center space-x-2 bg-[#FDF8E7] px-4 py-2.5 rounded-xl border border-gold-500/10">
+                    <div className="flex items-center space-x-2 bg-[#FDF8E7] px-4 py-2.5 rounded-xl border border-black w-full sm:w-auto justify-start">
                       <Briefcase className="h-4 w-4 text-[#0B1A30]" />
                       <span className="text-[#0B1A30] text-xs font-bold">Career Opportunities</span>
                     </div>
                   </div>
 
                   {/* CTA Buttons */}
-                  <div className="pt-4 flex flex-wrap gap-4">
+                  <div className="pt-4 flex flex-col sm:flex-row gap-4">
                     <button 
-                      onClick={() => { try { sessionStorage.setItem('tcc_active_tab', 'eligibility'); sessionStorage.removeItem('tcc_eligibility_step'); sessionStorage.removeItem('tcc_confirmed_assessment'); } catch {} setActiveTab('eligibility'); setEligibilityStep(0); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
-                      className="px-6 py-3.5 bg-[#F5C451] hover:bg-[#E2AF3C] text-[#0B1A30] font-extrabold rounded-lg shadow-md hover:scale-105 transform transition duration-150 uppercase tracking-wider text-xs flex items-center space-x-1.5 cursor-pointer font-sans"
+                      onClick={() => { try { sessionStorage.setItem('tcc_active_tab', 'eligibility'); sessionStorage.removeItem('tcc_eligibility_step'); sessionStorage.removeItem('tcc_confirmed_assessment'); } catch {} setActiveTab('eligibility'); setEligibilityStep(1); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
+                      className="w-full sm:w-auto px-6 py-3.5 bg-[#F5C451] hover:bg-[#E2AF3C] text-[#0B1A30] font-extrabold rounded-lg shadow-md hover:scale-105 transform transition duration-150 uppercase tracking-wider text-xs flex items-center justify-center space-x-1.5 cursor-pointer font-sans"
                     >
                       <span>Check Eligibility - UK 2027</span>
                       <ChevronRight className="h-4 w-4" />
@@ -2448,7 +2489,7 @@ END:VCALENDAR`;
                     
                     <button 
                       onClick={() => { setActiveTab('book'); setBookingStep(1); }}
-                      className="px-6 py-3.5 bg-white border border-[#0B1A30] hover:bg-[#0B1A30]/5 text-[#0B1A30] font-extrabold rounded-lg hover:scale-105 transform transition duration-150 uppercase tracking-wider text-xs flex items-center space-x-1.5 cursor-pointer font-sans"
+                      className="w-full sm:w-auto px-6 py-3.5 bg-white border border-[#0B1A30] hover:bg-[#0B1A30]/5 text-[#0B1A30] font-extrabold rounded-lg hover:scale-105 transform transition duration-150 uppercase tracking-wider text-xs flex items-center justify-center space-x-1.5 cursor-pointer font-sans"
                     >
                       <span>Book Now</span>
                       <ChevronRight className="h-4 w-4" />
@@ -2478,15 +2519,15 @@ END:VCALENDAR`;
 
             {/* --- SECTION DIVIDER --- */}
             <div className="bg-[#FAFBFD] pt-12 pb-2 px-4 max-w-7xl mx-auto">
-              <div className="bg-navy-900 rounded-2xl p-8 shadow-xl text-center flex flex-col md:flex-row items-center justify-between border border-gold-500/10">
-                <div className="text-left mb-6 md:mb-0">
+              <div className="bg-navy-900 rounded-2xl p-8 shadow-xl text-center flex flex-col md:flex-row items-center justify-between border border-gold-500/10 gap-6">
+                <div className="text-center md:text-left mb-0">
                   <h3 className="text-white text-lg font-bold font-display">Are you looking for overseas cricket career guidance or a club looking for overseas player?</h3>
-                  <p className="text-amber-100 text-sm">Book a direct premium consultation and lock in your session slot instantly.</p>
+                  <p className="text-amber-100 text-sm mt-1">Book a direct premium consultation and lock in your session slot instantly.</p>
                 </div>
-                <div className="flex flex-wrap gap-3">
+                <div className="flex justify-center md:justify-end w-full md:w-auto">
                   <button 
                     onClick={() => { setActiveTab('book'); setBookingStep(1); }}
-                    className="px-6 py-3 bg-gold-gradient text-navy-950 font-bold rounded hover:scale-105 transition text-xs uppercase tracking-wider border border-gold-400 cursor-pointer"
+                    className="w-full md:w-auto px-6 py-3 bg-gold-gradient text-navy-950 font-bold rounded hover:scale-105 transition text-xs uppercase tracking-wider border border-gold-400 cursor-pointer text-center justify-center flex items-center"
                   >
                     Book Appointment
                   </button>
@@ -2541,7 +2582,7 @@ END:VCALENDAR`;
                         </p>
                         <div className="mt-4">
                           <button
-                            onClick={() => { setActiveTab('eligibility'); setEligibilityStep(0); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
+                            onClick={() => { setActiveTab('eligibility'); setEligibilityStep(1); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
                             className="w-full py-2 bg-[#0B1A30] hover:bg-navy-950 text-white font-bold rounded text-xs uppercase tracking-wider transition cursor-pointer shadow-sm font-sans"
                           >
                             Check My Eligibility
@@ -2656,17 +2697,17 @@ END:VCALENDAR`;
                     <p className="text-xs sm:text-sm text-amber-100 uppercase tracking-widest font-medium">Overseas Placements</p>
                   </div>
 
-                  <div className="space-y-2 border-l border-navy-800">
+                  <div className="space-y-2 md:border-l md:border-navy-800">
                     <p className="text-gold-500 text-4xl sm:text-5xl font-extrabold font-display">6+</p>
                     <p className="text-xs sm:text-sm text-amber-100 uppercase tracking-widest font-medium">Global Network Countries</p>
                   </div>
 
-                  <div className="space-y-2 border-l border-navy-800">
+                  <div className="space-y-2 md:border-l md:border-navy-800">
                     <p className="text-gold-500 text-4xl sm:text-5xl font-extrabold font-display">15+</p>
                     <p className="text-xs sm:text-sm text-amber-100 uppercase tracking-widest font-medium">Years in Administration</p>
                   </div>
 
-                  <div className="space-y-2 border-l border-navy-800">
+                  <div className="space-y-2 md:border-l md:border-navy-800">
                     <p className="text-gold-500 text-4xl sm:text-5xl font-extrabold font-display">7+</p>
                     <p className="text-xs sm:text-sm text-amber-100 uppercase tracking-widest font-medium">Organisations Served</p>
                   </div>
@@ -2837,15 +2878,7 @@ END:VCALENDAR`;
                     >
                       Book Online Consultation
                     </button>
-                    <a 
-                      href="https://wa.me/918591133960" 
-                      target="_blank" 
-                      rel="noopener noreferrer"
-                      className="px-6 py-4 bg-[#25D366] hover:bg-[#20ba5a] text-white font-semibold rounded flex items-center space-x-2 transition text-xs uppercase tracking-wider"
-                    >
-                      <Phone className="h-4 w-4 fill-current" />
-                      <span>WhatsApp Inquiries</span>
-                    </a>
+
                   </div>
                 </div>
 
@@ -3203,29 +3236,27 @@ END:VCALENDAR`;
            ========================================================================= */}
         {activeTab === 'eligibility' && (
           <div className="py-12 bg-slate-50 min-h-[85vh] text-slate-800 font-sans">
-            <div className={`${eligibilityStep === 0 ? 'max-w-4xl' : 'max-w-3xl'} mx-auto px-4 sm:px-6`}>
+            <div className="max-w-3xl mx-auto px-4 sm:px-6">
               
               {/* Back Button */}
               {eligibilityStep <= 17 && (
                 <div className="mb-6 print:hidden">
                   <button 
                     onClick={() => {
-                      if (eligibilityStep === 0) {
+                      if (eligibilityStep === 1) {
                         try { sessionStorage.removeItem('tcc_active_tab'); } catch {}
                         setActiveTab('main');
-                      } else if (eligibilityStep === 1) {
-                        setEligibilityStep(0);
                       } else if (window.confirm("Are you sure you want to exit the Eligibility Assessment? Your current progress will be lost.")) {
                         try { sessionStorage.removeItem('tcc_confirmed_assessment'); sessionStorage.removeItem('tcc_eligibility_step'); sessionStorage.removeItem('tcc_active_tab'); } catch {}
                         setActiveTab('main');
-                        setEligibilityStep(0);
+                        setEligibilityStep(1);
                         setEligibilityForm(initialEligibilityForm);
                       }
                     }}
                     className="flex items-center space-x-2 text-slate-600 hover:text-[#0B1A30] font-semibold text-sm transition cursor-pointer"
                   >
                     <ChevronLeft className="h-4 w-4" />
-                    <span>{eligibilityStep === 0 ? 'Back to Homepage' : 'Cancel & Back to Homepage'}</span>
+                    <span>{eligibilityStep === 1 ? 'Back to Homepage' : 'Cancel & Back to Homepage'}</span>
                   </button>
                 </div>
               )}
@@ -3243,30 +3274,6 @@ END:VCALENDAR`;
                   </div>
                   <div className="w-full bg-[#0B1A30]/10 h-1.5 rounded-full overflow-hidden">
                     <div className="bg-[#0B1A30] h-full w-full" />
-                  </div>
-                </div>
-              )}
-
-              {/* STEP 0: INFOGRAPHIC PROMO */}
-              {eligibilityStep === 0 && (
-                <div className="bg-white rounded-xl shadow-lg border border-slate-200 p-6 sm:p-8 relative">
-                  <div className="space-y-6 animate-fade-in text-center">
-                    <div className="relative max-w-full rounded-xl overflow-hidden shadow-md border border-slate-200/80 mx-auto">
-                      <img 
-                        src={ukEligibilityReportDesign} 
-                        alt="UK Eligibility Report Premium Infographic" 
-                        className="w-full h-auto object-contain mx-auto"
-                      />
-                    </div>
-                    <div className="pt-4 max-w-md mx-auto">
-                      <button
-                        type="button"
-                        onClick={() => setEligibilityStep(1)}
-                        className="w-full py-4 bg-[#0B1A30] hover:bg-navy-950 text-white font-extrabold rounded-xl uppercase tracking-widest text-xs shadow-lg transition transform duration-150 hover:scale-[1.01] flex items-center justify-center space-x-2 cursor-pointer font-sans"
-                      >
-                        <span>Check My Eligibility</span>
-                      </button>
-                    </div>
                   </div>
                 </div>
               )}
@@ -3389,7 +3396,7 @@ END:VCALENDAR`;
                           onClick={() => {
                             if (window.confirm("Are you sure you want to cancel and exit? Your progress will be lost.")) {
                               setActiveTab('main');
-                              setEligibilityStep(0);
+                              setEligibilityStep(1);
                               setActiveSection(1);
                               setEligibilityForm(initialEligibilityForm);
                             }
@@ -3659,65 +3666,7 @@ END:VCALENDAR`;
                         )}
                       </button>
 
-                      {/* Sandbox simulation */}
-                      <button
-                        type="button"
-                        disabled={isProcessingEligibilityPayment}
-                        onClick={async () => {
-                          setIsProcessingEligibilityPayment(true);
-                          await new Promise(resolve => setTimeout(resolve, 1000));
-                          
-                          const uniqueId = 'TCA-ASS-' + Date.now();
-                          const assessmentPayload = {
-                            ...eligibilityForm,
-                            id: uniqueId,
-                            paymentAmount: 500,
-                            paymentCurrency: 'INR',
-                            paymentStatus: 'Paid',
-                            status: 'UNDER REVIEW',
-                            playerType: 'UNDER REVIEW',
-                            createdAt: new Date().toISOString()
-                          };
-
-                          try {
-                            const verifyResp = await fetch('/api/verify-payment', {
-                              method: 'POST',
-                              headers: { 'Content-Type': 'application/json' },
-                              body: JSON.stringify({
-                                razorpay_order_id: 'test_order_id_' + Date.now(),
-                                razorpay_payment_id: 'test_payment_id',
-                                razorpay_signature: 'test_signature',
-                                assessment: assessmentPayload
-                              })
-                            });
-
-                            if (verifyResp.ok) {
-                              const verifyResult = await verifyResp.json();
-                              const confirmed = {
-                                ...assessmentPayload,
-                                referenceNumber: verifyResult.referenceNumber || 'TCA-UK-2026-000000',
-                                paymentId: 'test_payment_id',
-                                transactionId: 'test_order_id',
-                                paymentStatus: 'Paid'
-                              };
-                              setConfirmedAssessment(confirmed);
-                              try { sessionStorage.setItem('tcc_confirmed_assessment', JSON.stringify(confirmed)); } catch {}
-                              try { sessionStorage.setItem('tcc_active_tab', 'eligibility'); } catch {}
-                              try { sessionStorage.setItem('tcc_eligibility_step', '18'); } catch {}
-                              setEligibilityStep(18);
-                            } else {
-                              setEligibilityPaymentError('Direct sandbox submission failed. Please try the secure checkout button.');
-                            }
-                          } catch (err: any) {
-                            setEligibilityPaymentError('Testing submission failed: ' + err.message);
-                          } finally {
-                            setIsProcessingEligibilityPayment(false);
-                          }
-                        }}
-                        className="text-[10px] text-slate-500 hover:text-navy-955 hover:underline uppercase font-bold tracking-wider pt-2 cursor-pointer font-sans"
-                      >
-                        [ Sandbox Mode: Simulate Successful Payment ]
-                      </button>
+                      {/* Sandbox simulation removed */}
                     </div>
                   </div>
                 </div>
@@ -3774,7 +3723,7 @@ END:VCALENDAR`;
                         onClick={() => {
                           try { sessionStorage.removeItem('tcc_confirmed_assessment'); sessionStorage.removeItem('tcc_eligibility_step'); sessionStorage.removeItem('tcc_active_tab'); } catch {}
                           setActiveTab('main');
-                          setEligibilityStep(0);
+                          setEligibilityStep(1);
                           setEligibilityForm(initialEligibilityForm);
                           setConfirmedAssessment(null);
                         }}
