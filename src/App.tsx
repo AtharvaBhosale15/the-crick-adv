@@ -2184,50 +2184,53 @@ END:VCALENDAR`;
     <div className="min-h-screen flex flex-col font-sans">
 
       {/* --- STICKY NAVIGATION --- */}
-      <header id="header" className="sticky top-0 z-50 bg-navy-800 text-white border-b border-navy-700/50 shadow-md transition-all">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex items-center justify-between">
+      <header id="header" className="sticky top-0 z-50 bg-white border-b border-slate-200 shadow-sm transition-all">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 flex items-center justify-between">
           
           {/* Logo Brand area */}
           <div className="flex items-center space-x-3 cursor-pointer" onClick={() => { setActiveTab('main'); scrollToSection('home'); }}>
             <img 
               src={logoImg} 
               alt="The Cricket Advisor Logo" 
-              className="h-10 sm:h-12 w-auto rounded-lg object-contain shadow-sm" 
+              className="h-10 sm:h-12 w-auto rounded-lg object-contain" 
             />
             <div>
-              <span className="font-display tracking-tight font-bold text-white text-sm sm:text-base block uppercase leading-tight">
+              <span className="font-display tracking-tight font-bold text-[#0B1A30] text-sm sm:text-base block uppercase leading-tight">
                 Prakash Palande
               </span>
-              <span className="font-display tracking-widest text-[9px] sm:text-[10px] font-semibold text-gold-500 block leading-tight">
+              <span className="font-display tracking-widest text-[9px] sm:text-[10px] font-semibold text-[#D4AF37] block leading-tight">
                 Cricket Consultant & Advisor
               </span>
             </div>
           </div>
 
           {/* Desktop Navigation Menu */}
-          <nav className="hidden lg:flex items-center space-x-3.5 xl:space-x-5 text-[13px] xl:text-[15px] font-sans font-semibold tracking-wider uppercase text-slate-100">
-            <button onClick={() => scrollToSection('home')} className="hover:text-gold-400 transition cursor-pointer">Home</button>
-            <button onClick={() => scrollToSection('why-choose-me')} className="hover:text-gold-400 transition cursor-pointer whitespace-nowrap">Why Choose Me</button>
-            <button onClick={() => scrollToSection('about-me')} className="hover:text-gold-400 transition cursor-pointer whitespace-nowrap">About Me</button>
-            <button onClick={() => scrollToSection('services')} className="hover:text-gold-400 transition cursor-pointer whitespace-nowrap">My Services</button>
-            {/* Removed Check Eligibility quick link to prevent overlap */}
-            <button onClick={() => scrollToSection('faq')} className="hover:text-gold-400 transition cursor-pointer">FAQ</button>
-            <button onClick={() => scrollToSection('contact')} className="hover:text-gold-400 transition cursor-pointer">Contact</button>
+          <nav className="hidden lg:flex items-center space-x-5 xl:space-x-7 text-[13px] xl:text-[14px] font-sans font-bold tracking-wider uppercase">
+            <button onClick={() => scrollToSection('home')} className="relative py-2 text-[#0B1A30] hover:text-[#D4AF37] transition cursor-pointer">
+              Home
+              {activeTab === 'main' && (
+                <span className="absolute bottom-0 left-0 w-full h-[3px] bg-[#D4AF37] rounded-full"></span>
+              )}
+            </button>
+            <button onClick={() => scrollToSection('why-choose-me')} className="py-2 text-[#0B1A30] hover:text-[#D4AF37] transition cursor-pointer whitespace-nowrap">Why Choose Me</button>
+            <button onClick={() => scrollToSection('about-me')} className="py-2 text-[#0B1A30] hover:text-[#D4AF37] transition cursor-pointer whitespace-nowrap">About Me</button>
+            <button onClick={() => scrollToSection('services')} className="py-2 text-[#0B1A30] hover:text-[#D4AF37] transition cursor-pointer whitespace-nowrap">My Services</button>
+            <button onClick={() => scrollToSection('faq')} className="py-2 text-[#0B1A30] hover:text-[#D4AF37] transition cursor-pointer">FAQ</button>
+            <button onClick={() => scrollToSection('contact')} className="py-2 text-[#0B1A30] hover:text-[#D4AF37] transition cursor-pointer">Contact</button>
           </nav>
 
-          {/* Action buttons (Check Eligibility & Book Now) & Mobile Hamburger */}
-          <div className="flex items-center space-x-2.5">
+          {/* Action buttons (Check Eligibility - UK 2027 & Book Now) & Mobile Hamburger */}
+          <div className="flex items-center space-x-3">
             <button 
               onClick={() => { try { sessionStorage.setItem('tcc_active_tab', 'eligibility'); sessionStorage.removeItem('tcc_eligibility_step'); sessionStorage.removeItem('tcc_confirmed_assessment'); } catch {} setActiveTab('eligibility'); setEligibilityStep(0); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
-
-              className="px-3 py-2 sm:px-4 sm:py-2.5 text-xs font-bold bg-[#0B5CFF] hover:bg-[#004BD6] text-white rounded hover:scale-105 hover:shadow-lg transition transform duration-150 uppercase tracking-widest cursor-pointer font-sans"
+              className="px-4 py-2.5 text-xs font-extrabold bg-[#F5C451] hover:bg-[#E2AF3C] text-[#0B1A30] rounded-lg shadow-sm hover:scale-105 hover:shadow transition transform duration-150 uppercase tracking-widest cursor-pointer font-sans"
             >
               Check Eligibility - UK 2027
             </button>
 
             <button 
               onClick={() => { setActiveTab('book'); setBookingStep(1); }}
-              className="px-3 py-2 sm:px-4 sm:py-2.5 text-xs font-bold bg-white text-[#0B1A30] hover:bg-slate-100 rounded border border-white hover:scale-105 hover:shadow-lg transition transform duration-150 uppercase tracking-widest cursor-pointer font-sans"
+              className="px-4 py-2.5 text-xs font-extrabold bg-[#0B1A30] hover:bg-[#1A2E4C] text-white rounded-lg hover:scale-105 hover:shadow-lg transition transform duration-150 uppercase tracking-widest cursor-pointer font-sans"
             >
               Book Now
             </button>
@@ -2235,7 +2238,7 @@ END:VCALENDAR`;
             {/* Hamburger Toggle Button */}
             <button 
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="lg:hidden p-2 text-slate-300 hover:text-gold-500 rounded hover:bg-white/5 transition-all"
+              className="lg:hidden p-2 text-[#0B1A30] hover:text-[#D4AF37] rounded hover:bg-slate-100 transition-all"
               title="Toggle Navigation Menu"
               aria-label="Toggle Navigation Menu"
             >
@@ -2247,8 +2250,8 @@ END:VCALENDAR`;
 
         {/* Mobile Dropdown Navigation Menu */}
         {mobileMenuOpen && (
-          <div className="lg:hidden bg-navy-900 border-t border-navy-700/55 px-4 py-3 shadow-xl animate-fade-in">
-            <nav className="flex flex-col space-y-2 text-sm font-arial font-normal tracking-wider uppercase text-slate-100">
+          <div className="lg:hidden bg-[#0B1A30] border-t border-navy-700/55 px-4 py-3 shadow-xl animate-fade-in">
+            <nav className="flex flex-col space-y-2 text-sm font-sans font-normal tracking-wider uppercase text-slate-100">
               <button 
                 onClick={() => scrollToSection('home')} 
                 className="text-left py-2 border-b border-navy-800/60 hover:text-gold-400 transition"
@@ -2279,18 +2282,6 @@ END:VCALENDAR`;
               >
                 Check Eligibility - UK 2027
               </button>
-              {/* <button 
-                onClick={() => { setActiveTab('placements'); setMobileMenuOpen(false); }} 
-                className="text-left py-2 border-b border-navy-800/60 hover:text-gold-400 transition"
-              >
-                Players Placed
-              </button> */}
-              {/* <button 
-                onClick={() => scrollToSection('client-websites')} 
-                className="text-left py-2 border-b border-navy-800/60 hover:text-gold-400 transition"
-              >
-                Cricket Clients Website
-              </button> */}
               <button 
                 onClick={() => scrollToSection('faq')} 
                 className="text-left py-2 border-b border-navy-800/60 hover:text-gold-400 transition"
@@ -2307,6 +2298,8 @@ END:VCALENDAR`;
           </div>
         )}
       </header>
+
+
 
       {/* --- FLOATING CONTACT BUTTONS --- */}
       <div className="fixed bottom-6 right-6 z-40 flex flex-col space-y-3">
@@ -2355,89 +2348,136 @@ END:VCALENDAR`;
             {/* --- HERO BANNER --- */}
             <section 
               id="home" 
-              className="relative min-h-[90vh] flex items-center overflow-hidden py-16 px-4"
-              style={{
-                background: 'linear-gradient(135deg, #020817 0%, #0a1628 25%, #0d2240 55%, #13315c 80%, #1a3a6b 100%)',
-              }}
+              className="relative min-h-[95vh] lg:min-h-[90vh] flex items-center overflow-hidden py-16 px-4 bg-[#FAF9F5]"
             >
+              {/* Background Accent Wave: Top-Left (Gold) */}
+              <div className="absolute top-0 left-0 w-80 h-80 pointer-events-none z-0 opacity-80">
+                <svg viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full h-full">
+                  <path d="M0 0 C 80 15, 140 70, 150 180 C 130 190, 0 100, 0 0 Z" fill="url(#goldGradHero)" opacity="0.15" />
+                  <path d="M0 0 C 60 10, 110 50, 120 180 C 100 190, 0 100, 0 0 Z" fill="url(#goldGradHero)" opacity="0.1" />
+                  <defs>
+                    <linearGradient id="goldGradHero" x1="0%" y1="0%" x2="100%" y2="100%">
+                      <stop offset="0%" stopColor="#FAF5B7" />
+                      <stop offset="50%" stopColor="#D4AF37" />
+                      <stop offset="100%" stopColor="#AA771C" />
+                    </linearGradient>
+                  </defs>
+                </svg>
+              </div>
+
+              {/* Background Accent Wave: Bottom-Right (Navy & Gold Accent) */}
+              <div className="absolute bottom-0 right-0 w-[45%] h-[55%] pointer-events-none z-0">
+                <svg viewBox="0 0 400 400" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full h-full" preserveAspectRatio="none">
+                  {/* Gold Wave Layer */}
+                  <path d="M 400 400 L 0 400 C 150 360, 280 230, 400 100 Z" fill="#D4AF37" opacity="0.8" />
+                  {/* Navy Wave Layer */}
+                  <path d="M 400 400 L 30 400 C 170 370, 295 250, 400 130 Z" fill="#0B1A30" />
+                </svg>
+              </div>
+
+              {/* Batsman Silhouette Watermark on the Right */}
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 250" className="absolute right-[5%] bottom-[10%] h-[80%] w-auto opacity-[0.04] lg:opacity-[0.06] pointer-events-none z-0 text-[#0B1A30]" fill="currentColor">
+                <g transform="translate(10, 20)">
+                  <circle cx="110" cy="40" r="12" />
+                  <path d="M 115,48 L 105,48 L 100,43 L 118,43 Z" />
+                  <path d="M 100,55 L 125,55 L 135,95 L 115,110 L 95,95 Z" />
+                  <path d="M 98,58 L 80,75 L 75,70 L 93,53 Z" />
+                  <path d="M 118,58 L 95,90 L 88,85 L 112,53 Z" />
+                  <path d="M 75,72 L 40,110 L 32,105 L 67,67 Z" />
+                  <path d="M 74,71 L 82,78 L 85,75 L 77,68 Z" />
+                  <path d="M 95,95 L 90,160 L 105,160 L 112,115 L 120,165 L 135,165 L 128,105 Z" />
+                  <rect x="85" y="115" width="18" height="45" rx="4" />
+                  <rect x="120" y="115" width="18" height="48" rx="4" />
+                  <ellipse cx="95" cy="162" rx="10" ry="4" />
+                  <ellipse cx="130" cy="167" rx="10" ry="4" />
+                </g>
+              </svg>
+
               <div className="max-w-7xl mx-auto w-full grid grid-cols-1 lg:grid-cols-12 gap-12 items-center relative z-10">
                 
                 {/* Hero Left Content */}
                 <div className="lg:col-span-7 text-left space-y-6">
-                  <div className="inline-flex items-center space-x-2 bg-gold-500/10 border border-gold-500/20 px-3 py-1 rounded-full">
-                    <span className="w-2 h-2 rounded-full bg-gold-500 animate-ping"></span>
-                    <span className="text-gold-500 text-xs font-semibold uppercase tracking-wider">Independent Global Advisor</span>
+                  {/* Badge */}
+                  <div className="inline-flex items-center space-x-2 bg-[#FDF8E7] border border-gold-500/30 px-3 py-1.5 rounded-full">
+                    <span className="text-sm">🏆</span>
+                    <span className="text-[#B89020] text-xs font-bold uppercase tracking-wider">Independent Global Advisor</span>
                   </div>
 
-                  <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold text-[#D4AF37] font-display leading-tight">
+                  {/* Heading */}
+                  <h1 className="text-4xl sm:text-5xl lg:text-6xl font-black text-[#0B1A30] font-display leading-tight">
                     Prakash Palande <br/>
-                    <span className="text-gradient-gold">Cricket Consultant & Advisor</span>
+                    Cricket Consultant & <br/>
+                    <span className="text-[#D4AF37]">Advisor</span>
                   </h1>
 
-                  <h2 className="text-xl sm:text-2xl font-semibold text-gold-300 max-w-2xl font-sans">
+                  {/* Subheading */}
+                  <h2 className="text-lg sm:text-xl font-bold text-[#0B1A30] max-w-2xl font-sans">
                     Confused About Your Cricket Career? Let's Build Your Path to Global Cricket Opportunities.
                   </h2>
 
-                  <p className="text-gold-100/90 text-sm sm:text-base max-w-2xl leading-relaxed font-light">
+                  {/* Body Paragraph */}
+                  <p className="text-slate-650 text-xs sm:text-sm max-w-2xl leading-relaxed font-normal">
                     Whether you're an aspiring cricketer looking for overseas opportunities, a cricket club seeking professional consultation, or an organisation planning international cricket tours, I provide honest, independent guidance backed by years of experience and a global cricket network.
                   </p>
 
-                  <p className="text-gold-100/90 text-sm sm:text-base max-w-2xl leading-relaxed font-light">
-                    My aim is to help players, clubs and cricket organisations make informed decisions through professional consulting, international networking and operational expertise.
-                  </p>
+                  {/* Quick Feature Grid */}
+                  <div className="flex flex-wrap gap-3 pt-2">
+                    <div className="flex items-center space-x-2 bg-[#FDF8E7] px-4 py-2.5 rounded-xl border border-gold-500/10">
+                      <Globe className="h-4 w-4 text-[#0B1A30]" />
+                      <span className="text-[#0B1A30] text-xs font-bold">Global Cricket Network</span>
+                    </div>
+                    <div className="flex items-center space-x-2 bg-[#FDF8E7] px-4 py-2.5 rounded-xl border border-gold-500/10">
+                      <Users className="h-4 w-4 text-[#0B1A30]" />
+                      <span className="text-[#0B1A30] text-xs font-bold">Independent Consultation</span>
+                    </div>
+                    <div className="flex items-center space-x-2 bg-[#FDF8E7] px-4 py-2.5 rounded-xl border border-gold-500/10">
+                      <Briefcase className="h-4 w-4 text-[#0B1A30]" />
+                      <span className="text-[#0B1A30] text-xs font-bold">Career Opportunities</span>
+                    </div>
+                  </div>
 
-                  {/* Hero Action Buttons */}
+                  {/* CTA Buttons */}
                   <div className="pt-4 flex flex-wrap gap-4">
                     <button 
-                      onClick={() => { setActiveTab('book'); setBookingStep(1); }}
-                      className="px-8 py-4 bg-white text-[#0B1A30] hover:bg-slate-100 font-bold rounded shadow-lg hover:scale-105 transform transition duration-150 uppercase tracking-wider text-xs"
+                      onClick={() => { try { sessionStorage.setItem('tcc_active_tab', 'eligibility'); sessionStorage.removeItem('tcc_eligibility_step'); sessionStorage.removeItem('tcc_confirmed_assessment'); } catch {} setActiveTab('eligibility'); setEligibilityStep(0); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
+                      className="px-6 py-3.5 bg-[#F5C451] hover:bg-[#E2AF3C] text-[#0B1A30] font-extrabold rounded-lg shadow-md hover:scale-105 transform transition duration-150 uppercase tracking-wider text-xs flex items-center space-x-1.5 cursor-pointer font-sans"
                     >
-                      Book a Consultation
+                      <span>Check Eligibility - UK 2027</span>
+                      <ChevronRight className="h-4 w-4" />
                     </button>
-                    <a 
-                      href="https://wa.me/918591133960" 
-                      target="_blank" 
-                      rel="noopener noreferrer"
-                      className="px-6 py-4 bg-[#25D366] hover:bg-[#20ba5a] text-white font-semibold rounded flex items-center space-x-2 transition text-xs uppercase tracking-wider"
+                    
+                    <button 
+                      onClick={() => { setActiveTab('book'); setBookingStep(1); }}
+                      className="px-6 py-3.5 bg-white border border-[#0B1A30] hover:bg-[#0B1A30]/5 text-[#0B1A30] font-extrabold rounded-lg hover:scale-105 transform transition duration-150 uppercase tracking-wider text-xs flex items-center space-x-1.5 cursor-pointer font-sans"
                     >
-                      <Phone className="h-4 w-4 fill-current" />
-                      <span>Contact on WhatsApp</span>
-                    </a>
-                    <a 
-                      href="mailto:thecricketadvisor@gmail.com"
-                      className="px-6 py-4 bg-navy-800/80 hover:bg-navy-800 text-white border border-slate-700/50 hover:border-gold-500/40 font-semibold rounded flex items-center space-x-2 transition text-xs uppercase tracking-wider"
-                    >
-                      <Mail className="h-4 w-4" />
-                      <span>Send an Email</span>
-                    </a>
+                      <span>Book Now</span>
+                      <ChevronRight className="h-4 w-4" />
+                    </button>
                   </div>
                 </div>
 
-                {/* Hero Right - Enhanced Professional Photo */}
+                {/* Hero Right - Photo with L-shaped border & caption */}
                 <div className="lg:col-span-5 flex justify-center">
-                  <div className="relative w-72 h-96 sm:w-80 sm:h-[420px] rounded-2xl p-2 bg-gradient-to-tr from-gold-600 to-navy-700 shadow-2xl overflow-hidden group">
-                    <div className="absolute inset-0 bg-navy-950/40 z-10 pointer-events-none group-hover:bg-transparent transition duration-300"></div>
+                  <div className="relative w-72 sm:w-80 rounded-2xl border-l-[10px] border-b-[10px] border-[#D4AF37] shadow-2xl overflow-hidden bg-white">
                     <img 
                       src={profileImg} 
                       alt="Official Professional Consultant Profile" 
-                      className="w-full h-full object-cover rounded-xl shadow-inner transform group-hover:scale-105 transition duration-500"
+                      className="w-full h-80 sm:h-96 object-cover"
                     />
-                    <div className="absolute bottom-4 left-4 right-4 bg-navy-900/90 backdrop-blur-md px-4 py-3 rounded-lg border border-gold-500/20 z-20">
-                      <p className="text-gold-500 text-xs uppercase tracking-wider font-semibold">Ex-Mumbai U19 Player</p>
-                      <p className="text-white font-display font-bold text-sm">Prakash Palande</p>
-                      <p className="text-gold-300 text-xs">Cricket Consultant & Advisor</p>
+                    {/* Navy Overlay Caption */}
+                    <div className="bg-[#0B1A30] p-4 sm:p-5 text-left border-t border-navy-950">
+                      <p className="text-[#D4AF37] text-[10px] uppercase tracking-widest font-extrabold">Ex-Mumbai U19 Player</p>
+                      <p className="text-white font-display font-extrabold text-base sm:text-lg mt-0.5">Prakash Palande</p>
+                      <p className="text-[#D4AF37] text-xs mt-0.5">Cricket Consultant & Advisor</p>
                     </div>
                   </div>
                 </div>
 
               </div>
-
-              {/* Angle overlay spacer */}
-              <div className="absolute bottom-0 left-0 right-0 h-16 bg-[#FAFBFD] transform -skew-y-2 translate-y-10 z-0"></div>
             </section>
 
             {/* --- SECTION DIVIDER --- */}
-            <div className="bg-[#FAFBFD] py-12 px-4 max-w-7xl mx-auto">
+            <div className="bg-[#FAFBFD] pt-12 pb-2 px-4 max-w-7xl mx-auto">
               <div className="bg-navy-900 rounded-2xl p-8 shadow-xl text-center flex flex-col md:flex-row items-center justify-between border border-gold-500/10">
                 <div className="text-left mb-6 md:mb-0">
                   <h3 className="text-white text-lg font-bold font-display">Are you looking for overseas cricket career guidance or a club looking for overseas player?</h3>
@@ -2446,24 +2486,16 @@ END:VCALENDAR`;
                 <div className="flex flex-wrap gap-3">
                   <button 
                     onClick={() => { setActiveTab('book'); setBookingStep(1); }}
-                    className="px-6 py-3 bg-gold-gradient text-navy-950 font-bold rounded hover:scale-105 transition text-xs uppercase tracking-wider border border-gold-400"
+                    className="px-6 py-3 bg-gold-gradient text-navy-950 font-bold rounded hover:scale-105 transition text-xs uppercase tracking-wider border border-gold-400 cursor-pointer"
                   >
                     Book Appointment
                   </button>
-                  <a 
-                    href="https://wa.me/918591133960" 
-                    target="_blank" 
-                    rel="noopener noreferrer" 
-                    className="px-6 py-3 bg-white/10 hover:bg-white/20 text-white font-bold rounded text-xs uppercase tracking-wider transition border border-white/10"
-                  >
-                    WhatsApp Chat
-                  </a>
                 </div>
               </div>
             </div>
 
             {/* --- WHY CHOOSE ME SECTION --- */}
-            <section id="why-choose-me" className="py-20 bg-slate-50 border-y border-slate-100">
+            <section id="why-choose-me" className="pt-8 pb-20 bg-slate-50 border-y border-slate-100">
               <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 
                 <div className="text-center max-w-3xl mx-auto mb-16 space-y-4">
