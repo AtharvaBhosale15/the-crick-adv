@@ -2245,11 +2245,11 @@ END:VCALENDAR`;
               alt="The Cricket Advisor Logo" 
               className="h-10 sm:h-12 w-auto rounded-lg object-contain" 
             />
-            <div>
+            <div className="hidden sm:block">
               <span className="font-display tracking-tight font-bold text-[#0B1A30] text-sm sm:text-base block uppercase leading-tight">
                 Prakash Palande
               </span>
-              <span className="hidden sm:block font-display tracking-widest text-[9px] sm:text-[10px] font-semibold text-[#D4AF37] leading-tight">
+              <span className="font-display tracking-widest text-[9px] sm:text-[10px] font-semibold text-[#D4AF37] block leading-tight">
                 Cricket Consultant & Advisor
               </span>
             </div>
@@ -2270,18 +2270,19 @@ END:VCALENDAR`;
             <button onClick={() => scrollToSection('contact')} className="py-2 text-[#0B1A30] hover:text-[#D4AF37] transition cursor-pointer">Contact</button>
           </nav>
 
-          {/* Action buttons (Check Eligibility - UK 2027 & Book Now) & Mobile Hamburger */}
-          <div className="flex items-center space-x-3">
+          {/* Action buttons (Check Eligibility & Book Now) & Mobile Hamburger */}
+          <div className="flex items-center space-x-2 sm:space-x-3">
             <button 
               onClick={() => { try { sessionStorage.setItem('tcc_active_tab', 'eligibility'); sessionStorage.removeItem('tcc_eligibility_step'); sessionStorage.removeItem('tcc_confirmed_assessment'); } catch {} setActiveTab('eligibility'); setEligibilityStep(1); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
-              className="hidden lg:inline-block px-4 py-2.5 text-xs font-extrabold bg-[#F5C451] hover:bg-[#E2AF3C] text-[#0B1A30] rounded-lg shadow-sm hover:scale-105 hover:shadow transition transform duration-150 uppercase tracking-widest cursor-pointer font-sans"
+              className="px-2.5 sm:px-4 py-2.5 text-xs font-extrabold bg-[#F5C451] hover:bg-[#E2AF3C] text-[#0B1A30] rounded-lg shadow-sm hover:scale-105 hover:shadow transition transform duration-150 uppercase tracking-widest cursor-pointer font-sans whitespace-nowrap"
             >
-              Check Eligibility - UK 2027
+              <span className="inline sm:hidden">Check Eligibility</span>
+              <span className="hidden sm:inline">Check Eligibility - UK 2027</span>
             </button>
 
             <button 
               onClick={() => { setActiveTab('book'); setBookingStep(1); }}
-              className="px-4 py-2.5 text-xs font-extrabold bg-[#0B1A30] hover:bg-[#1A2E4C] text-white rounded-lg hover:scale-105 hover:shadow-lg transition transform duration-150 uppercase tracking-widest cursor-pointer font-sans"
+              className="px-2.5 sm:px-4 py-2.5 text-xs font-extrabold bg-[#0B1A30] hover:bg-[#1A2E4C] text-white rounded-lg hover:scale-105 hover:shadow-lg transition transform duration-150 uppercase tracking-widest cursor-pointer font-sans whitespace-nowrap"
             >
               Book Now
             </button>
