@@ -57,8 +57,246 @@ import cricketToursImg from './assets/images/cricket_tours_1784638123336.jpg';
 import independentConsultingImg from './assets/images/independent_consulting_1784638137784.jpg';
 import harshilDoshiImg from './assets/images/harshil_doshi_placement.jpg';
 import ukEligibilityReportDesign from './assets/images/uk_eligibility_report_design.png';
+import { jsPDF } from 'jspdf';
+
+// --- PREMIUM CRICKET CV BUILDER EXTENSION IMPORTS ---
+import CVLandingPage from './components/cv/CVLandingPage';
+import CVBuilderForm from './components/cv/CVBuilderForm';
+import CVLivePreview from './components/cv/CVLivePreview';
+import CVReviewPage from './components/cv/CVReviewPage';
+import CVDashboard from './components/cv/CVDashboard';
+import CVAuthModal from './components/cv/CVAuthModal';
+import CVEmailVerification from './components/cv/CVEmailVerification';
+import CVForgotPassword from './components/cv/CVForgotPassword';
+import { initialCVForm as initialCVFormFull, CricketCVFull } from './components/cv/CVTypes';
+import CVStyleStep from './components/cv/CVStyleStep';
+import CVPaymentSuccess from './components/cv/CVPaymentSuccess';
+import CVFinalView from './components/cv/CVFinalView';
+
 
 // --- TYPES ---
+interface CricketCV {
+  id: string;
+  referenceNumber: string;
+  createdAt: string;
+  lastUpdated: string;
+  paymentStatus: 'Paid' | 'Pending';
+  downloadStatus: 'LOCKED' | 'UNLOCKED';
+  updateBalance: number;
+  purchaseDate?: string;
+  firstName: string;
+  lastName: string;
+  dob: string;
+  nationality: string;
+  currentCountry: string;
+  cityLocation: string;
+  email: string;
+  phone: string;
+  profilePhoto?: string;
+  cricketLevel: string;
+  playingRole: string;
+  battingStyle: string;
+  bowlingStyle: string;
+  currentClub: string;
+  currentLevel: string;
+  country: string;
+  currentStateProvince: string;
+  playingSince: string;
+  currentSeason: string;
+  lookingForOpp: string;
+  oppTypes?: string[];
+  previousTeams: {
+    id: string;
+    teamName: string;
+    country: string;
+    level: string;
+    role: string;
+    fromYear: string;
+    toYear: string;
+  }[];
+  careerStats: {
+    matches: string;
+    innings: string;
+    runs: string;
+    highestScore: string;
+    battingAverage: string;
+    fifties: string;
+    hundreds: string;
+    wickets: string;
+    bestBowling: string;
+    bowlingAverage: string;
+    economyRate: string;
+    catches: string;
+    stumpings: string;
+  };
+  seasonStats: {
+    id: string;
+    season: string;
+    team: string;
+    competition: string;
+    matches: string;
+    runs: string;
+    wickets: string;
+  }[];
+  achievements: {
+    id: string;
+    title: string;
+    year: string;
+    competitionOrg: string;
+    description: string;
+  }[];
+  education: {
+    id: string;
+    institution: string;
+    qualification: string;
+    year: string;
+  }[];
+  qualifications: {
+    id: string;
+    certName: string;
+    details: string;
+    year: string;
+  }[];
+  aboutMe: string;
+  highlights: string[];
+  references: {
+    id: string;
+    name: string;
+    role: string;
+    clubOrg: string;
+    email: string;
+    phone: string;
+  }[];
+}
+
+const initialCVForm: CricketCV = {
+  id: '',
+  referenceNumber: '',
+  createdAt: '',
+  lastUpdated: '',
+  paymentStatus: 'Pending',
+  downloadStatus: 'LOCKED',
+  updateBalance: 3,
+  firstName: '',
+  lastName: '',
+  dob: '',
+  nationality: '',
+  currentCountry: '',
+  cityLocation: '',
+  email: '',
+  phone: '',
+  profilePhoto: '',
+  cricketLevel: '',
+  playingRole: '',
+  battingStyle: '',
+  bowlingStyle: '',
+  currentClub: '',
+  currentLevel: '',
+  country: '',
+  currentStateProvince: '',
+  playingSince: '',
+  currentSeason: '',
+  lookingForOpp: 'No',
+  oppTypes: [],
+  previousTeams: [],
+  careerStats: {
+    matches: '',
+    innings: '',
+    runs: '',
+    highestScore: '',
+    battingAverage: '',
+    fifties: '',
+    hundreds: '',
+    wickets: '',
+    bestBowling: '',
+    bowlingAverage: '',
+    economyRate: '',
+    catches: '',
+    stumpings: ''
+  },
+  seasonStats: [],
+  achievements: [],
+  education: [],
+  qualifications: [],
+  aboutMe: '',
+  highlights: [''],
+  references: []
+};
+
+const mockExampleCV: CricketCV = {
+  id: 'example-cv',
+  referenceNumber: 'TCA-CV-2026-EXAMPLE',
+  createdAt: new Date().toISOString(),
+  lastUpdated: new Date().toISOString(),
+  paymentStatus: 'Paid',
+  downloadStatus: 'UNLOCKED',
+  updateBalance: 3,
+  firstName: 'James',
+  lastName: 'Anderson',
+  dob: '1995-07-30',
+  nationality: 'English',
+  currentCountry: 'United Kingdom',
+  cityLocation: 'Manchester',
+  email: 'james.anderson@example.com',
+  phone: '+44 7700 900077',
+  profilePhoto: '',
+  cricketLevel: 'First-Class Cricketer',
+  playingRole: 'Bowler',
+  battingStyle: 'Left-Handed',
+  bowlingStyle: 'Right-Arm Fast-Medium',
+  currentClub: 'Lancashire CCC',
+  currentLevel: 'County Cricket',
+  country: 'United Kingdom',
+  currentStateProvince: 'Lancashire',
+  playingSince: '2010',
+  currentSeason: '2026',
+  lookingForOpp: 'Yes',
+  oppTypes: ['Overseas Cricket', 'Professional Opportunity'],
+  previousTeams: [
+    { id: '1', teamName: 'Burnley CC', country: 'United Kingdom', level: 'Club', role: 'Bowler', fromYear: '2010', toYear: '2015' },
+    { id: '2', teamName: 'Lancashire 2nd XI', country: 'United Kingdom', level: 'Academy', role: 'Bowler', fromYear: '2016', toYear: '2018' }
+  ],
+  careerStats: {
+    matches: '124',
+    innings: '80',
+    runs: '480',
+    highestScore: '34*',
+    battingAverage: '12.30',
+    fifties: '0',
+    hundreds: '0',
+    wickets: '412',
+    bestBowling: '7/42',
+    bowlingAverage: '21.45',
+    economyRate: '2.85',
+    catches: '42',
+    stumpings: '0'
+  },
+  seasonStats: [
+    { id: '1', season: '2025', team: 'Lancashire CCC', competition: 'County Championship', matches: '14', runs: '45', wickets: '52' },
+    { id: '2', season: '2024', team: 'Lancashire CCC', competition: 'County Championship', matches: '12', runs: '32', wickets: '41' }
+  ],
+  achievements: [
+    { id: '1', title: 'Leading Wicket Taker', year: '2025', competitionOrg: 'County Championship', description: 'Finished as the highest wicket-taker for Lancashire CC with 52 wickets.' },
+    { id: '2', title: 'Player of the Tournament', year: '2024', competitionOrg: 'One-Day Cup', description: 'Awarded player of the tournament for taking 24 wickets in 9 matches.' }
+  ],
+  education: [
+    { id: '1', institution: 'University of Manchester', qualification: 'BSc Sports Science', year: '2016' }
+  ],
+  qualifications: [
+    { id: '1', certName: 'Coaching Qualification', details: 'ECB Level 2 Coach', year: '2021' }
+  ],
+  aboutMe: 'I am a highly motivated right-arm fast-medium opening bowler with substantial first-class experience. I specialize in swing bowling and have a proven track record of taking early wickets in multi-day and limited-overs cricket.',
+  highlights: [
+    '400+ First-Class Wickets',
+    'ECB Level 2 Certified Coach',
+    'Lancashire CCC Wicket-Taker of the Year (2025)',
+    'Overseas club cricket experience in Australia'
+  ],
+  references: [
+    { id: '1', name: 'Glen Chapple', role: 'Head Coach', clubOrg: 'Lancashire CCC', email: 'glen.chapple@example.com', phone: '+44 7700 900088' }
+  ]
+};
+
 interface Player {
   id: string;
   name: string;
@@ -426,16 +664,48 @@ const isSlotPastInIST = (slot: string, selectedDate: string) => {
 export default function App() {
   // --- CORE STATE ---
   // Restore from sessionStorage so React remounts (e.g., from an error boundary reset) don't lose navigation state
-  const [activeTab, setActiveTab] = useState<'main' | 'book' | 'admin' | 'placements' | 'eligibility'>(() => {
+  const [activeTab, setActiveTab] = useState<'main' | 'book' | 'admin' | 'placements' | 'eligibility' | 'cricket-cv'>(() => {
     const hash = window.location.hash;
     if (hash === '#eligibility') return 'eligibility';
     if (hash === '#book') return 'book';
     if (hash === '#admin') return 'admin';
     if (hash === '#placements') return 'placements';
+    if (hash === '#cricket-cv') return 'cricket-cv';
     try { return (sessionStorage.getItem('tcc_active_tab') as any) || 'main'; } catch { return 'main'; }
   });
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
+  // Cricket CV states
+  const [cvView, setCvView] = useState<'landing' | 'onboarding' | 'form' | 'styling' | 'preview' | 'success' | 'final-cv' | 'dashboard'>('landing');
+  const [cvStep, setCvStep] = useState<number>(1);
+  const [cvForm, setCvForm] = useState<CricketCVFull>(() => initialCVFormFull('', '', '', ''));
+  const [isProcessingCvPayment, setIsProcessingCvPayment] = useState(false);
+  const [cvPaymentError, setCvPaymentError] = useState('');
+  const [cvList, setCvList] = useState<any[]>([]);
+  const [deliveryEmail, setDeliveryEmail] = useState('');
+  const [confirmDeliveryEmail, setConfirmDeliveryEmail] = useState('');
+  const [emailDeliveryError, setEmailDeliveryError] = useState('');
+  const [isSendingCvEmail, setIsSendingCvEmail] = useState(false);
+  const [emailDeliverySuccess, setEmailDeliverySuccess] = useState(false);
+  const [cvImagePreview, setCvImagePreview] = useState<string>('');
+  const [isSimulatedCheckout, setIsSimulatedCheckout] = useState(false);
   const [currency, setCurrency] = useState<CurrencyCode>('INR');
+
+  // CV Auth Extension states
+  const [cvUser, setCvUser] = useState<any>(() => {
+    try {
+      const u = sessionStorage.getItem('cv_user');
+      return u ? JSON.parse(u) : null;
+    } catch { return null; }
+  });
+  const [cvToken, setCvToken] = useState<string | null>(() => {
+    try { return sessionStorage.getItem('cv_token'); } catch { return null; }
+  });
+  const [showCVAuthModal, setShowCVAuthModal] = useState(false);
+  const [forgotPasswordToken, setForgotPasswordToken] = useState<string | null>(null);
+  const [verificationToken, setVerificationToken] = useState<string | null>(null);
+  const [isSavingCv, setIsSavingCv] = useState(false);
+  const [showForgotPasswordModal, setShowForgotPasswordModal] = useState(false);
 
   // Eligibility Assessment State
   const [eligibilityStep, setEligibilityStep] = useState<number>(() => {
@@ -485,7 +755,7 @@ export default function App() {
   const [adminUsername, setAdminUsername] = useState('');
   const [adminPassword, setAdminPassword] = useState('');
   const [adminError, setAdminError] = useState('');
-  const [adminSubTab, setAdminSubTab] = useState<'all' | 'bank' | 'bookings' | 'assessments' | 'prices' | 'dates' | 'players' | 'calendar' | 'settings'>('all');
+  const [adminSubTab, setAdminSubTab] = useState<'all' | 'bank' | 'bookings' | 'assessments' | 'prices' | 'dates' | 'players' | 'calendar' | 'settings' | 'cvs'>('all');
   const [selectedInvoiceBooking, setSelectedInvoiceBooking] = useState<Booking | null>(null);
   const [editingBooking, setEditingBooking] = useState<Booking | null>(null);
   const [copiedLink, setCopiedLink] = useState(false);
@@ -1186,6 +1456,8 @@ END:VCALENDAR`;
         setActiveTab('admin');
       } else if (hash === '#placements') {
         setActiveTab('placements');
+      } else if (hash === '#cricket-cv') {
+        setActiveTab('cricket-cv');
       } else if (!hash || hash === '#home') {
         setActiveTab('main');
       }
@@ -1208,7 +1480,7 @@ END:VCALENDAR`;
     if (window.location.hash !== targetHash) {
       if (activeTab === 'main') {
         const currentHash = window.location.hash;
-        if (['#eligibility', '#book', '#admin', '#placements'].includes(currentHash)) {
+        if (['#eligibility', '#book', '#admin', '#placements', '#cricket-cv'].includes(currentHash)) {
           window.history.replaceState(null, '', window.location.pathname + window.location.search);
         }
       } else {
@@ -1216,6 +1488,121 @@ END:VCALENDAR`;
       }
     }
   }, [activeTab]);
+
+  // Sync session on mount and URL query params
+  useEffect(() => {
+    const checkParams = () => {
+      const params = new URLSearchParams(window.location.search);
+      const verify = params.get('verify');
+      const reset = params.get('reset');
+      if (verify) {
+        setVerificationToken(verify);
+        setActiveTab('cricket-cv');
+        setCvView('landing');
+      }
+      if (reset) {
+        setForgotPasswordToken(reset);
+        setShowForgotPasswordModal(true);
+        setActiveTab('cricket-cv');
+        setCvView('landing');
+      }
+    };
+
+    const validateToken = async () => {
+      if (cvToken) {
+        try {
+          const res = await fetch('/api/cv-auth-check', {
+            headers: { 'Authorization': `Bearer ${cvToken}` }
+          });
+          if (res.ok) {
+            const data = await res.json();
+            setCvUser(data.user);
+            await fetchUserCV(cvToken);
+          } else {
+            handleCvLogout();
+          }
+        } catch {
+          handleCvLogout();
+        }
+      }
+    };
+
+    checkParams();
+    validateToken();
+  }, []);
+
+  const fetchUserCV = async (tokenStr: string) => {
+    try {
+      const res = await fetch('/api/cv-get', {
+        headers: { 'Authorization': `Bearer ${tokenStr}` }
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.cv) {
+          const mergedCv = {
+            ...initialCVFormFull('', '', '', ''),
+            ...data.cv
+          };
+          setCvForm(mergedCv);
+          if (mergedCv.paymentStatus === 'Paid') {
+            setCvView('dashboard');
+          } else if (mergedCv.status === 'draft' && mergedCv.firstName) {
+            setCvView('dashboard');
+          }
+        }
+      }
+    } catch (err) {
+      console.error('Error loading CV:', err);
+    }
+  };
+
+  const handleSaveCvDraft = async (updatedCv: CricketCVFull = cvForm, isStyleUpdate: boolean = false) => {
+    if (!cvToken) return;
+    setIsSavingCv(true);
+    try {
+      const res = await fetch('/api/cv-save', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${cvToken}`
+        },
+        body: JSON.stringify({ cv: updatedCv, isStyleUpdate })
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.cv) {
+          setCvForm({
+            ...initialCVFormFull('', '', '', ''),
+            ...data.cv
+          });
+        }
+      }
+    } catch (err) {
+      console.error('Failed to save CV:', err);
+    } finally {
+      setIsSavingCv(false);
+    }
+  };
+
+  const handleCvLoginSuccess = (token: string, user: any) => {
+    setCvToken(token);
+    setCvUser(user);
+    sessionStorage.setItem('cv_token', token);
+    sessionStorage.setItem('cv_user', JSON.stringify(user));
+    fetchUserCV(token);
+    setCvView('dashboard');
+    setShowCVAuthModal(false);
+  };
+
+  const handleCvLogout = () => {
+    setCvToken(null);
+    setCvUser(null);
+    sessionStorage.removeItem('cv_token');
+    sessionStorage.removeItem('cv_user');
+    setCvForm(initialCVFormFull('', '', '', ''));
+    setCvView('landing');
+  };
+
 
   // Scroll to top of page whenever activeTab or bookingStep changes
   useEffect(() => {
@@ -1976,6 +2363,17 @@ END:VCALENDAR`;
           } catch (err) {
             console.error('Error fetching assessments for admin:', err);
           }
+
+          // 5. Load CVs
+          try {
+            const cvsResp = await fetch(`/api/get-cvs?secret=${encodeURIComponent(typedPassword)}`);
+            if (cvsResp.ok) {
+              const cloudCvs = await cvsResp.json();
+              setCvList(cloudCvs);
+            }
+          } catch (err) {
+            console.error('Error fetching CVs for admin:', err);
+          }
           return;
         }
       }
@@ -2003,6 +2401,15 @@ END:VCALENDAR`;
         } catch (err) {
           console.error('Error fetching assessments for admin:', err);
         }
+        try {
+          const cvsResp = await fetch(`/api/get-cvs?secret=${encodeURIComponent(typedPassword)}`);
+          if (cvsResp.ok) {
+            const cloudCvs = await cvsResp.json();
+            setCvList(cloudCvs);
+          }
+        } catch (err) {
+          console.error('Error fetching CVs for admin:', err);
+        }
       } else {
         setAdminError(`Invalid username or password. Default password is: cricket2026`);
       }
@@ -2021,6 +2428,15 @@ END:VCALENDAR`;
           }
         } catch (err) {
           console.error('Error fetching assessments for admin:', err);
+        }
+        try {
+          const cvsResp = await fetch(`/api/get-cvs?secret=${encodeURIComponent(typedPassword)}`);
+          if (cvsResp.ok) {
+            const cloudCvs = await cvsResp.json();
+            setCvList(cloudCvs);
+          }
+        } catch (err) {
+          console.error('Error fetching CVs for admin:', err);
         }
       } else {
         setAdminError(`Invalid username or password. Default password is: cricket2026`);
@@ -2231,6 +2647,994 @@ END:VCALENDAR`;
     }, 100);
   };
 
+  // --- CRICKET CV GENERATORS & HANDLERS ---
+  const generateCricketCvPdf = (cv: CricketCV) => {
+    const doc = new jsPDF({
+      orientation: 'portrait',
+      unit: 'mm',
+      format: 'a4'
+    });
+
+    const navy = [11, 26, 48];
+    const gold = [212, 175, 55];
+    const darkGray = [80, 80, 80];
+    const lightGray = [245, 245, 245];
+
+    // Header bar
+    doc.setFillColor(navy[0], navy[1], navy[2]);
+    doc.rect(0, 0, 210, 50, 'F');
+
+    // Title
+    doc.setTextColor(255, 255, 255);
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(22);
+    doc.text(`${cv.firstName.toUpperCase()} ${cv.lastName.toUpperCase()}`, 15, 20);
+
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(11);
+    doc.setTextColor(gold[0], gold[1], gold[2]);
+    doc.text(`${cv.playingRole.toUpperCase()} | ${cv.cricketLevel.toUpperCase()}`, 15, 28);
+
+    doc.setFontSize(8);
+    doc.setTextColor(230, 230, 230);
+    doc.text(`Ref: ${cv.referenceNumber || 'Pending Purchase'}`, 15, 34);
+
+    // Profile photo
+    if (cv.profilePhoto) {
+      try {
+        doc.addImage(cv.profilePhoto, 'JPEG', 160, 8, 35, 35);
+        doc.setDrawColor(gold[0], gold[1], gold[2]);
+        doc.setLineWidth(0.8);
+        doc.rect(160, 8, 35, 35, 'D');
+      } catch (e) {
+        console.warn("Failed to render profile photo in PDF:", e);
+      }
+    }
+
+    let y = 60;
+
+    // Contact details box
+    doc.setFillColor(lightGray[0], lightGray[1], lightGray[2]);
+    doc.rect(15, y, 180, 16, 'F');
+    
+    doc.setTextColor(navy[0], navy[1], navy[2]);
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(8);
+    
+    doc.text('NATIONALITY:', 20, y + 6);
+    doc.setFont('helvetica', 'normal');
+    doc.text(cv.nationality || 'N/A', 20, y + 11);
+
+    doc.setFont('helvetica', 'bold');
+    doc.text('CURRENT COUNTRY:', 60, y + 6);
+    doc.setFont('helvetica', 'normal');
+    doc.text(cv.currentCountry || 'N/A', 60, y + 11);
+
+    doc.setFont('helvetica', 'bold');
+    doc.text('EMAIL ADDRESS:', 110, y + 6);
+    doc.setFont('helvetica', 'normal');
+    doc.text(cv.email || 'N/A', 110, y + 11);
+
+    doc.setFont('helvetica', 'bold');
+    doc.text('PHONE NUMBER:', 155, y + 6);
+    doc.setFont('helvetica', 'normal');
+    doc.text(cv.phone || 'N/A', 155, y + 11);
+
+    y += 25;
+
+    // Player profile section
+    doc.setDrawColor(navy[0], navy[1], navy[2]);
+    doc.setLineWidth(0.5);
+    doc.line(15, y, 195, y);
+    
+    doc.setTextColor(navy[0], navy[1], navy[2]);
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(12);
+    doc.text('PLAYER PROFILE', 15, y - 2);
+
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(9.5);
+    doc.setTextColor(darkGray[0], darkGray[1], darkGray[2]);
+    
+    const splitProfile = doc.splitTextToSize(cv.aboutMe || 'No description provided.', 180);
+    doc.text(splitProfile, 15, y + 5);
+    y += (splitProfile.length * 4.5) + 8;
+
+    // Career highlights
+    if (cv.highlights && cv.highlights.length > 0 && cv.highlights.some(h => h.trim())) {
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(10);
+      doc.setTextColor(navy[0], navy[1], navy[2]);
+      doc.text('CAREER HIGHLIGHTS:', 15, y);
+      y += 4;
+      
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(9);
+      doc.setTextColor(darkGray[0], darkGray[1], darkGray[2]);
+      cv.highlights.forEach((h) => {
+        if (h.trim()) {
+          doc.text(`• ${h}`, 20, y);
+          y += 4.5;
+        }
+      });
+      y += 4;
+    }
+
+    // Statistics Section
+    doc.setDrawColor(navy[0], navy[1], navy[2]);
+    doc.line(15, y, 195, y);
+    doc.setTextColor(navy[0], navy[1], navy[2]);
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(12);
+    doc.text('CRICKET STATISTICS', 15, y - 2);
+    y += 5;
+
+    doc.setFillColor(navy[0], navy[1], navy[2]);
+    doc.rect(15, y, 180, 6, 'F');
+    
+    doc.setTextColor(255, 255, 255);
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(7.5);
+    
+    doc.text('MATCHES', 17, y + 4.5);
+    doc.text('INNINGS', 37, y + 4.5);
+    doc.text('RUNS', 57, y + 4.5);
+    doc.text('H.S.', 77, y + 4.5);
+    doc.text('AVG', 92, y + 4.5);
+    doc.text('50s/100s', 110, y + 4.5);
+    doc.text('WICKETS', 130, y + 4.5);
+    doc.text('B.B.', 150, y + 4.5);
+    doc.text('BOWL AVG', 165, y + 4.5);
+    doc.text('ECONOMY', 183, y + 4.5);
+
+    y += 6;
+    doc.setFillColor(250, 250, 250);
+    doc.rect(15, y, 180, 7, 'F');
+    doc.setTextColor(darkGray[0], darkGray[1], darkGray[2]);
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(8.5);
+
+    const cs = cv.careerStats;
+    doc.text(cs.matches || '0', 17, y + 5);
+    doc.text(cs.innings || '0', 37, y + 5);
+    doc.text(cs.runs || '0', 57, y + 5);
+    doc.text(cs.highestScore || '0', 77, y + 5);
+    doc.text(cs.battingAverage || '0.00', 92, y + 5);
+    doc.text(`${cs.fifties || '0'}/${cs.hundreds || '0'}`, 110, y + 5);
+    doc.text(cs.wickets || '0', 130, y + 5);
+    doc.text(cs.bestBowling || 'N/A', 150, y + 5);
+    doc.text(cs.bowlingAverage || '0.00', 165, y + 5);
+    doc.text(cs.economyRate || '0.00', 183, y + 5);
+
+    y += 12;
+
+    if (cv.seasonStats && cv.seasonStats.length > 0) {
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(9.5);
+      doc.setTextColor(navy[0], navy[1], navy[2]);
+      doc.text('SEASON BREAKDOWN:', 15, y);
+      y += 5;
+
+      doc.setFillColor(235, 238, 242);
+      doc.rect(15, y, 180, 5, 'F');
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(7);
+      doc.text('SEASON', 17, y + 3.5);
+      doc.text('TEAM', 40, y + 3.5);
+      doc.text('COMPETITION', 85, y + 3.5);
+      doc.text('MATCHES', 135, y + 3.5);
+      doc.text('RUNS', 155, y + 3.5);
+      doc.text('WICKETS', 175, y + 3.5);
+      
+      y += 5;
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(8);
+      cv.seasonStats.forEach((ss) => {
+        doc.text(ss.season || 'N/A', 17, y + 3.5);
+        doc.text(ss.team || 'N/A', 40, y + 3.5);
+        doc.text(ss.competition || 'N/A', 85, y + 3.5);
+        doc.text(ss.matches || '0', 135, y + 3.5);
+        doc.text(ss.runs || '0', 155, y + 3.5);
+        doc.text(ss.wickets || '0', 175, y + 3.5);
+        y += 4.5;
+      });
+      y += 5;
+    }
+
+    // Experience Section
+    doc.setDrawColor(navy[0], navy[1], navy[2]);
+    doc.line(15, y, 195, y);
+    doc.setTextColor(navy[0], navy[1], navy[2]);
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(12);
+    doc.text('CRICKET EXPERIENCE', 15, y - 2);
+    y += 5;
+
+    if (cv.previousTeams && cv.previousTeams.length > 0) {
+      cv.previousTeams.forEach((pt) => {
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(9.5);
+        doc.setTextColor(navy[0], navy[1], navy[2]);
+        doc.text(`${pt.teamName.toUpperCase()} (${pt.country})`, 15, y);
+        
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(8.5);
+        doc.setTextColor(gold[0], gold[1], gold[2]);
+        doc.text(`${pt.role} - ${pt.level}`, 15, y + 4);
+
+        doc.setTextColor(darkGray[0], darkGray[1], darkGray[2]);
+        doc.text(`Duration: ${pt.fromYear} - ${pt.toYear}`, 150, y);
+
+        y += 8;
+      });
+    } else {
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(9);
+      doc.text('No previous teams added.', 15, y);
+      y += 6;
+    }
+    y += 2;
+
+    if (y > 220) {
+      doc.addPage();
+      y = 20;
+    }
+
+    // Achievements Section
+    if (cv.achievements && cv.achievements.length > 0) {
+      doc.setDrawColor(navy[0], navy[1], navy[2]);
+      doc.line(15, y, 195, y);
+      doc.setTextColor(navy[0], navy[1], navy[2]);
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(12);
+      doc.text('KEY ACHIEVEMENTS', 15, y - 2);
+      y += 5;
+
+      cv.achievements.forEach((ach) => {
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(9);
+        doc.setTextColor(navy[0], navy[1], navy[2]);
+        doc.text(`${ach.title} (${ach.year})`, 15, y);
+        doc.setFont('helvetica', 'normal');
+        doc.text(ach.competitionOrg || 'N/A', 120, y);
+        
+        if (ach.description) {
+          doc.setFont('helvetica', 'normal');
+          doc.setFontSize(8);
+          doc.setTextColor(darkGray[0], darkGray[1], darkGray[2]);
+          const splitDesc = doc.splitTextToSize(ach.description, 175);
+          doc.text(splitDesc, 20, y + 4);
+          y += (splitDesc.length * 4) + 5;
+        } else {
+          y += 5;
+        }
+      });
+      y += 2;
+    }
+
+    if (y > 230) {
+      doc.addPage();
+      y = 20;
+    }
+
+    // Education & Qualifications Section
+    const hasEd = cv.education && cv.education.length > 0;
+    const hasQual = cv.qualifications && cv.qualifications.length > 0;
+    if (hasEd || hasQual) {
+      doc.setDrawColor(navy[0], navy[1], navy[2]);
+      doc.line(15, y, 195, y);
+      doc.setTextColor(navy[0], navy[1], navy[2]);
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(12);
+      doc.text('EDUCATION & QUALIFICATIONS', 15, y - 2);
+      y += 5;
+
+      if (hasEd) {
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(9.5);
+        doc.setTextColor(navy[0], navy[1], navy[2]);
+        doc.text('Academic Education:', 15, y);
+        y += 4;
+        cv.education.forEach((ed) => {
+          doc.setFont('helvetica', 'bold');
+          doc.setFontSize(8.5);
+          doc.text(ed.qualification, 20, y);
+          doc.setFont('helvetica', 'normal');
+          doc.text(`${ed.institution} (${ed.year})`, 80, y);
+          y += 4.5;
+        });
+        y += 3;
+      }
+
+      if (hasQual) {
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(9.5);
+        doc.setTextColor(navy[0], navy[1], navy[2]);
+        doc.text('Cricket Qualifications:', 15, y);
+        y += 4;
+        cv.qualifications.forEach((q) => {
+          doc.setFont('helvetica', 'bold');
+          doc.setFontSize(8.5);
+          doc.text(q.certName, 20, y);
+          doc.setFont('helvetica', 'normal');
+          doc.text(`${q.details} (${q.year})`, 80, y);
+          y += 4.5;
+        });
+        y += 4;
+      }
+    }
+
+    if (y > 230) {
+      doc.addPage();
+      y = 20;
+    }
+
+    // References Section
+    if (cv.references && cv.references.length > 0 && cv.references.some(r => r.name)) {
+      doc.setDrawColor(navy[0], navy[1], navy[2]);
+      doc.line(15, y, 195, y);
+      doc.setTextColor(navy[0], navy[1], navy[2]);
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(12);
+      doc.text('REFERENCES (OPTIONAL)', 15, y - 2);
+      y += 5;
+
+      cv.references.forEach((ref) => {
+        if (ref.name) {
+          doc.setFont('helvetica', 'bold');
+          doc.setFontSize(9);
+          doc.setTextColor(navy[0], navy[1], navy[2]);
+          doc.text(ref.name, 15, y);
+          doc.setFont('helvetica', 'normal');
+          doc.setFontSize(8);
+          doc.text(`${ref.role} - ${ref.clubOrg}`, 15, y + 4);
+          doc.text(`Email: ${ref.email || 'N/A'} | Phone: ${ref.phone || 'N/A'}`, 15, y + 8);
+          y += 12;
+        }
+      });
+    }
+
+    // Last page footer
+    doc.setFillColor(navy[0], navy[1], navy[2]);
+    doc.rect(0, 287, 210, 10, 'F');
+    
+    doc.setTextColor(255, 255, 255);
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(8);
+    doc.text('Generated via The Cricket Advisor CV Builder', 15, 293.5);
+    doc.text('www.thecricketadvisor.com', 160, 293.5);
+
+    return doc;
+  };
+
+  const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (!['image/jpeg', 'image/png'].includes(file.type)) {
+        alert('Please upload a JPG or PNG image.');
+        return;
+      }
+      if (file.size > 5 * 1024 * 1024) {
+        alert('Profile photo must be smaller than 5MB.');
+        return;
+      }
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setCvImagePreview(reader.result as string);
+        setCvForm(prev => ({ ...prev, profilePhoto: reader.result as string }));
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const validateCvStep = (step: number): boolean => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+    if (step === 1) {
+      if (!cvForm.firstName.trim()) { alert("Please enter First Name."); return false; }
+      if (!cvForm.lastName.trim()) { alert("Please enter Last Name."); return false; }
+      if (!cvForm.dob) { alert("Please enter Date of Birth."); return false; }
+      if (!cvForm.nationality.trim()) { alert("Please enter Nationality."); return false; }
+      if (!cvForm.currentCountry.trim()) { alert("Please enter Current Country."); return false; }
+      if (!cvForm.cityLocation.trim()) { alert("Please enter City / Location."); return false; }
+      if (!cvForm.email.trim() || !emailRegex.test(cvForm.email)) { alert("Please enter a valid Email Address."); return false; }
+      if (!cvForm.phone.trim()) { alert("Please enter a valid Phone Number."); return false; }
+    }
+
+    if (step === 2) {
+      if (!cvForm.cricketLevel) { alert("Please select your Cricket Level."); return false; }
+      if (!cvForm.playingRole) { alert("Please select your Playing Role."); return false; }
+      if (!cvForm.battingStyle) { alert("Please select your Batting Style."); return false; }
+      if (!cvForm.bowlingStyle) { alert("Please select your Bowling Style."); return false; }
+    }
+
+    if (step === 3) {
+      if (!cvForm.currentClub.trim()) { alert("Please enter Current Club / Team."); return false; }
+      if (!cvForm.currentLevel.trim()) { alert("Please enter Current Cricket Level."); return false; }
+      if (!cvForm.country.trim()) { alert("Please enter Current Team Country."); return false; }
+      if (!cvForm.currentStateProvince.trim()) { alert("Please enter State / Province / County."); return false; }
+      if (!cvForm.playingSince.trim() || isNaN(Number(cvForm.playingSince))) { alert("Please enter a valid year in Playing Since."); return false; }
+      if (!cvForm.currentSeason.trim()) { alert("Please enter Current Season."); return false; }
+      if (cvForm.lookingForOpp === 'Yes' && (!cvForm.oppTypes || cvForm.oppTypes.length === 0)) {
+        alert("Please select at least one type of opportunity.");
+        return false;
+      }
+    }
+
+    if (step === 5) {
+      const cs = cvForm.careerStats;
+      const numberFields = ['matches', 'innings', 'runs', 'fifties', 'hundreds', 'wickets', 'catches', 'stumpings'];
+      for (const f of numberFields) {
+        const val = (cs as any)[f];
+        if (val && (isNaN(Number(val)) || Number(val) < 0)) {
+          alert(`Please enter a valid, non-negative number for ${f.toUpperCase()}.`);
+          return false;
+        }
+      }
+    }
+
+    return true;
+  };
+
+  const handleSaveCv = async (updatedCv: CricketCV) => {
+    try {
+      const response = await fetch('/api/save-cv', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ cv: updatedCv })
+      });
+      return response.ok;
+    } catch (e) {
+      console.error("Failed to save CV:", e);
+      return false;
+    }
+  };
+
+  const handleEmailCv = async (cvData: CricketCV, targetEmail: string) => {
+    setIsSendingCvEmail(true);
+    setEmailDeliveryError('');
+    setEmailDeliverySuccess(false);
+    try {
+      const pdf = generateCricketCvPdf(cvData);
+      const pdfBase64 = pdf.output('datauristring');
+
+      const response = await fetch('/api/email-cv', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: targetEmail,
+          firstName: cvData.firstName,
+          lastName: cvData.lastName,
+          referenceNumber: cvData.referenceNumber,
+          pdfBase64
+        })
+      });
+
+      if (response.ok) {
+        setEmailDeliverySuccess(true);
+      } else {
+        const err = await response.json();
+        setEmailDeliveryError(err.error || 'Failed to email CV.');
+      }
+    } catch (e: any) {
+      setEmailDeliveryError(e.message || 'Error occurred while emailing CV.');
+    } finally {
+      setIsSendingCvEmail(false);
+    }
+  };
+
+  const CV_PRICES: Record<CurrencyCode, { symbol: string, amount: number, text: string }> = {
+    INR: { symbol: '₹', amount: 999, text: '₹999' },
+    USD: { symbol: '$', amount: 15, text: '$15' },
+    GBP: { symbol: '£', amount: 12, text: '£12' },
+    AUD: { symbol: 'A$', amount: 20, text: 'A$20' },
+    NZD: { symbol: 'NZ$', amount: 22, text: 'NZ$' + 22 }
+  };
+
+  const renderCricketCvWorkspace = () => {
+    const renderOnboardingWizard = () => {
+      const handleOnboardSubmit = () => {
+        if (!cvForm.firstName || !cvForm.lastName || !cvForm.nationality || !cvForm.dateOfBirth || !cvForm.countryOfResidence || !cvForm.currentCity || !cvForm.phone || !cvForm.email || !cvForm.password) {
+          alert("Please fill in all the required fields.");
+          return;
+        }
+
+        // Trigger Recheck Confirmation Popup
+        const confirmDetails = window.confirm(
+          `RE-CHECK YOUR DETAILS:\n\n` +
+          `First Name: ${cvForm.firstName}\n` +
+          `Last Name: ${cvForm.lastName}\n` +
+          `Nationality: ${cvForm.nationality}\n` +
+          `Date of Birth: ${cvForm.dateOfBirth}\n` +
+          `Country: ${cvForm.countryOfResidence}\n` +
+          `State/Province: ${cvForm.currentCity}\n` +
+          `Mobile: ${cvForm.phone}\n` +
+          `Email: ${cvForm.email}\n\n` +
+          `Please confirm these details are correct. They will be auto-locked upon purchase.`
+        );
+        if (confirmDetails) {
+          handleRegisterSubmit();
+        }
+      };
+
+      const handleRegisterSubmit = async () => {
+        try {
+          const res = await fetch('/api/cv-register', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              email: cvForm.email,
+              password: cvForm.password || 'tempPass123',
+              firstName: cvForm.firstName,
+              lastName: cvForm.lastName,
+              country: cvForm.countryOfResidence,
+              stateProvince: cvForm.currentCity,
+              mobileNumber: cvForm.phone,
+              nationality: cvForm.nationality,
+              dateOfBirth: cvForm.dateOfBirth
+            })
+          });
+          const data = await res.json();
+          if (!res.ok) throw new Error(data.error || 'Registration failed');
+
+          if (data.token) {
+            handleCvLoginSuccess(data.token, data.user);
+            setCvView('dashboard');
+            alert('Registration Successful! Welcome to your dashboard.');
+          } else {
+            alert(data.message || 'Registration completed successfully! Please verify your email.');
+            setCvView('landing');
+          }
+        } catch (err: any) {
+          alert(`Error: ${err.message}`);
+        }
+      };
+
+      return (
+        <div className="py-12 bg-slate-50 min-h-[85vh] text-slate-800 flex items-center justify-center font-sans">
+          <div className="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden w-full max-w-lg animate-fade-in flex flex-col">
+            {/* Header subbar styling matching Eligibility intake form */}
+            <div className="bg-[#0B1A30] text-[#D4AF37] px-6 py-4 border-b border-gold-500/20 flex items-center justify-between">
+              <span className="font-bold font-display uppercase text-xs tracking-wider">Create Your Account</span>
+              <span className="text-[10px] text-gold-300/80 normal-case font-semibold font-sans">Cricket CV Registration</span>
+            </div>
+
+            <div className="p-6 space-y-6 text-left">
+              <div>
+                <h3 className="text-lg font-bold text-[#0B1A30] font-display uppercase tracking-tight">Player Registration Form</h3>
+                <p className="text-slate-500 text-xs mt-1 font-sans">Please fill out the form below to create your account and draft your CV.</p>
+              </div>
+
+              <form onSubmit={(e) => { e.preventDefault(); handleOnboardSubmit(); }} className="space-y-5">
+                {/* First Name & Last Name */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="space-y-1.5">
+                    <label className="block text-xs font-bold text-slate-700 uppercase font-sans">First Name *</label>
+                    <input 
+                      type="text" 
+                      required
+                      value={cvForm.firstName}
+                      onChange={(e) => setCvForm({ ...cvForm, firstName: e.target.value })}
+                      placeholder="Enter first name"
+                      className="w-full text-xs p-3 border border-slate-300 rounded-xl focus:outline-none focus:border-[#D4AF37] bg-white text-slate-800 font-semibold font-sans"
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="block text-xs font-bold text-slate-700 uppercase font-sans">Last Name *</label>
+                    <input 
+                      type="text" 
+                      required
+                      value={cvForm.lastName}
+                      onChange={(e) => setCvForm({ ...cvForm, lastName: e.target.value })}
+                      placeholder="Enter last name"
+                      className="w-full text-xs p-3 border border-slate-300 rounded-xl focus:outline-none focus:border-[#D4AF37] bg-white text-slate-800 font-semibold font-sans"
+                    />
+                  </div>
+                </div>
+
+                {/* Nationality & Date of Birth */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="space-y-1.5">
+                    <label className="block text-xs font-bold text-slate-700 uppercase font-sans">Nationality *</label>
+                    <input 
+                      type="text" 
+                      required
+                      value={cvForm.nationality}
+                      onChange={(e) => setCvForm({ ...cvForm, nationality: e.target.value })}
+                      placeholder="e.g. Indian, British"
+                      className="w-full text-xs p-3 border border-slate-300 rounded-xl focus:outline-none focus:border-[#D4AF37] bg-white text-slate-800 font-semibold font-sans"
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="block text-xs font-bold text-slate-700 uppercase font-sans">Date of Birth *</label>
+                    <input 
+                      type="date" 
+                      required
+                      value={cvForm.dateOfBirth}
+                      onChange={(e) => setCvForm({ ...cvForm, dateOfBirth: e.target.value })}
+                      className="w-full text-xs p-3 border border-slate-300 rounded-xl focus:outline-none focus:border-[#D4AF37] bg-white text-slate-800 font-semibold font-sans"
+                    />
+                  </div>
+                </div>
+
+                {/* Country & State */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="space-y-1.5">
+                    <label className="block text-xs font-bold text-slate-700 uppercase font-sans">Country of Residence *</label>
+                    <select 
+                      required
+                      value={cvForm.countryOfResidence}
+                      onChange={(e) => setCvForm({ ...cvForm, countryOfResidence: e.target.value })}
+                      className="w-full text-xs p-3 border border-slate-300 rounded-xl focus:outline-none focus:border-[#D4AF37] bg-white text-slate-800 font-semibold font-sans"
+                    >
+                      <option value="">Select Country</option>
+                      <option value="India">India</option>
+                      <option value="United Kingdom">United Kingdom</option>
+                      <option value="Australia">Australia</option>
+                      <option value="South Africa">South Africa</option>
+                      <option value="New Zealand">New Zealand</option>
+                      <option value="Sri Lanka">Sri Lanka</option>
+                      <option value="Zimbabwe">Zimbabwe</option>
+                      <option value="United Arab Emirates">United Arab Emirates</option>
+                    </select>
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="block text-xs font-bold text-slate-700 uppercase font-sans">State / County / Province *</label>
+                    <input 
+                      type="text" 
+                      required
+                      value={cvForm.currentCity}
+                      onChange={(e) => setCvForm({ ...cvForm, currentCity: e.target.value })}
+                      placeholder="e.g. Maharashtra, Lancashire"
+                      className="w-full text-xs p-3 border border-slate-300 rounded-xl focus:outline-none focus:border-[#D4AF37] bg-white text-slate-800 font-semibold font-sans"
+                    />
+                  </div>
+                </div>
+
+                {/* Mobile Number & Email */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="space-y-1.5">
+                    <label className="block text-xs font-bold text-slate-700 uppercase font-sans">Mobile Number *</label>
+                    <input 
+                      type="tel" 
+                      required
+                      value={cvForm.phone}
+                      onChange={(e) => setCvForm({ ...cvForm, phone: e.target.value })}
+                      placeholder="e.g. +91 9876543210"
+                      className="w-full text-xs p-3 border border-slate-300 rounded-xl focus:outline-none focus:border-[#D4AF37] bg-white text-slate-800 font-semibold font-sans font-mono"
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="block text-xs font-bold text-slate-700 uppercase font-sans">Email Address *</label>
+                    <input 
+                      type="email" 
+                      required
+                      value={cvForm.email}
+                      onChange={(e) => setCvForm({ ...cvForm, email: e.target.value })}
+                      placeholder="name@example.com"
+                      className="w-full text-xs p-3 border border-slate-300 rounded-xl focus:outline-none focus:border-[#D4AF37] bg-white text-slate-800 font-semibold font-sans"
+                    />
+                  </div>
+                </div>
+
+                {/* Password */}
+                <div className="space-y-1.5">
+                  <label className="block text-xs font-bold text-slate-700 uppercase font-sans">Account Password *</label>
+                  <input 
+                    type="password" 
+                    required
+                    value={cvForm.password || ''}
+                    onChange={(e) => setCvForm({ ...cvForm, password: e.target.value })}
+                    placeholder="Min 8 characters for account login"
+                    className="w-full text-xs p-3 border border-slate-300 rounded-xl focus:outline-none focus:border-[#D4AF37] bg-white text-slate-800 font-semibold font-sans font-mono"
+                  />
+                </div>
+
+                {/* Navigation Buttons */}
+                <div className="flex justify-between items-center pt-6 border-t border-slate-100 font-sans">
+                  <button 
+                    type="button"
+                    onClick={() => setCvView('landing')}
+                    className="px-4 py-2 border border-slate-300 rounded-lg text-xs font-bold hover:bg-slate-50 transition cursor-pointer text-slate-700 bg-white"
+                  >
+                    Cancel
+                  </button>
+                  <button 
+                    type="submit"
+                    className="px-6 py-2.5 bg-[#0B1A30] text-white rounded-lg text-xs font-bold hover:bg-navy-950 transition cursor-pointer"
+                  >
+                    Submit Profile
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      );
+    };
+
+    const triggerSimulatedRazorpay = async () => {
+      try {
+        const res = await fetch('/api/cv-verify-payment', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            razorpay_order_id: 'order_test_123',
+            razorpay_payment_id: 'test_payment_id',
+            razorpay_signature: 'signature_test',
+            cvId: cvForm.id,
+            userId: cvUser?.id
+          })
+        });
+        if (res.ok) {
+          alert('Simulated Razorpay checkout successful! Premium PDF unlocked.');
+          await fetchUserCV(cvToken || '');
+        }
+      } catch (err) {
+        console.error(err);
+      }
+    };
+
+    const handleDownloadCleanPDF = () => {
+      const doc = new jsPDF('p', 'mm', 'a4');
+      doc.setFont('Helvetica', 'bold');
+      doc.setFontSize(22);
+      doc.text(`${cvForm.firstName} ${cvForm.lastName}`, 20, 30);
+      doc.setFontSize(14);
+      doc.text(cvForm.playingRole || 'Cricket Professional', 20, 38);
+      doc.setFont('Helvetica', 'normal');
+      doc.setFontSize(10);
+      doc.text(`Email: ${cvForm.email} | Phone: ${cvForm.phone || '-'}`, 20, 46);
+      doc.text(`Nationality: ${cvForm.nationality} | DOB: ${cvForm.dateOfBirth || ''}`, 20, 52);
+      
+      doc.setFont('Helvetica', 'bold');
+      doc.text('PLAYER PROFILE', 20, 64);
+      doc.setLineWidth(0.5);
+      doc.line(20, 66, 190, 66);
+      doc.setFont('Helvetica', 'normal');
+      const splitBio = doc.splitTextToSize(cvForm.aboutPlayer || 'No player bio defined.', 170);
+      doc.text(splitBio, 20, 72);
+
+      let startY = 95;
+      if (cvForm.statistics && cvForm.statistics.length > 0) {
+        doc.setFont('Helvetica', 'bold');
+        doc.text('CRICKET STATISTICS RECORD', 20, startY);
+        doc.line(20, startY + 2, 190, startY + 2);
+        doc.setFont('Helvetica', 'normal');
+        
+        cvForm.statistics.forEach((s, idx) => {
+          doc.text(`${s.format} Format: Matches: ${s.batMatches || '0'} | Runs: ${s.batRuns || '0'} | Wkts: ${s.bowlWickets || '0'}`, 20, startY + 8 + (idx * 6));
+        });
+      }
+
+      doc.save(`Cricket_CV_${cvForm.firstName}_${cvForm.lastName}.pdf`);
+      alert('Clean Premium PDF downloaded successfully!');
+    };
+
+    const renderDashboardView = () => {
+
+      return (
+        <div className="py-12 bg-slate-950 min-h-[85vh] text-slate-100 font-sans px-4">
+          <CVDashboard 
+            cv={cvForm}
+            cvToken={cvToken || ''}
+            onLogout={handleCvLogout}
+            onEditCV={async () => {
+              if (cvForm.paymentStatus === 'Paid') {
+                const updated = {
+                  ...cvForm,
+                  editsUsed: cvForm.editsUsed + 1
+                };
+                setCvForm(updated);
+                await handleSaveCvDraft(updated, false); // consumes 1 token
+              }
+              setCvView('form');
+            }}
+            onSelectTemplate={(tid, isStyleUpdate = false) => handleSaveCvDraft({ ...cvForm, templateId: tid }, isStyleUpdate)}
+            onSelectFont={(f, isStyleUpdate = false) => handleSaveCvDraft({ ...cvForm, font: f }, isStyleUpdate)}
+            onSelectColour={(c, isStyleUpdate = false) => handleSaveCvDraft({ ...cvForm, accentColour: c }, isStyleUpdate)}
+            onDownloadCleanPDF={handleDownloadCleanPDF}
+            onPayAndDownload={triggerSimulatedRazorpay}
+            onRenewSuccess={(updatedCv) => {
+              setCvForm(updatedCv);
+            }}
+            onRequestCorrection={() => alert('Profile correction request logged. Admin support has been notified.')}
+          />
+        </div>
+      );
+    };
+
+    const renderFormBuilderView = () => {
+      return (
+        <div className="py-8 bg-slate-950 min-h-[85vh] text-slate-100 font-sans">
+          <div className="max-w-3xl mx-auto px-4">
+            <CVBuilderForm 
+              cv={cvForm}
+              onChange={(updated) => setCvForm(updated)}
+              onSaveDraft={async () => { await handleSaveCvDraft(cvForm); }}
+              onNext={() => setCvView('styling')}
+              onPrev={() => setCvView('dashboard')}
+              isSaving={isSavingCv}
+              isIdentityLocked={cvForm.identityLocked || false}
+            />
+          </div>
+        </div>
+      );
+    };
+
+    const renderStylingStepView = () => {
+      return (
+        <div className="py-8 bg-slate-950 min-h-[85vh] text-slate-100 font-sans px-4">
+          <CVStyleStep 
+            cv={cvForm}
+            onChange={(updated) => setCvForm(updated)}
+            onNext={async () => {
+              // Save styles as style update (no edits token cost)
+              await handleSaveCvDraft(cvForm, true);
+              if (cvForm.paymentStatus === 'Paid') {
+                setCvView('final-cv');
+              } else {
+                setCvView('preview');
+              }
+            }}
+            onPrev={() => setCvView('form')}
+          />
+        </div>
+      );
+    };
+
+    const renderReviewAndUnlockView = () => {
+      const handleCheckoutPayment = async () => {
+        try {
+          const res = await fetch('/api/cv-verify-payment', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              razorpay_order_id: `order_${Date.now()}`,
+              razorpay_payment_id: 'test_payment_id',
+              razorpay_signature: 'signature_test',
+              cvId: cvForm.id,
+              userId: cvUser?.id
+            })
+          });
+          if (res.ok) {
+            await fetchUserCV(cvToken || '');
+            setCvView('success');
+          }
+        } catch (err) {
+          console.error(err);
+        }
+      };
+
+      return (
+        <div className="py-12 bg-slate-950 min-h-[85vh] text-slate-100 font-sans px-4">
+          <CVReviewPage 
+            cv={cvForm}
+            onPrev={() => setCvView('styling')}
+            onPay={handleCheckoutPayment}
+          />
+        </div>
+      );
+    };
+
+    const renderPaymentSuccessView = () => {
+      return (
+        <div className="py-12 bg-slate-950 min-h-[85vh] text-slate-100 font-sans px-4">
+          <CVPaymentSuccess 
+            cv={cvForm}
+            onNext={() => setCvView('final-cv')}
+          />
+        </div>
+      );
+    };
+
+    const renderFinalCvView = () => {
+      return (
+        <div className="py-12 bg-slate-950 min-h-[85vh] text-slate-100 font-sans px-4">
+          <CVFinalView 
+            cv={cvForm}
+            onDownloadCleanPDF={handleDownloadCleanPDF}
+            onGoToDashboard={() => setCvView('dashboard')}
+          />
+        </div>
+      );
+    };
+
+    return (
+      <div className="min-h-[85vh] bg-slate-950 text-slate-100 font-sans relative">
+        {/* Render Auth Dialog if open */}
+        {showCVAuthModal && (
+          <CVAuthModal
+            isOpen={showCVAuthModal}
+            onClose={() => setShowCVAuthModal(false)}
+            onLoginSuccess={handleCvLoginSuccess}
+            onForgotPasswordClick={() => {
+              setShowCVAuthModal(false);
+              setShowForgotPasswordModal(true);
+            }}
+            onSignUpClick={() => {
+              setShowCVAuthModal(false);
+              setCvStep(1);
+              setCvForm(initialCVFormFull('', '', '', ''));
+              setCvView('onboarding');
+            }}
+          />
+        )}
+
+        {/* Forgot Password Modal */}
+        {showForgotPasswordModal && (
+          <CVForgotPassword
+            resetToken={forgotPasswordToken || undefined}
+            onClose={() => {
+              setShowForgotPasswordModal(false);
+              setForgotPasswordToken(null);
+            }}
+            onSuccess={() => {
+              setShowForgotPasswordModal(false);
+              setForgotPasswordToken(null);
+              alert("Password updated successfully! Please log in.");
+              setShowCVAuthModal(true);
+            }}
+          />
+        )}
+
+        {/* Verification banner/handler if token is present */}
+        {verificationToken && (
+          <div className="max-w-md mx-auto py-6">
+            <CVEmailVerification
+              token={verificationToken}
+              onVerified={() => {
+                setVerificationToken(null);
+                alert("Email verified! Please log in.");
+                setShowCVAuthModal(true);
+              }}
+              onClose={() => setVerificationToken(null)}
+            />
+          </div>
+        )}
+
+        {/* Main Routing based on cvView */}
+        {cvView === 'landing' && (
+          <CVLandingPage
+            isLoggedIn={!!cvToken}
+            hasPaidCV={cvForm.paymentStatus === 'Paid'}
+            onStartBuilding={() => {
+              if (cvToken) {
+                setCvView('dashboard');
+              } else {
+                setCvStep(1);
+                setCvForm(initialCVFormFull('', '', '', ''));
+                setCvView('onboarding');
+              }
+            }}
+            onGoToDashboard={() => setCvView('dashboard')}
+            onTriggerLogin={() => setShowCVAuthModal(true)}
+            onTriggerSignup={() => {
+              setCvStep(1);
+              setCvForm(initialCVFormFull('', '', '', ''));
+              setCvView('onboarding');
+            }}
+          />
+        )}
+
+        {cvView === 'onboarding' && renderOnboardingWizard()}
+
+        {cvView === 'dashboard' && renderDashboardView()}
+
+        {cvView === 'form' && renderFormBuilderView()}
+
+        {cvView === 'styling' && renderStylingStepView()}
+
+        {cvView === 'preview' && renderReviewAndUnlockView()}
+
+        {cvView === 'success' && renderPaymentSuccessView()}
+
+        {cvView === 'final-cv' && renderFinalCvView()}
+      </div>
+    );
+  };
+
+
   return (
     <div className="min-h-screen flex flex-col font-sans">
 
@@ -2266,8 +3670,17 @@ END:VCALENDAR`;
             <button onClick={() => scrollToSection('why-choose-me')} className="py-2 text-[#0B1A30] hover:text-[#D4AF37] transition cursor-pointer whitespace-nowrap">Why Choose Me</button>
             <button onClick={() => scrollToSection('about-me')} className="py-2 text-[#0B1A30] hover:text-[#D4AF37] transition cursor-pointer whitespace-nowrap">About Me</button>
             <button onClick={() => scrollToSection('services')} className="py-2 text-[#0B1A30] hover:text-[#D4AF37] transition cursor-pointer whitespace-nowrap">My Services</button>
+            <button 
+              onClick={() => { setActiveTab('cricket-cv'); setCvView('landing'); setCvStep(1); }} 
+              className="relative py-2 text-[#0B1A30] hover:text-[#D4AF37] transition cursor-pointer whitespace-nowrap font-bold"
+            >
+              Cricket CV
+              {activeTab === 'cricket-cv' && (
+                <span className="absolute bottom-0 left-0 w-full h-[3px] bg-[#D4AF37] rounded-full"></span>
+              )}
+            </button>
             <button onClick={() => scrollToSection('faq')} className="py-2 text-[#0B1A30] hover:text-[#D4AF37] transition cursor-pointer">FAQ</button>
-            <button onClick={() => scrollToSection('contact')} className="py-2 text-[#0B1A30] hover:text-[#D4AF37] transition cursor-pointer">Contact</button>
+            <button onClick={() => scrollToSection('contact')} className="py-2 text-[#0B1A30] hover:text-[#D4AF37] transition cursor-pointer font-sans whitespace-nowrap">Contact</button>
           </nav>
 
           {/* Action buttons (Check Eligibility & Book Now) & Mobile Hamburger */}
@@ -2326,6 +3739,12 @@ END:VCALENDAR`;
                 className="text-left py-2 border-b border-navy-800/60 hover:text-gold-400 transition"
               >
                 My Services
+              </button>
+              <button 
+                onClick={() => { setActiveTab('cricket-cv'); setCvView('landing'); setCvStep(1); setMobileMenuOpen(false); }} 
+                className="text-left py-2 border-b border-navy-800/60 hover:text-gold-400 transition"
+              >
+                Cricket CV
               </button>
               <button 
                 onClick={() => { setActiveTab('eligibility'); setEligibilityStep(1); setMobileMenuOpen(false); }} 
@@ -4177,7 +5596,10 @@ END:VCALENDAR`;
           </div>
         </div>
       )}
-        {activeTab === 'book' && (
+
+      {activeTab === 'cricket-cv' && renderCricketCvWorkspace()}
+
+      {activeTab === 'book' && (
           <div className="py-12 bg-slate-50 min-h-[85vh]">
             <div className="max-w-4xl mx-auto px-4">
               
@@ -4955,6 +6377,13 @@ END:VCALENDAR`;
                     >
                       <Users className="h-4 w-4" />
                       <span>Player Roster ({players.length})</span>
+                    </button>
+                    <button 
+                      onClick={() => setAdminSubTab('cvs')}
+                      className={`px-4 py-2 text-xs font-bold rounded-lg uppercase tracking-wider transition flex items-center space-x-1.5 cursor-pointer ${adminSubTab === 'cvs' ? 'bg-navy-900 text-white shadow-md font-extrabold' : 'bg-slate-100 text-slate-700 hover:bg-slate-200 border border-slate-200'}`}
+                    >
+                      <FileSpreadsheet className="h-4 w-4 text-emerald-600" />
+                      <span>Cricket CVs ({cvList.length})</span>
                     </button>
                     <button 
                       onClick={() => setAdminSubTab('all')}
@@ -6553,6 +7982,84 @@ END:VCALENDAR`;
 
                 </div>
               )}
+
+              {/* Dedicated Cricket CVs View */}
+              {adminSubTab === 'cvs' && (
+                <div className="bg-white rounded-2xl shadow-xl border border-navy-100 p-6 sm:p-8 space-y-6 animate-fade-in text-slate-800">
+                  <div className="flex flex-col sm:flex-row justify-between sm:items-center border-b border-slate-150 pb-4 gap-4">
+                    <div>
+                      <div className="flex items-center space-x-2">
+                        <FileSpreadsheet className="h-6 w-6 text-emerald-600" />
+                        <h3 className="text-xl font-bold font-display text-navy-900 uppercase">Cricket CV Builder Database</h3>
+                      </div>
+                      <p className="text-xs text-slate-500 mt-1">
+                        Review all cricket player CVs generated, including contact details and payment statuses.
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-left text-xs border-collapse">
+                      <thead>
+                        <tr className="border-b border-slate-200 bg-slate-50 text-slate-500 font-bold uppercase tracking-wider text-[10px]">
+                          <th className="py-3 px-4">Ref Number</th>
+                          <th className="py-3 px-4">Player</th>
+                          <th className="py-3 px-4">Email</th>
+                          <th className="py-3 px-4">Level & Role</th>
+                          <th className="py-3 px-4">Status</th>
+                          <th className="py-3 px-4">Updates Left</th>
+                          <th className="py-3 px-4 text-right">Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-150">
+                        {cvList.length === 0 ? (
+                          <tr>
+                            <td colSpan={7} className="py-8 text-center text-slate-400 font-medium">
+                              No Cricket CVs found in database.
+                            </td>
+                          </tr>
+                        ) : (
+                          cvList.map((cv) => (
+                            <tr key={cv.id} className="hover:bg-slate-50 transition">
+                              <td className="py-3.5 px-4 font-mono font-bold text-navy-950">{cv.referenceNumber || 'Pending'}</td>
+                              <td className="py-3.5 px-4 font-semibold text-slate-700">{cv.firstName} {cv.lastName}</td>
+                              <td className="py-3.5 px-4 text-slate-500">{cv.email}</td>
+                              <td className="py-3.5 px-4 text-slate-600">
+                                <span className="font-semibold text-navy-800">{cv.cricketLevel}</span>
+                                <span className="block text-[10px] text-slate-400">{cv.playingRole}</span>
+                              </td>
+                              <td className="py-3.5 px-4">
+                                <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold border ${
+                                  cv.paymentStatus === 'Paid' 
+                                    ? 'bg-emerald-50 text-emerald-700 border-emerald-200' 
+                                    : 'bg-amber-50 text-amber-700 border-amber-200'
+                                }`}>
+                                  {cv.paymentStatus}
+                                </span>
+                              </td>
+                              <td className="py-3.5 px-4 font-semibold text-slate-600">{cv.updateBalance} of 3</td>
+                              <td className="py-3.5 px-4 text-right space-x-2">
+                                <button 
+                                  onClick={() => {
+                                    setCvForm(cv);
+                                    setCvView('preview');
+                                    setActiveTab('cricket-cv');
+                                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                                  }}
+                                  className="px-2.5 py-1 bg-navy-100 hover:bg-navy-200 text-navy-800 font-bold rounded transition cursor-pointer"
+                                >
+                                  View CV
+                                </button>
+                              </td>
+                            </tr>
+                          ))
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              )}
+
 
             </div>
           </div>

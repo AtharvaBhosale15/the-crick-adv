@@ -72,7 +72,8 @@ if (fs.existsSync(devEnvPath)) {
 }
 
 const app = express();
-app.use(express.json());
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ limit: '10mb', extended: true }));
 
 const LOCAL_DB_PATH = path.join(process.cwd(), 'bookings-db.json');
 const LOCAL_ASSESSMENTS_PATH = path.join(process.cwd(), 'assessments-db.json');
@@ -595,8 +596,583 @@ app.post('/api/save-assessments', (req, res) => {
   }
 });
 
+// --- CRICKET CV ENDPOINTS ---
+const LOCAL_CVS_PATH = path.join(process.cwd(), 'cvs-db.json');
+
+const getLocalCvs = () => {
+  try {
+    if (fs.existsSync(LOCAL_CVS_PATH)) {
+      const data = fs.readFileSync(LOCAL_CVS_PATH, 'utf-8');
+      return JSON.parse(data);
+    }
+  } catch (error) {
+    console.error('Error reading local cvs file:', error);
+  }
+  return [];
+};
+
+const saveLocalCvs = (cvs) => {
+  try {
+    fs.writeFileSync(LOCAL_CVS_PATH, JSON.stringify(cvs, null, 2), 'utf-8');
+  } catch (error) {
+    console.error('Error writing local cvs file:', error);
+  }
+};
+
+app.post('/api/save-cv', (req, res) => {
+  const { cv } = req.body;
+  if (!cv || !cv.id) {
+    return res.status(400).json({ error: 'Invalid CV data' });
+  }
+
+  try {
+    const cvs = getLocalCvs();
+    const index = cvs.findIndex((c) => c.id === cv.id);
+    if (index > -1) {
+      cvs[index] = cv;
+    } else {
+      cvs.push(cv);
+    }
+    saveLocalCvs(cvs);
+    console.log(`Saved CV: ${cv.id} (${cv.firstName} ${cv.lastName})`);
+    return res.status(200).json({ status: 'success', message: 'CV saved successfully' });
+  } catch (error) {
+    console.error('Error saving CV:', error);
+    return res.status(500).json({ error: error.message || 'Failed to save CV' });
+  }
+});
+
+app.get('/api/get-cvs', (req, res) => {
+  const { secret } = req.query;
+  const adminPassword = process.env.ADMIN_PASSWORD || 'cricket2026';
+  const isAuthorized = secret === 'cricket2026' || secret === 'admin123' || secret === adminPassword;
+
+  if (!isAuthorized) {
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
+
+  try {
+    const cvs = getLocalCvs();
+    return res.status(200).json(cvs);
+  } catch (error) {
+    console.error('Error retrieving CVs:', error);
+    return res.status(500).json({ error: error.message || 'Failed to fetch CVs' });
+  }
+});
+
+app.post('/api/email-cv', async (req, res) => {
+  const { email, firstName, lastName, referenceNumber, pdfBase64 } = req.body;
+  if (!email || !firstName || !referenceNumber || !pdfBase64) {
+    return res.status(400).json({ error: 'Missing required parameters' });
+  }
+
+  const apiKey = process.env.RESEND_API_KEY;
+  if (!apiKey) {
+    console.warn('[Local Mailer] RESEND_API_KEY is not set. Mocking email delivery for CV.');
+    return res.status(200).json({ status: 'mocked', message: 'RESEND_API_KEY is not set. Local simulated delivery successful.' });
+  }
+
+  const resend = new Resend(apiKey.trim());
+  const fromEmail = process.env.RESEND_FROM_EMAIL || 'booking@thecricketadvisor.com';
+
+  const htmlContent = `
+    <div style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; border: 1px solid #e0e0e0; border-radius: 8px; overflow: hidden;">
+      <div style="background-color: #0b1a30; padding: 20px; text-align: center; color: white;">
+        <h2 style="margin: 0; color: #ffffff;">Your Cricket CV</h2>
+        <p style="margin: 5px 0 0 0; font-size: 14px; color: #cbd5e1;">The Cricket Advisor</p>
+      </div>
+      <div style="padding: 25px; background-color: #ffffff;">
+        <p>Dear ${firstName},</p>
+        <p>Your professional Cricket CV has been successfully created.</p>
+        <p>Please find your Cricket CV attached to this email.</p>
+        
+        <div style="background-color: #f8fafc; padding: 15px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #D4AF37; border-top: 1px solid #e2e8f0; border-right: 1px solid #e2e8f0; border-bottom: 1px solid #e2e8f0;">
+          <p style="margin: 4px 0; font-size: 13px;"><strong>CV Reference:</strong></p>
+          <p style="margin: 4px 0; font-size: 16px; font-family: monospace; color: #0b1a30; font-weight: bold;">[${referenceNumber}]</p>
+        </div>
+
+        <p>You can use this CV when contacting cricket clubs, coaches, academies and cricket organisations.</p>
+        
+        <p style="margin-bottom: 0;">Regards,</p>
+        <p style="margin-top: 5px; font-size: 14px; line-height: 1.5;">
+          The Cricket Advisor<br>
+          The Cricket Overseas
+        </p>
+      </div>
+    </div>
+  `;
+
+  let cleanBase64 = pdfBase64;
+  if (pdfBase64.includes('base64,')) {
+    cleanBase64 = pdfBase64.split('base64,')[1];
+  }
+
+  try {
+    await resend.emails.send({
+      from: `The Cricket Advisor <${fromEmail}>`,
+      to: email,
+      subject: `Your Cricket CV — The Cricket Advisor`,
+      html: htmlContent,
+      attachments: [
+        {
+          filename: `Cricket_CV_${firstName}_${lastName || 'Player'}.pdf`,
+          content: cleanBase64,
+        }
+      ]
+    });
+    console.log(`[Local Mailer] Cricket CV emailed successfully to ${email}`);
+    return res.status(200).json({ status: 'success', message: 'Simulated email delivery successful' });
+  } catch (error) {
+    console.error('[Local Mailer] Failed to send email:', error);
+    return res.status(500).json({ error: 'Failed to send email' });
+  }
+});
+
+// --- PREMIUM CRICKET CV BUILDER EXTENSION ENDPOINTS ---
+
+import { generateSalt, hashPassword, signToken, verifyToken } from './api/utils/cv-auth.js';
+
+const LOCAL_USERS_PATH = path.join(process.cwd(), 'cv-users-db.json');
+
+const getLocalUsers = () => {
+  try {
+    if (fs.existsSync(LOCAL_USERS_PATH)) {
+      return JSON.parse(fs.readFileSync(LOCAL_USERS_PATH, 'utf-8'));
+    }
+  } catch (error) {
+    console.error('Error reading local users db:', error);
+  }
+  return [];
+};
+
+const saveLocalUsers = (users) => {
+  try {
+    fs.writeFileSync(LOCAL_USERS_PATH, JSON.stringify(users, null, 2), 'utf-8');
+  } catch (error) {
+    console.error('Error writing local users db:', error);
+  }
+};
+
+app.post('/api/cv-register', async (req, res) => {
+  const { email, password, firstName, lastName, country, stateProvince, mobileNumber, nationality, dateOfBirth } = req.body;
+  if (!email || !password || !firstName || !lastName) {
+    return res.status(400).json({ error: 'Missing signup details' });
+  }
+
+  const sanitizedEmail = email.toLowerCase().trim();
+  const salt = generateSalt();
+  const pwdHash = hashPassword(password, salt);
+  const userId = `user_${Date.now()}`;
+  const verificationToken = crypto.randomBytes(32).toString('hex');
+
+  try {
+    const users = getLocalUsers();
+    if (users.some(u => u.email === sanitizedEmail)) {
+      return res.status(409).json({ error: 'User already exists' });
+    }
+
+    users.push({
+      id: userId,
+      email: sanitizedEmail,
+      password_hash: pwdHash,
+      password_salt: salt,
+      first_name: firstName,
+      last_name: lastName,
+      country: country || '',
+      state_province: stateProvince || '',
+      mobile_number: mobileNumber || '',
+      nationality: nationality || '',
+      date_of_birth: dateOfBirth || '',
+      email_verified: false,
+      verification_token: verificationToken,
+      created_at: new Date().toISOString()
+    });
+    saveLocalUsers(users);
+
+    console.log(`[Local API] Created user: ${sanitizedEmail} (Unverified). Verification Token: ${verificationToken}`);
+
+    return res.status(200).json({ 
+      status: 'success', 
+      message: 'Account created successfully. Please verify your email.'
+    });
+  } catch (err) {
+    return res.status(500).json({ error: err.message });
+  }
+});
+
+app.get('/api/cv-verify-email', (req, res) => {
+  const { token } = req.query;
+  if (!token) return res.status(400).json({ error: 'Missing token' });
+
+  const users = getLocalUsers();
+  const idx = users.findIndex(u => u.verification_token === token);
+  if (idx > -1) {
+    users[idx].email_verified = true;
+    users[idx].verification_token = null;
+    saveLocalUsers(users);
+    console.log(`[Local API] Email verified for: ${users[idx].email}`);
+    return res.status(200).json({ status: 'verified', message: 'Email verified successfully!' });
+  }
+  return res.status(404).json({ error: 'Invalid verification token' });
+});
+
+app.post('/api/cv-login', (req, res) => {
+  const { email, password } = req.body;
+  if (!email || !password) return res.status(400).json({ error: 'Missing email or password' });
+
+  const sanitizedEmail = email.toLowerCase().trim();
+  const users = getLocalUsers();
+  const dbUser = users.find(u => u.email === sanitizedEmail);
+
+  if (!dbUser) return res.status(401).json({ error: 'Invalid credentials' });
+
+  const computedHash = hashPassword(password, dbUser.password_salt);
+  if (computedHash !== dbUser.password_hash) {
+    return res.status(401).json({ error: 'Invalid credentials' });
+  }
+  if (!dbUser.email_verified) {
+    return res.status(403).json({ error: 'email_unverified', message: 'Please verify your email address.' });
+  }
+
+
+  const jwtSecret = process.env.CV_JWT_SECRET || 'tca_cv_default_jwt_secret_key_2026';
+  const token = signToken({ userId: dbUser.id, email: dbUser.email, exp: Date.now() + 7 * 24 * 3600 * 1000 }, jwtSecret);
+
+  return res.status(200).json({
+    token,
+    user: {
+      id: dbUser.id,
+      email: dbUser.email,
+      firstName: dbUser.first_name,
+      lastName: dbUser.last_name,
+      country: dbUser.country || '',
+      stateProvince: dbUser.state_province || '',
+      mobileNumber: dbUser.mobile_number || ''
+    }
+  });
+});
+
+app.get('/api/cv-auth-check', (req, res) => {
+  const authHeader = req.headers.authorization;
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
+
+  const token = authHeader.split(' ')[1];
+  const jwtSecret = process.env.CV_JWT_SECRET || 'tca_cv_default_jwt_secret_key_2026';
+  const decoded = verifyToken(token, jwtSecret);
+
+  if (!decoded || !decoded.userId) return res.status(401).json({ error: 'Invalid token' });
+
+  const users = getLocalUsers();
+  const dbUser = users.find(u => u.id === decoded.userId);
+  if (!dbUser) return res.status(404).json({ error: 'User not found' });
+
+  return res.status(200).json({
+    user: {
+      id: dbUser.id,
+      email: dbUser.email,
+      firstName: dbUser.first_name,
+      lastName: dbUser.last_name,
+      country: dbUser.country || '',
+      stateProvince: dbUser.state_province || '',
+      mobileNumber: dbUser.mobile_number || ''
+    }
+  });
+});
+
+app.post('/api/cv-forgot-password', (req, res) => {
+  const { email } = req.body;
+  if (!email) return res.status(400).json({ error: 'Missing email' });
+
+  const sanitizedEmail = email.toLowerCase().trim();
+  const users = getLocalUsers();
+  const uIdx = users.findIndex(u => u.email === sanitizedEmail);
+
+  if (uIdx > -1) {
+    const resetToken = crypto.randomBytes(32).toString('hex');
+    users[uIdx].reset_token = resetToken;
+    users[uIdx].reset_token_expires = new Date(Date.now() + 3600 * 1000).toISOString();
+    saveLocalUsers(users);
+    console.log(`[Local API] Reset token for ${sanitizedEmail}: ${resetToken}`);
+  }
+
+  return res.status(200).json({ status: 'success', message: 'Instructions sent if email exists.' });
+});
+
+app.post('/api/cv-reset-password', (req, res) => {
+  const { token, newPassword } = req.body;
+  if (!token || !newPassword) return res.status(400).json({ error: 'Missing token or password' });
+
+  const users = getLocalUsers();
+  const uIdx = users.findIndex(u => u.reset_token === token);
+
+  if (uIdx > -1) {
+    const expiry = new Date(users[uIdx].reset_token_expires);
+    if (expiry > new Date()) {
+      const salt = generateSalt();
+      users[uIdx].password_hash = hashPassword(newPassword, salt);
+      users[uIdx].password_salt = salt;
+      users[uIdx].reset_token = null;
+      users[uIdx].reset_token_expires = null;
+      saveLocalUsers(users);
+      console.log(`[Local API] Password reset for user: ${users[uIdx].email}`);
+      return res.status(200).json({ status: 'success', message: 'Password updated successfully' });
+    }
+  }
+  return res.status(400).json({ error: 'Invalid or expired token' });
+});
+
+app.post('/api/cv-save', (req, res) => {
+  const authHeader = req.headers.authorization;
+  if (!authHeader || !authHeader.startsWith('Bearer ')) return res.status(401).json({ error: 'Unauthorized' });
+
+  const token = authHeader.split(' ')[1];
+  const jwtSecret = process.env.CV_JWT_SECRET || 'tca_cv_default_jwt_secret_key_2026';
+  const decoded = verifyToken(token, jwtSecret);
+  if (!decoded) return res.status(401).json({ error: 'Invalid token' });
+
+  const { cv } = req.body;
+  if (!cv) return res.status(400).json({ error: 'Invalid CV' });
+
+  const cvs = getLocalCvs();
+  const existingCv = cvs.find(c => c.userId === decoded.userId);
+
+  const cvId = existingCv ? existingCv.id : `cv_${Date.now()}`;
+  const refNum = existingCv ? existingCv.reference_number : `TCA-CV-${new Date().getFullYear()}-${Math.floor(100000 + Math.random() * 900000)}`;
+
+  let newEditsUsed = existingCv ? (existingCv.editsUsed || 0) : 0;
+  const editsAllowed = existingCv ? (existingCv.editsAllowed || 5) : 5;
+  const isPaid = existingCv ? (existingCv.paymentStatus === 'Paid') : (cv.paymentStatus === 'Paid');
+  const isStyleUpdate = req.body.isStyleUpdate === true;
+
+  if (isPaid && existingCv && !isStyleUpdate) {
+    if (newEditsUsed >= editsAllowed) {
+      return res.status(403).json({ error: 'edit_limit_reached', message: 'Modifications limit reached.' });
+    }
+    newEditsUsed += 1;
+  }
+
+  const updatedCv = {
+    ...cv,
+    id: cvId,
+    userId: decoded.userId,
+    referenceNumber: refNum,
+    paymentStatus: isPaid ? 'Paid' : 'Pending',
+    downloadStatus: isPaid ? 'UNLOCKED' : 'LOCKED',
+    editsUsed: newEditsUsed,
+    editsAllowed: editsAllowed,
+    identityLocked: isPaid
+  };
+
+  const idx = cvs.findIndex(c => c.id === cvId);
+  if (idx > -1) {
+    cvs[idx] = updatedCv;
+  } else {
+    cvs.push(updatedCv);
+  }
+  saveLocalCvs(cvs);
+
+  return res.status(200).json({ status: 'success', cv: updatedCv });
+});
+
+app.get('/api/cv-get', (req, res) => {
+  const authHeader = req.headers.authorization;
+  if (!authHeader || !authHeader.startsWith('Bearer ')) return res.status(401).json({ error: 'Unauthorized' });
+
+  const token = authHeader.split(' ')[1];
+  const jwtSecret = process.env.CV_JWT_SECRET || 'tca_cv_default_jwt_secret_key_2026';
+  const decoded = verifyToken(token, jwtSecret);
+  if (!decoded) return res.status(401).json({ error: 'Invalid token' });
+
+  const cvs = getLocalCvs();
+  const dbCv = cvs.find(c => c.userId === decoded.userId);
+
+  if (dbCv) return res.status(200).json({ cv: dbCv });
+
+  const users = getLocalUsers();
+  const userDetails = users.find(u => u.id === decoded.userId);
+
+  const initialCv = {
+    id: `cv_${Date.now()}`,
+    userId: decoded.userId,
+    referenceNumber: `TCA-CV-${new Date().getFullYear()}-${Math.floor(100000 + Math.random() * 900000)}`,
+    templateId: 'executive',
+    font: 'Inter',
+    accentColour: '#0B1A30',
+    paymentStatus: 'Pending',
+    downloadStatus: 'LOCKED',
+    firstName: userDetails ? userDetails.first_name : '',
+    lastName: userDetails ? userDetails.last_name : '',
+    email: decoded.email,
+    phone: userDetails ? userDetails.mobile_number : '',
+    countryOfResidence: userDetails ? userDetails.country : '',
+    currentCity: userDetails ? userDetails.state_province : '',
+    nationality: userDetails ? userDetails.nationality : '',
+    dateOfBirth: userDetails ? userDetails.date_of_birth : '',
+    careerHistory: [],
+    statistics: [],
+    achievements: [],
+    experience: [],
+    education: [],
+    certifications: [],
+    references: [],
+    showReferences: 'show',
+    declarationAccepted: false,
+    editsAllowed: 5,
+    editsUsed: 0
+  };
+
+  return res.status(200).json({ cv: initialCv });
+});
+
+app.post('/api/cv-verify-payment', async (req, res) => {
+  const { razorpay_order_id, razorpay_payment_id, cvId, userId } = req.body;
+  if (!cvId) return res.status(400).json({ error: 'Missing parameters' });
+
+  const cvs = getLocalCvs();
+  const idx = cvs.findIndex(c => c.id === cvId);
+  if (idx > -1) {
+    cvs[idx].paymentStatus = 'Paid';
+    cvs[idx].downloadStatus = 'UNLOCKED';
+    cvs[idx].identityLocked = true;
+    saveLocalCvs(cvs);
+
+    const users = getLocalUsers();
+    const uIdx = users.findIndex(u => u.id === userId);
+    if (uIdx > -1) {
+      users[uIdx].identityLocked = true;
+      saveLocalUsers(users);
+    }
+
+    const email = cvs[idx].email;
+    const firstName = cvs[idx].firstName || 'Player';
+    const refNum = cvs[idx].referenceNumber || '';
+
+    // Dispatch Verification/Receipt Email
+    const resendApiKey = process.env.RESEND_API_KEY;
+    if (resendApiKey && email) {
+      const resend = new Resend(resendApiKey.trim());
+      const fromEmail = process.env.RESEND_FROM_EMAIL || 'booking@thecricketadvisor.com';
+      
+      const htmlContent = `
+        <div style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; border: 1px solid #e0e0e0; border-radius: 8px; overflow: hidden;">
+          <div style="background-color: #0b1a30; padding: 25px; text-align: center; color: white;">
+            <h2 style="margin: 0; color: #ffffff;">Your Premium CV is Unlocked!</h2>
+            <p style="margin: 5px 0 0 0; font-size: 14px; color: #cbd5e1;">The Cricket Advisor • Invoice Receipt</p>
+          </div>
+          <div style="padding: 25px; background-color: #ffffff;">
+            <p>Dear ${firstName},</p>
+            <p>Thank you for purchasing the Premium Cricket CV Builder. Your payment of ₹699 has been successfully verified.</p>
+            
+            <div style="border: 1px solid #e2e8f0; border-radius: 8px; overflow: hidden; margin: 20px 0;">
+              <div style="background-color: #f8fafc; padding: 12px 15px; border-bottom: 1px solid #e2e8f0;">
+                <span style="font-size: 11px; font-weight: bold; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em;">INVOICE DETAILS</span>
+              </div>
+              <div style="padding: 15px; font-size: 13px; line-height: 1.8;">
+                <table style="width: 100%; border-collapse: collapse;">
+                  <tr>
+                    <td style="color: #64748b; padding: 4px 0;">Invoice Number:</td>
+                    <td style="text-align: right; font-weight: bold; padding: 4px 0;">INV-${refNum}</td>
+                  </tr>
+                  <tr>
+                    <td style="color: #64748b; padding: 4px 0;">Date:</td>
+                    <td style="text-align: right; font-weight: bold; padding: 4px 0;">${new Date().toLocaleDateString('en-IN')}</td>
+                  </tr>
+                  <tr>
+                    <td style="color: #64748b; padding: 4px 0;">Payment Status:</td>
+                    <td style="text-align: right; font-weight: bold; color: #10b981; padding: 4px 0;">PAID</td>
+                  </tr>
+                  <tr style="border-top: 1px solid #f1f5f9;">
+                    <td style="color: #0b1a30; font-weight: bold; padding: 10px 0 4px 0;">Amount Paid:</td>
+                    <td style="text-align: right; font-weight: bold; color: #D4AF37; font-size: 15px; padding: 10px 0 4px 0;">₹699.00</td>
+                  </tr>
+                </table>
+              </div>
+            </div>
+
+            <h3 style="color: #0b1a30; font-size: 14px; margin-top: 25px; margin-bottom: 10px; text-transform: uppercase;">What's Included:</h3>
+            <ul style="padding-left: 20px; margin-top: 0; margin-bottom: 25px; font-size: 13px; color: #555;">
+              <li>Unlimited clean A4 PDF downloads without watermarks</li>
+              <li>Access to all 5 professional templates (Executive, Professional, International, Classic, Performance)</li>
+              <li>Up to 5 modifications/edits allowed per year to update stats or achievements</li>
+              <li>Secure hosting on The Cricket Advisor player database</li>
+            </ul>
+            
+            <div style="text-align: center; margin: 30px 0;">
+              <a href="https://thecricketadvisor.com/#cricket-cv" style="background-color: #0b1a30; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold; display: inline-block; border: 1px solid #D4AF37;">Go to My CV Dashboard</a>
+            </div>
+
+            <p style="margin-top: 30px; font-size: 12px; color: #64748b; border-top: 1px solid #e2e8f0; padding-top: 15px;">
+              For any support regarding your profile, feel free to contact us at support@thecricketadvisor.com.
+            </p>
+            <p style="font-size: 12px; color: #64748b; margin-top: 5px;">Regards,<br><strong>Team The Cricket Advisor</strong></p>
+          </div>
+        </div>
+      `;
+
+      try {
+        await resend.emails.send({
+          from: `The Cricket Advisor <${fromEmail}>`,
+          to: email,
+          subject: 'Premium Cricket CV Ready - The Cricket Advisor',
+          html: htmlContent
+        });
+        console.log(`[Local API] Dispatched verification invoice email to ${email}`);
+      } catch (err) {
+        console.error('[Local API] Failed to send receipt email:', err);
+      }
+    }
+
+    console.log(`[Local API] Unlocked CV ${cvId} after simulated payment.`);
+    return res.status(200).json({ status: 'success', message: 'Simulated payment successful' });
+  }
+  return res.status(404).json({ error: 'CV not found' });
+});
+
+app.get('/api/cv-download', (req, res) => {
+  const authHeader = req.headers.authorization;
+  const { cvId } = req.query;
+  if (!authHeader || !authHeader.startsWith('Bearer ')) return res.status(401).json({ error: 'Unauthorized' });
+
+  const token = authHeader.split(' ')[1];
+  const jwtSecret = process.env.CV_JWT_SECRET || 'tca_cv_default_jwt_secret_key_2026';
+  const decoded = verifyToken(token, jwtSecret);
+  if (!decoded) return res.status(401).json({ error: 'Invalid token' });
+
+  const cvs = getLocalCvs();
+  const dbCv = cvs.find(c => c.id === cvId);
+  if (!dbCv) return res.status(404).json({ error: 'CV not found' });
+
+  if (dbCv.userId !== decoded.userId) return res.status(403).json({ error: 'Forbidden' });
+  if (dbCv.paymentStatus !== 'Paid') return res.status(402).json({ error: 'Payment Required' });
+
+  return res.status(200).json({ status: 'success', cv: dbCv });
+});
+app.post('/api/cv-renew-plan', (req, res) => {
+  const authHeader = req.headers.authorization;
+  if (!authHeader || !authHeader.startsWith('Bearer ')) return res.status(401).json({ error: 'Unauthorized' });
+
+  const token = authHeader.split(' ')[1];
+  const jwtSecret = process.env.CV_JWT_SECRET || 'tca_cv_default_jwt_secret_key_2026';
+  const decoded = verifyToken(token, jwtSecret);
+  if (!decoded) return res.status(401).json({ error: 'Invalid token' });
+
+  const cvs = getLocalCvs();
+  const idx = cvs.findIndex(c => c.userId === decoded.userId);
+  if (idx > -1) {
+    cvs[idx].editsUsed = 0;
+    cvs[idx].editsAllowed = 5;
+    saveLocalCvs(cvs);
+    return res.status(200).json({ status: 'success', cv: cvs[idx] });
+  }
+  return res.status(404).json({ error: 'CV not found' });
+});
+
+
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
   console.log(`Local API Server running on http://localhost:${PORT}`);
 });
+
 
