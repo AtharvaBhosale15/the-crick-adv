@@ -1,6 +1,6 @@
 import React from 'react';
 import { CricketCVFull, CareerEntry, StatisticsBlock, Achievement, ProfessionalExperience, Education, Certification, Reference } from '../CVTypes';
-import { User, Phone, Mail, MapPin, Globe, Award, Calendar, Shield } from 'lucide-react';
+import { User, Phone, Mail, MapPin, Globe, Award, Calendar, Shield, Linkedin, Instagram, Twitter } from 'lucide-react';
 
 interface TemplateProps {
   cv: CricketCVFull;
@@ -40,18 +40,155 @@ const Watermark = () => (
 
 // Photo / Avatar Helper
 const PlayerPhoto = ({ photo, name }: { photo?: string; name: string }) => {
-  if (photo) {
-    return (
+  if (!photo) return null;
+  return (
+    <div className="w-24 h-24 md:w-28 md:h-28 rounded-xl bg-slate-900 border border-slate-200/20 overflow-hidden flex items-center justify-center shadow-md shrink-0">
       <img 
         src={photo} 
         alt={name} 
-        className="w-24 h-24 md:w-28 md:h-28 object-cover rounded-xl border-2 border-white/20 shadow-md"
+        className="w-full h-full object-contain"
       />
-    );
-  }
+    </div>
+  );
+};
+
+const CVAdditionalContact = ({ cv, align = 'left', textClass = 'text-xs text-slate-600' }: { cv: CricketCVFull; align?: 'left' | 'right' | 'center'; textClass?: string }) => {
+  const alignClass = align === 'right' ? 'flex items-center md:justify-end gap-1.5' : align === 'center' ? 'flex items-center justify-center gap-1.5' : 'flex items-center gap-1.5';
   return (
-    <div className="w-24 h-24 md:w-28 md:h-28 rounded-xl bg-slate-800 border border-slate-700 flex items-center justify-center text-slate-500 shadow-md">
-      <User className="w-12 h-12" />
+    <>
+      {cv.linkedin && <div className={alignClass}><Linkedin className="w-3.5 h-3.5" /> <span className={textClass}>LinkedIn: {cv.linkedin}</span></div>}
+      {cv.instagram && <div className={alignClass}><Instagram className="w-3.5 h-3.5" /> <span className={textClass}>Instagram: {cv.instagram}</span></div>}
+      {cv.twitter && <div className={alignClass}><Twitter className="w-3.5 h-3.5" /> <span className={textClass}>Twitter: {cv.twitter}</span></div>}
+    </>
+  );
+};
+
+const CVExtraProfileDetails = ({ cv }: { cv: CricketCVFull }) => {
+  const showLanguages = cv.languages && cv.languages.length > 0;
+  return (
+    <div className="space-y-1.5 text-xs text-slate-700">
+      {cv.nationality && <div><strong>Nationality:</strong> {cv.nationality}</div>}
+      {cv.dateOfBirth && <div><strong>DOB:</strong> {cv.dateOfBirth}</div>}
+      {cv.height && <div><strong>Height:</strong> {cv.height} cm</div>}
+      {cv.playingRole && <div><strong>Role:</strong> {cv.playingRole}</div>}
+      {cv.secondaryRole && <div><strong>Secondary Role:</strong> {cv.secondaryRole}</div>}
+      {cv.battingStyle && <div><strong>Batting:</strong> {cv.battingStyle}</div>}
+      {cv.bowlingStyle && <div><strong>Bowling:</strong> {cv.bowlingStyle}</div>}
+      {cv.throwingArm && <div><strong>Throw:</strong> {cv.throwingArm} Arm</div>}
+      {cv.bowlingPace && <div><strong>Pace:</strong> {cv.bowlingPace}</div>}
+      {cv.careerLevel && <div><strong>Level:</strong> {cv.careerLevel}</div>}
+      {cv.currentClub && <div><strong>Club:</strong> {cv.currentClub}</div>}
+      {cv.availability && <div><strong>Availability:</strong> {cv.availability}</div>}
+      {cv.overseasExperience !== undefined && <div><strong>Overseas Exp:</strong> {cv.overseasExperience ? 'Yes' : 'No'}</div>}
+      {cv.internationalExperience !== undefined && <div><strong>Intl Exp:</strong> {cv.internationalExperience ? 'Yes' : 'No'}</div>}
+      {showLanguages && <div><strong>Languages:</strong> {cv.languages.join(', ')}</div>}
+    </div>
+  );
+};
+
+const CVExperienceBlock = ({ cv, accentColour }: { cv: CricketCVFull; accentColour: string }) => {
+  if (!cv.experience || cv.experience.length === 0) return null;
+  return (
+    <div>
+      <h2 className="text-xs font-bold uppercase tracking-widest border-b pb-1 mb-3 text-slate-900">Professional Experience / Coaching</h2>
+      <div className="space-y-3">
+        {cv.experience.map((exp, eIdx) => (
+          <div key={exp.id || eIdx} className="text-xs">
+            <div className="flex justify-between font-bold text-slate-900">
+              <span>{exp.position} - {exp.organisation}</span>
+              <span className="text-slate-500 font-semibold">{exp.startDate} - {exp.endDate}</span>
+            </div>
+            {exp.location && <div className="text-[10px] text-slate-500">{exp.location}</div>}
+            {exp.responsibilities && <p className="text-slate-600 text-[11px] mt-0.5 whitespace-pre-line">{exp.responsibilities}</p>}
+            {exp.achievements && <p className="text-slate-500 text-[10px] mt-0.5 italic">Key Achievements: {exp.achievements}</p>}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+};
+
+const CVEducationBlock = ({ cv }: { cv: CricketCVFull }) => {
+  const showEdu = cv.education && cv.education.length > 0;
+  const showCert = cv.certifications && cv.certifications.length > 0;
+  if (!showEdu && !showCert) return null;
+  return (
+    <div className="grid md:grid-cols-2 gap-4">
+      {showEdu && (
+        <div>
+          <h2 className="text-xs font-bold uppercase tracking-widest border-b pb-1 mb-2 text-slate-900">Education</h2>
+          <div className="space-y-2">
+            {cv.education.map((edu, edIdx) => (
+              <div key={edu.id || edIdx} className="text-xs">
+                <div className="font-bold text-slate-900">{edu.degree}</div>
+                <div className="text-slate-500 text-[10px]">{edu.school} | {edu.year}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+      {showCert && (
+        <div>
+          <h2 className="text-xs font-bold uppercase tracking-widest border-b pb-1 mb-2 text-slate-900">Certifications</h2>
+          <div className="space-y-2">
+            {cv.certifications.map((cert, ceIdx) => (
+              <div key={cert.id || ceIdx} className="text-xs">
+                <div className="font-bold text-slate-900">{cert.certName}</div>
+                <div className="text-slate-500 text-[10px]">{cert.details} | {cert.year}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
+const CVReferencesBlock = ({ cv }: { cv: CricketCVFull }) => {
+  const showList = cv.showReferences === 'show' && cv.references && cv.references.length > 0;
+  const showReq = cv.showReferences === 'request';
+  if (!showList && !showReq) return null;
+  return (
+    <div>
+      <h2 className="text-xs font-bold uppercase tracking-widest border-b pb-1 mb-2 text-slate-900">References</h2>
+      {showList && (
+        <div className="space-y-2">
+          {cv.references.map((ref, rIdx) => (
+            <div key={ref.id || rIdx} className="text-xs text-slate-700">
+              <div className="font-bold text-slate-900">{ref.name}</div>
+              <div className="text-[10px] text-slate-500">{ref.position} - {ref.organisation}</div>
+              {ref.relationship && <div className="text-[9px] text-slate-400">Relationship: {ref.relationship}</div>}
+              {(ref.email || ref.phone) && (
+                <div className="text-[10px]">{ref.email} {ref.email && ref.phone ? '|' : ''} {ref.phone}</div>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
+      {showReq && (
+        <p className="text-[11px] text-slate-500 italic">References available upon request.</p>
+      )}
+    </div>
+  );
+};
+
+const CVAchievementsBlock = ({ cv, accentColour }: { cv: CricketCVFull; accentColour: string }) => {
+  if (!cv.achievements || cv.achievements.length === 0) return null;
+  return (
+    <div>
+      <h2 className="text-xs font-bold uppercase tracking-widest border-b pb-1 mb-3 text-slate-900">Career Highlights</h2>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+        {cv.achievements.map((ach, aIdx) => (
+          <div key={ach.id || aIdx} className="bg-slate-50 p-2.5 rounded-lg border border-slate-100">
+            <div className="flex justify-between items-start text-xs font-bold text-slate-900 mb-1">
+              <span>{ach.title}</span>
+              <span className="text-slate-500 font-normal">{ach.year}</span>
+            </div>
+            <div className="text-[10px] text-slate-600 mb-1">{ach.teamEvent}</div>
+            {ach.description && <p className="text-[10px] text-slate-500 whitespace-pre-line">{ach.description}</p>}
+          </div>
+        ))}
+      </div>
     </div>
   );
 };
@@ -93,6 +230,7 @@ export function ExecutiveTemplate({ cv, accentColour, font, isPreview }: Templat
             {cv.phone && <div className="flex items-center md:justify-end gap-1.5"><Phone className="w-3.5 h-3.5" /> {cv.phone}</div>}
             <div className="flex items-center md:justify-end gap-1.5"><MapPin className="w-3.5 h-3.5" /> {cv.currentCity || ''}, {cv.countryOfResidence}</div>
             {cv.personalWebsite && <div className="flex items-center md:justify-end gap-1.5"><Globe className="w-3.5 h-3.5" /> {cv.personalWebsite}</div>}
+            <CVAdditionalContact cv={cv} align="right" />
           </div>
         </div>
 
@@ -102,17 +240,7 @@ export function ExecutiveTemplate({ cv, accentColour, font, isPreview }: Templat
           <div className="md:col-span-1 space-y-6">
             <div>
               <h2 className="text-xs font-bold uppercase tracking-widest border-b pb-1 mb-2 text-slate-900">Player Profile</h2>
-              <div className="space-y-1.5 text-xs text-slate-700">
-                <div><strong>Nationality:</strong> {cv.nationality}</div>
-                {cv.dateOfBirth && <div><strong>DOB:</strong> {cv.dateOfBirth}</div>}
-                {cv.height && <div><strong>Height:</strong> {cv.height} cm</div>}
-                {cv.battingStyle && <div><strong>Batting:</strong> {cv.battingStyle}</div>}
-                {cv.bowlingStyle && <div><strong>Bowling:</strong> {cv.bowlingStyle}</div>}
-                {cv.throwingArm && <div><strong>Throw:</strong> {cv.throwingArm} Arm</div>}
-                {cv.bowlingPace && <div><strong>Pace:</strong> {cv.bowlingPace}</div>}
-                {cv.careerLevel && <div><strong>Level:</strong> {cv.careerLevel}</div>}
-                {cv.currentClub && <div><strong>Club:</strong> {cv.currentClub}</div>}
-              </div>
+              <CVExtraProfileDetails cv={cv} />
             </div>
 
             {/* Statistics Summary */}
@@ -138,26 +266,7 @@ export function ExecutiveTemplate({ cv, accentColour, font, isPreview }: Templat
             )}
             
             {/* References */}
-            {cv.showReferences === 'show' && cv.references.length > 0 && (
-              <div>
-                <h2 className="text-xs font-bold uppercase tracking-widest border-b pb-1 mb-2 text-slate-900">References</h2>
-                <div className="space-y-2">
-                  {cv.references.map((ref, rIdx) => (
-                    <div key={rIdx} className="text-xs text-slate-700">
-                      <div className="font-bold text-slate-900">{ref.name}</div>
-                      <div className="text-[10px] text-slate-500">{ref.position} - {ref.organisation}</div>
-                      <div className="text-[10px]">{ref.email} | {ref.phone}</div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-            {cv.showReferences === 'request' && (
-              <div>
-                <h2 className="text-xs font-bold uppercase tracking-widest border-b pb-1 mb-2 text-slate-900">References</h2>
-                <p className="text-[11px] text-slate-500 italic">References available upon request.</p>
-              </div>
-            )}
+            <CVReferencesBlock cv={cv} />
           </div>
 
           {/* Right Column: About, Playing History, Highlights, Education */}
@@ -193,73 +302,13 @@ export function ExecutiveTemplate({ cv, accentColour, font, isPreview }: Templat
             )}
 
             {/* Highlights */}
-            {cv.achievements.length > 0 && (
-              <div>
-                <h2 className="text-xs font-bold uppercase tracking-widest border-b pb-1 mb-3 text-slate-900">Career Highlights</h2>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                  {cv.achievements.map((ach, aIdx) => (
-                    <div key={aIdx} className="bg-slate-50 p-2.5 rounded-lg border border-slate-100">
-                      <div className="flex justify-between items-start text-xs font-bold text-slate-900 mb-1">
-                        <span>{ach.title}</span>
-                        <span className="text-slate-500 font-normal">{ach.year}</span>
-                      </div>
-                      <div className="text-[10px] text-slate-600 mb-1">{ach.teamEvent}</div>
-                      {ach.description && <p className="text-[10px] text-slate-500 whitespace-pre-line">{ach.description}</p>}
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
+            <CVAchievementsBlock cv={cv} accentColour={accentColour} />
 
             {/* Experience */}
-            {cv.experience.length > 0 && (
-              <div>
-                <h2 className="text-xs font-bold uppercase tracking-widest border-b pb-1 mb-3 text-slate-900">Professional Experience</h2>
-                <div className="space-y-3">
-                  {cv.experience.map((exp, eIdx) => (
-                    <div key={eIdx} className="text-xs">
-                      <div className="flex justify-between font-bold text-slate-900">
-                        <span>{exp.position} - {exp.organisation}</span>
-                        <span className="text-slate-500">{exp.startDate} - {exp.endDate}</span>
-                      </div>
-                      {exp.responsibilities && <p className="text-slate-600 text-[11px] mt-0.5">{exp.responsibilities}</p>}
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
+            <CVExperienceBlock cv={cv} accentColour={accentColour} />
 
             {/* Education & Certs */}
-            {(cv.education.length > 0 || cv.certifications.length > 0) && (
-              <div className="grid md:grid-cols-2 gap-4">
-                {cv.education.length > 0 && (
-                  <div>
-                    <h2 className="text-xs font-bold uppercase tracking-widest border-b pb-1 mb-2 text-slate-900">Education</h2>
-                    <div className="space-y-2">
-                      {cv.education.map((edu, edIdx) => (
-                        <div key={edIdx} className="text-xs">
-                          <div className="font-bold text-slate-900">{edu.degree}</div>
-                          <div className="text-slate-500 text-[10px]">{edu.school} | {edu.year}</div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-                {cv.certifications.length > 0 && (
-                  <div>
-                    <h2 className="text-xs font-bold uppercase tracking-widest border-b pb-1 mb-2 text-slate-900">Certifications</h2>
-                    <div className="space-y-2">
-                      {cv.certifications.map((cert, ceIdx) => (
-                        <div key={ceIdx} className="text-xs">
-                          <div className="font-bold text-slate-900">{cert.certName}</div>
-                          <div className="text-slate-500 text-[10px]">{cert.details} | {cert.year}</div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </div>
-            )}
+            <CVEducationBlock cv={cv} />
           </div>
         </div>
       </div>
@@ -288,16 +337,20 @@ export function ProfessionalTemplate({ cv, accentColour, font, isPreview }: Temp
 
       <div>
         {/* Banner Header */}
-        <div className="p-6 rounded-xl text-white mb-6 flex flex-col md:flex-row justify-between items-start md:items-center gap-4" style={{ backgroundColor: accentColour }}>
+        <div className="p-6 rounded-xl text-white mb-6 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 animate-fade-in" style={{ backgroundColor: accentColour }}>
           <div className="flex items-center gap-4">
             <PlayerPhoto photo={cv.profilePhoto} name={`${cv.firstName} ${cv.lastName}`} />
             <div>
               <h1 className="text-2xl md:text-3xl font-black tracking-tight">{cv.firstName} {cv.lastName}</h1>
               <p className="text-xs font-bold text-gold-400 uppercase tracking-widest mt-1">{cv.playingRole || 'Professional Cricketer'}</p>
               <div className="flex flex-wrap gap-x-3 gap-y-1 text-[10px] text-slate-200 mt-2">
-                <span>{cv.battingStyle} Bat</span>
-                <span>•</span>
-                <span>{cv.bowlingStyle}</span>
+                {cv.battingStyle && <span>{cv.battingStyle} Bat</span>}
+                {cv.bowlingStyle && (
+                  <>
+                    <span>•</span>
+                    <span>{cv.bowlingStyle}</span>
+                  </>
+                )}
                 {cv.height && (
                   <>
                     <span>•</span>
@@ -310,17 +363,27 @@ export function ProfessionalTemplate({ cv, accentColour, font, isPreview }: Temp
           <div className="text-xs space-y-1 text-slate-200 text-left md:text-right border-t md:border-t-0 pt-3 md:pt-0 w-full md:w-auto">
             <div>Email: {cv.email}</div>
             {cv.phone && <div>Phone: {cv.phone}</div>}
-            <div>Location: {cv.currentCity || ''}, {cv.countryOfResidence}</div>
+            <div>Location: {cv.currentCity ? `${cv.currentCity}, ` : ''}{cv.countryOfResidence}</div>
+            {cv.personalWebsite && <div>Web: {cv.personalWebsite}</div>}
+            <CVAdditionalContact cv={cv} align="right" textClass="text-xs text-slate-200" />
           </div>
         </div>
 
-        {/* Profile */}
-        {cv.aboutPlayer && (
-          <div className="mb-6">
-            <h2 className="text-sm font-bold uppercase tracking-wider mb-2 border-b-2 pb-1" style={{ color: accentColour, borderColor: accentColour }}>About the Player</h2>
-            <p className="text-xs text-slate-600 leading-relaxed whitespace-pre-line">{cv.aboutPlayer}</p>
+        {/* Two Column details for Profile / extra details */}
+        <div className="grid md:grid-cols-3 gap-6 mb-6">
+          <div className="md:col-span-2">
+            {cv.aboutPlayer && (
+              <div>
+                <h2 className="text-sm font-bold uppercase tracking-wider mb-2 border-b-2 pb-1" style={{ color: accentColour, borderColor: accentColour }}>About the Player</h2>
+                <p className="text-xs text-slate-600 leading-relaxed whitespace-pre-line">{cv.aboutPlayer}</p>
+              </div>
+            )}
           </div>
-        )}
+          <div className="md:col-span-1">
+            <h2 className="text-sm font-bold uppercase tracking-wider mb-2 border-b-2 pb-1" style={{ color: accentColour, borderColor: accentColour }}>Profile Details</h2>
+            <CVExtraProfileDetails cv={cv} />
+          </div>
+        </div>
 
         {/* Statistics Grid */}
         {cv.statistics.length > 0 && (
@@ -393,21 +456,25 @@ export function ProfessionalTemplate({ cv, accentColour, font, isPreview }: Temp
           </div>
         )}
 
-        {/* Highlights */}
-        {cv.achievements.length > 0 && (
-          <div className="mb-6">
-            <h2 className="text-sm font-bold uppercase tracking-wider mb-3 border-b-2 pb-1" style={{ color: accentColour, borderColor: accentColour }}>Achievements</h2>
-            <div className="grid sm:grid-cols-2 gap-3 text-xs">
-              {cv.achievements.map((ach, idx) => (
-                <div key={idx} className="border-l-4 pl-3" style={{ borderColor: accentColour }}>
-                  <div className="font-bold text-slate-900">{ach.title} ({ach.year})</div>
-                  <div className="text-[10px] text-slate-500">{ach.teamEvent}</div>
-                  {ach.description && <p className="text-slate-600 text-[11px] mt-0.5">{ach.description}</p>}
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
+        {/* Highlights / Achievements */}
+        <div className="mb-6">
+          <CVAchievementsBlock cv={cv} accentColour={accentColour} />
+        </div>
+
+        {/* Coaching / Professional Experience */}
+        <div className="mb-6">
+          <CVExperienceBlock cv={cv} accentColour={accentColour} />
+        </div>
+
+        {/* Education & Certifications */}
+        <div className="mb-6">
+          <CVEducationBlock cv={cv} />
+        </div>
+
+        {/* References */}
+        <div className="mb-6">
+          <CVReferencesBlock cv={cv} />
+        </div>
       </div>
 
       {/* Footer */}
@@ -460,20 +527,24 @@ export function InternationalTemplate({ cv, accentColour, font, isPreview }: Tem
         <div className="h-2 w-full mb-6 rounded" style={{ backgroundColor: accentColour }} />
 
         {/* Identity Grid */}
-        <div className="grid md:grid-cols-4 gap-6 items-center pb-6 border-b mb-6">
-          <div className="md:col-span-1 flex justify-center">
-            <PlayerPhoto photo={profilePhoto} name={`${firstName} ${lastName}`} />
-          </div>
-          <div className="md:col-span-3 text-left">
+        <div className="grid md:grid-cols-4 gap-6 items-center pb-6 border-b mb-6 animate-fade-in">
+          {profilePhoto && (
+            <div className="md:col-span-1 flex justify-center">
+              <PlayerPhoto photo={profilePhoto} name={`${firstName} ${lastName}`} />
+            </div>
+          )}
+          <div className={`${profilePhoto ? 'md:col-span-3' : 'md:col-span-4'} text-left`}>
             <h1 className="text-3xl font-black text-slate-950">{firstName} {lastName}</h1>
             <p className="text-sm font-bold text-slate-500 uppercase tracking-widest mt-1">International Placement Profile</p>
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-y-2 gap-x-4 text-xs text-slate-700 mt-4 bg-slate-50 p-3 rounded-lg border border-slate-100">
-              <div>Nationality: <strong>{nationality}</strong></div>
-              <div>Residence: <strong>{countryOfResidence}</strong></div>
+              {nationality && <div>Nationality: <strong>{nationality}</strong></div>}
+              {countryOfResidence && <div>Residence: <strong>{countryOfResidence}</strong></div>}
               {dateOfBirth && <div>DOB: <strong>{dateOfBirth}</strong></div>}
-              <div>Role: <strong>{playingRole}</strong></div>
+              {playingRole && <div>Role: <strong>{playingRole}</strong></div>}
               {battingStyle && <div>Batting: <strong>{battingStyle}</strong></div>}
               {bowlingStyle && <div>Bowling: <strong>{bowlingStyle}</strong></div>}
+              {cv.height && <div>Height: <strong>{cv.height} cm</strong></div>}
+              {cv.languages && cv.languages.length > 0 && <div className="col-span-2">Languages: <strong>{cv.languages.join(', ')}</strong></div>}
             </div>
           </div>
         </div>
@@ -484,14 +555,14 @@ export function InternationalTemplate({ cv, accentColour, font, isPreview }: Tem
           <div className="md:col-span-2 space-y-6">
             {aboutPlayer && (
               <div>
-                <h3 className="text-xs font-black uppercase tracking-wider mb-2 text-slate-950" style={{ color: accentColour }}>Professional Ambition</h3>
+                <h3 className="text-xs font-black uppercase tracking-wider mb-2 text-slate-950 animate-fade-in" style={{ color: accentColour }}>Professional Ambition</h3>
                 <p className="text-xs text-slate-600 leading-relaxed whitespace-pre-line">{aboutPlayer}</p>
               </div>
             )}
 
             {careerHistory.length > 0 && (
               <div>
-                <h3 className="text-xs font-black uppercase tracking-wider mb-3 text-slate-950" style={{ color: accentColour }}>Playing Career</h3>
+                <h3 className="text-xs font-black uppercase tracking-wider mb-3 text-slate-950 border-b pb-1" style={{ color: accentColour }}>Playing Career</h3>
                 <div className="space-y-4">
                   {careerHistory.map((item, idx) => item && (
                     <div key={item.id || idx} className="bg-slate-50/50 p-3 rounded-lg border border-slate-100">
@@ -508,6 +579,15 @@ export function InternationalTemplate({ cv, accentColour, font, isPreview }: Tem
                 </div>
               </div>
             )}
+
+            {/* Achievements */}
+            <CVAchievementsBlock cv={cv} accentColour={accentColour} />
+
+            {/* Experience (Coaching) */}
+            <CVExperienceBlock cv={cv} accentColour={accentColour} />
+
+            {/* References */}
+            <CVReferencesBlock cv={cv} />
           </div>
 
           {/* Right sidebar info */}
@@ -542,6 +622,12 @@ export function InternationalTemplate({ cv, accentColour, font, isPreview }: Tem
               </div>
             </div>
 
+            {/* Education & Certs */}
+            <div className="bg-slate-50 p-4 rounded-xl border border-slate-100">
+              <h3 className="text-xs font-black uppercase tracking-wider mb-2 text-slate-950">Education & Certifications</h3>
+              <CVEducationBlock cv={cv} />
+            </div>
+
             {/* Contact details */}
             <div className="bg-slate-50 p-4 rounded-xl border border-slate-100">
               <h3 className="text-xs font-black uppercase tracking-wider mb-2 text-slate-950">Contact Info</h3>
@@ -549,6 +635,7 @@ export function InternationalTemplate({ cv, accentColour, font, isPreview }: Tem
                 <div>Email: <strong>{email}</strong></div>
                 {phone && <div>Phone: <strong>{phone}</strong></div>}
                 {personalWebsite && <div className="truncate">Web: <strong>{personalWebsite}</strong></div>}
+                <CVAdditionalContact cv={cv} align="left" />
               </div>
             </div>
           </div>
@@ -579,13 +666,20 @@ export function ClassicTemplate({ cv, accentColour, font, isPreview }: TemplateP
 
       <div>
         {/* Simple Centered Header */}
-        <div className="text-center pb-6 border-b mb-6">
-          <h1 className="text-3xl font-serif text-slate-900 tracking-wide uppercase">{cv.firstName} {cv.lastName}</h1>
-          <p className="text-xs font-bold tracking-widest text-slate-500 uppercase mt-1">{cv.playingRole || 'Cricket Professional'}</p>
-          <div className="flex justify-center flex-wrap gap-4 text-xs text-slate-600 mt-3">
-            <span>Email: {cv.email}</span>
-            {cv.phone && <span>Phone: {cv.phone}</span>}
-            <span>Location: {cv.currentCity || ''}, {cv.countryOfResidence}</span>
+        <div className="text-center pb-6 border-b mb-6 animate-fade-in flex flex-col items-center gap-4">
+          <PlayerPhoto photo={cv.profilePhoto} name={`${cv.firstName} ${cv.lastName}`} />
+          <div>
+            <h1 className="text-3xl font-serif text-slate-900 tracking-wide uppercase">{cv.firstName} {cv.lastName}</h1>
+            <p className="text-xs font-bold tracking-widest text-slate-500 uppercase mt-1">{cv.playingRole || 'Cricket Professional'}</p>
+            <div className="flex justify-center flex-wrap gap-x-4 gap-y-1 text-xs text-slate-600 mt-3">
+              <span>Email: {cv.email}</span>
+              {cv.phone && <span>Phone: {cv.phone}</span>}
+              <span>Location: {cv.currentCity || ''}, {cv.countryOfResidence}</span>
+              {cv.personalWebsite && <span>Web: {cv.personalWebsite}</span>}
+            </div>
+            <div className="mt-2 flex justify-center gap-3">
+              <CVAdditionalContact cv={cv} align="center" />
+            </div>
           </div>
         </div>
 
@@ -601,32 +695,8 @@ export function ClassicTemplate({ cv, accentColour, font, isPreview }: TemplateP
           {/* Details Table style */}
           <div>
             <h3 className="text-xs font-bold uppercase tracking-wider text-slate-900 border-b pb-1 mb-2">Personal Data</h3>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-xs text-slate-700">
-              <div>Nationality: <strong>{cv.nationality}</strong></div>
-              {cv.dateOfBirth && <div>DOB: <strong>{cv.dateOfBirth}</strong></div>}
-              {cv.battingStyle && <div>Batting Style: <strong>{cv.battingStyle}</strong></div>}
-              {cv.bowlingStyle && <div>Bowling Style: <strong>{cv.bowlingStyle}</strong></div>}
-            </div>
+            <CVExtraProfileDetails cv={cv} />
           </div>
-
-          {/* Career Table */}
-          {cv.careerHistory.length > 0 && (
-            <div>
-              <h3 className="text-xs font-bold uppercase tracking-wider text-slate-900 border-b pb-1 mb-3">Playing Experience</h3>
-              <div className="space-y-4">
-                {cv.careerHistory.map((item, idx) => (
-                  <div key={idx} className="text-xs">
-                    <div className="flex justify-between font-bold text-slate-950">
-                      <span>{item.teamName} - {item.role}</span>
-                      <span>{item.startYear} - {item.endYear || 'Present'}</span>
-                    </div>
-                    <div className="text-[10px] text-slate-500 italic mb-1">{item.country} | {item.level}</div>
-                    {item.description && <p className="text-slate-600 whitespace-pre-line">{item.description}</p>}
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
 
           {/* Stats summary table */}
           {cv.statistics.length > 0 && (
@@ -660,6 +730,37 @@ export function ClassicTemplate({ cv, accentColour, font, isPreview }: TemplateP
               </div>
             </div>
           )}
+
+          {/* Career Table */}
+          {cv.careerHistory.length > 0 && (
+            <div>
+              <h3 className="text-xs font-bold uppercase tracking-wider text-slate-900 border-b pb-1 mb-3">Playing Experience</h3>
+              <div className="space-y-4">
+                {cv.careerHistory.map((item, idx) => (
+                  <div key={idx} className="text-xs">
+                    <div className="flex justify-between font-bold text-slate-950">
+                      <span>{item.teamName} - {item.role}</span>
+                      <span>{item.startYear} - {item.endYear || 'Present'}</span>
+                    </div>
+                    <div className="text-[10px] text-slate-500 italic mb-1">{item.country} | {item.level}</div>
+                    {item.description && <p className="text-slate-600 whitespace-pre-line">{item.description}</p>}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Highlights */}
+          <CVAchievementsBlock cv={cv} accentColour={accentColour} />
+
+          {/* Professional Coaching Experience */}
+          <CVExperienceBlock cv={cv} accentColour={accentColour} />
+
+          {/* Education & Certifications */}
+          <CVEducationBlock cv={cv} />
+
+          {/* References */}
+          <CVReferencesBlock cv={cv} />
         </div>
       </div>
 
@@ -687,7 +788,7 @@ export function PerformanceTemplate({ cv, accentColour, font, isPreview }: Templ
 
       <div>
         {/* Left Bar Identity Block */}
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-stretch gap-6 pb-6 border-b mb-6">
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-stretch gap-6 pb-6 border-b mb-6 animate-fade-in">
           <div className="flex items-center gap-4">
             <PlayerPhoto photo={cv.profilePhoto} name={`${cv.firstName} ${cv.lastName}`} />
             <div>
@@ -695,14 +796,18 @@ export function PerformanceTemplate({ cv, accentColour, font, isPreview }: Templ
               <div className="inline-block px-2.5 py-1 text-xs font-bold text-white uppercase tracking-wider rounded mt-1.5" style={{ backgroundColor: accentColour }}>
                 {cv.playingRole || 'Cricket Athlete'}
               </div>
+              <div className="mt-3 text-xs text-slate-600 space-y-1 text-left">
+                <div>Email: {cv.email}</div>
+                {cv.phone && <div>Phone: {cv.phone}</div>}
+                <div>Location: {cv.currentCity || ''}, {cv.countryOfResidence}</div>
+                {cv.personalWebsite && <div>Web: {cv.personalWebsite}</div>}
+                <CVAdditionalContact cv={cv} align="left" />
+              </div>
             </div>
           </div>
           
-          <div className="grid grid-cols-2 gap-4 text-xs text-slate-700 bg-slate-50 p-4 rounded-xl border border-slate-100 md:w-80">
-            <div>Country: <strong>{cv.countryOfResidence}</strong></div>
-            <div>Batting: <strong>{cv.battingStyle || '-'}</strong></div>
-            <div>Bowling: <strong>{cv.bowlingStyle || '-'}</strong></div>
-            {cv.height && <div>Height: <strong>{cv.height} cm</strong></div>}
+          <div className="grid grid-cols-2 gap-4 text-xs text-slate-700 bg-slate-50 p-4 rounded-xl border border-slate-100 md:w-80 shrink-0">
+            <CVExtraProfileDetails cv={cv} />
           </div>
         </div>
 
@@ -738,6 +843,14 @@ export function PerformanceTemplate({ cv, accentColour, font, isPreview }: Templ
                 </div>
               ))}
             </div>
+          </div>
+        )}
+
+        {/* Profile/About */}
+        {cv.aboutPlayer && (
+          <div className="mb-6">
+            <h2 className="text-xs font-bold uppercase tracking-widest text-slate-900 mb-2">About The Athlete</h2>
+            <p className="text-xs text-slate-650 leading-relaxed whitespace-pre-line bg-slate-50/30 p-3 rounded-lg border border-slate-100">{cv.aboutPlayer}</p>
           </div>
         )}
 
@@ -777,6 +890,21 @@ export function PerformanceTemplate({ cv, accentColour, font, isPreview }: Templ
             </div>
           </div>
         )}
+
+        {/* Coaching / Professional Experience */}
+        <div className="mb-6">
+          <CVExperienceBlock cv={cv} accentColour={accentColour} />
+        </div>
+
+        {/* Education & Certs */}
+        <div className="mb-6">
+          <CVEducationBlock cv={cv} />
+        </div>
+
+        {/* References */}
+        <div className="mb-6">
+          <CVReferencesBlock cv={cv} />
+        </div>
       </div>
 
       {/* Footer */}

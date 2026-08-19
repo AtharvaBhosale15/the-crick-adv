@@ -24,7 +24,7 @@ interface CVBuilderFormProps {
   cv: CricketCVFull;
   onChange: (cv: CricketCVFull) => void;
   onSaveDraft: () => Promise<void>;
-  onNext: () => void;
+  onNext: () => void | Promise<void>;
   onPrev: () => void;
   isSaving: boolean;
   isIdentityLocked: boolean;
@@ -48,8 +48,7 @@ export default function CVBuilderForm({
     { num: 5, name: 'Experience', desc: 'Coaching & Ops' },
     { num: 6, name: 'Achievements', desc: 'Major Highlights' },
     { num: 7, name: 'Education', desc: 'Academic & Qualifications' },
-    { num: 8, name: 'Contact', desc: 'Contact Info' },
-    { num: 9, name: 'Branding & Preview', desc: 'Font & Theme' }
+    { num: 8, name: 'Contact', desc: 'Contact Info' }
   ];
 
   const updateCVField = (field: keyof CricketCVFull, value: any) => {
@@ -1173,25 +1172,6 @@ export default function CVBuilderForm({
                 )
               )}
             </div>
-          </div>
-        )}
-
-        {/* STEP 9: BRANDING & PREVIEW */}
-        {currentStep === 9 && (
-          <div className="space-y-6">
-            <h3 className="text-base font-bold text-white mb-2 flex items-center gap-1.5">
-              <Layers className="w-4 h-4 text-gold-400" /> Branding & Theme Controls
-            </h3>
-
-            <CVFontSelector 
-              selectedFont={cv.font} 
-              onSelectFont={(font) => updateCVField('font', font)} 
-            />
-
-            <CVColourSelector 
-              selectedColour={cv.accentColour} 
-              onSelectColour={(color) => updateCVField('accentColour', color)} 
-            />
           </div>
         )}
       </div>

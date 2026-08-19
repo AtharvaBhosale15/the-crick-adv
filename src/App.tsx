@@ -72,6 +72,8 @@ import { initialCVForm as initialCVFormFull, CricketCVFull } from './components/
 import CVStyleStep from './components/cv/CVStyleStep';
 import CVPaymentSuccess from './components/cv/CVPaymentSuccess';
 import CVFinalView from './components/cv/CVFinalView';
+import html2canvas from 'html2canvas-pro';
+import CVTemplateRenderer from './components/cv/templates/CVTemplates';
 
 
 // --- TYPES ---
@@ -1533,7 +1535,7 @@ END:VCALENDAR`;
 
   const fetchUserCV = async (tokenStr: string) => {
     try {
-      const res = await fetch('/api/cv-get', {
+      const res = await fetch(`/api/cv-get?t=${Date.now()}`, {
         headers: { 'Authorization': `Bearer ${tokenStr}` }
       });
       if (res.ok) {
@@ -3375,40 +3377,63 @@ END:VCALENDAR`;
       }
     };
 
-    const handleDownloadCleanPDF = () => {
-      const doc = new jsPDF('p', 'mm', 'a4');
-      doc.setFont('Helvetica', 'bold');
-      doc.setFontSize(22);
-      doc.text(`${cvForm.firstName} ${cvForm.lastName}`, 20, 30);
-      doc.setFontSize(14);
-      doc.text(cvForm.playingRole || 'Cricket Professional', 20, 38);
-      doc.setFont('Helvetica', 'normal');
-      doc.setFontSize(10);
-      doc.text(`Email: ${cvForm.email} | Phone: ${cvForm.phone || '-'}`, 20, 46);
-      doc.text(`Nationality: ${cvForm.nationality} | DOB: ${cvForm.dateOfBirth || ''}`, 20, 52);
+    const handleDownloadCleanPDF = async () => {
+      const element = document.getElementById('cv-download-print-capture');
+      if (!element) {
+        alert('Error: CV print capture element not found. Please wait a moment and try again.');
+        return;
+      }
       
-      doc.setFont('Helvetica', 'bold');
-      doc.text('PLAYER PROFILE', 20, 64);
-      doc.setLineWidth(0.5);
-      doc.line(20, 66, 190, 66);
-      doc.setFont('Helvetica', 'normal');
-      const splitBio = doc.splitTextToSize(cvForm.aboutPlayer || 'No player bio defined.', 170);
-      doc.text(splitBio, 20, 72);
-
-      let startY = 95;
-      if (cvForm.statistics && cvForm.statistics.length > 0) {
-        doc.setFont('Helvetica', 'bold');
-        doc.text('CRICKET STATISTICS RECORD', 20, startY);
-        doc.line(20, startY + 2, 190, startY + 2);
-        doc.setFont('Helvetica', 'normal');
-        
-        cvForm.statistics.forEach((s, idx) => {
-          doc.text(`${s.format} Format: Matches: ${s.batMatches || '0'} | Runs: ${s.batRuns || '0'} | Wkts: ${s.bowlWickets || '0'}`, 20, startY + 8 + (idx * 6));
-        });
+      const downloadBtn = document.activeElement as HTMLButtonElement | null;
+      const originalText = downloadBtn ? downloadBtn.innerHTML : '';
+      if (downloadBtn) {
+        downloadBtn.disabled = true;
+        downloadBtn.innerHTML = '<span class="flex items-center gap-1.5"><svg class="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg> Generating PDF...</span>';
       }
 
-      doc.save(`Cricket_CV_${cvForm.firstName}_${cvForm.lastName}.pdf`);
-      alert('Clean Premium PDF downloaded successfully!');
+      try {
+        const canvas = await html2canvas(element, {
+          scale: 2, // 2x scale for sharp text & shapes
+          useCORS: true,
+          allowTaint: true,
+          logging: false,
+          backgroundColor: '#ffffff'
+        });
+        
+        const imgWidth = 210; // A4 width in mm
+        const pageHeight = 297; // A4 height in mm
+        const imgHeight = (canvas.height * imgWidth) / canvas.width;
+        let heightLeft = imgHeight;
+        
+        const pdf = new jsPDF('p', 'mm', 'a4');
+        let position = 0;
+        
+        const imgData = canvas.toDataURL('image/jpeg', 1.0);
+        
+        // Add Page 1
+        pdf.addImage(imgData, 'JPEG', 0, position, imgWidth, imgHeight);
+        heightLeft -= pageHeight;
+        
+        // Add extra pages only if remaining height is significantly more than zero
+        // Using threshold > 1 to avoid floating-point edge case adding a blank page
+        while (heightLeft > 1) {
+          position = heightLeft - imgHeight;
+          pdf.addPage();
+          pdf.addImage(imgData, 'JPEG', 0, position, imgWidth, imgHeight);
+          heightLeft -= pageHeight;
+        }
+        
+        pdf.save(`Cricket_CV_${cvForm.firstName || 'Player'}_${cvForm.lastName || 'Profile'}.pdf`);
+        alert('Clean Premium PDF downloaded successfully!');
+      } catch (error: any) {
+        console.error('Error rendering high-fidelity PDF download:', error);
+        alert(`Failed to download PDF: ${error.message || error}`);
+      } finally {
+        if (downloadBtn) {
+          downloadBtn.disabled = false;
+          downloadBtn.innerHTML = originalText;
+        }
+      }
     };
 
     const renderDashboardView = () => {
@@ -3420,17 +3445,20 @@ END:VCALENDAR`;
             cvToken={cvToken || ''}
             onLogout={handleCvLogout}
             onEditCV={async () => {
+              // For paid users, consume 1 edit token when entering edit mode
+              // All subsequent saves inside the form use isStyleUpdate=true
               if (cvForm.paymentStatus === 'Paid') {
-                const updated = {
-                  ...cvForm,
-                  editsUsed: cvForm.editsUsed + 1
-                };
-                setCvForm(updated);
-                await handleSaveCvDraft(updated, false); // consumes 1 token
+                await handleSaveCvDraft(cvForm, false); // Consumes exactly 1 token
               }
               setCvView('form');
             }}
-            onSelectTemplate={(tid, isStyleUpdate = false) => handleSaveCvDraft({ ...cvForm, templateId: tid }, isStyleUpdate)}
+            onSelectTemplate={(tid, isStyleUpdate = false) => {
+              const optColor = tid === 'professional' ? '#991B1B' :
+                               tid === 'international' ? '#065F46' :
+                               tid === 'classic' ? '#1F2937' :
+                               tid === 'performance' ? '#B45309' : '#0B1A30';
+              handleSaveCvDraft({ ...cvForm, templateId: tid, accentColour: optColor }, isStyleUpdate);
+            }}
             onSelectFont={(f, isStyleUpdate = false) => handleSaveCvDraft({ ...cvForm, font: f }, isStyleUpdate)}
             onSelectColour={(c, isStyleUpdate = false) => handleSaveCvDraft({ ...cvForm, accentColour: c }, isStyleUpdate)}
             onDownloadCleanPDF={handleDownloadCleanPDF}
@@ -3451,8 +3479,11 @@ END:VCALENDAR`;
             <CVBuilderForm 
               cv={cvForm}
               onChange={(updated) => setCvForm(updated)}
-              onSaveDraft={async () => { await handleSaveCvDraft(cvForm); }}
-              onNext={() => setCvView('styling')}
+              onSaveDraft={async () => { await handleSaveCvDraft(cvForm, true); }} // isStyleUpdate=true: no token cost inside form
+              onNext={async () => {
+                await handleSaveCvDraft(cvForm, true); // Save content, no token cost
+                setCvView('styling');
+              }}
               onPrev={() => setCvView('dashboard')}
               isSaving={isSavingCv}
               isIdentityLocked={cvForm.identityLocked || false}
@@ -8703,6 +8734,15 @@ END:VCALENDAR`;
               </button>
             </div>
 
+          </div>
+        </div>
+      )}
+
+      {/* Hidden print capture container for high-fidelity PDF downloads */}
+      {cvToken && cvForm && (
+        <div style={{ position: 'absolute', left: '-9999px', top: '-9999px', pointerEvents: 'none' }} aria-hidden="true">
+          <div id="cv-download-print-capture" style={{ width: '794px', minHeight: '1123px', position: 'relative', backgroundColor: '#ffffff', overflow: 'hidden' }}>
+            <CVTemplateRenderer cv={cvForm} accentColour={cvForm.accentColour} font={cvForm.font} isPreview={false} />
           </div>
         </div>
       )}

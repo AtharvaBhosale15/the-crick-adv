@@ -99,6 +99,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           refNum = cvRow.reference_number;
           const cvData = JSON.parse(cvRow.cv_data);
 
+          if (cvData.paymentStatus === 'Paid') {
+            cvData.editsUsed = 0;
+            cvData.editsAllowed = 5;
+          }
           cvData.paymentStatus = 'Paid';
           cvData.downloadStatus = 'UNLOCKED';
           cvData.identityLocked = true;
@@ -106,7 +110,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           // Update CV status & Lock Identity details
           await sql`
             UPDATE cvs 
-            SET payment_status = 'Paid', download_status = 'UNLOCKED', identity_locked = TRUE, cv_data = ${JSON.stringify(cvData)}
+            SET payment_status = 'Paid', download_status = 'UNLOCKED', identity_locked = TRUE, cv_data = ${JSON.stringify(cvData)}, edits_used = ${cvData.editsUsed}, edits_allowed = ${cvData.editsAllowed}
             WHERE id = ${cvId}
           `;
 
@@ -123,6 +127,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         const cvs = getLocalCvs();
         const cvIdx = cvs.findIndex((c: any) => c.id === cvId);
         if (cvIdx > -1) {
+          if (cvs[cvIdx].paymentStatus === 'Paid') {
+            cvs[cvIdx].editsUsed = 0;
+            cvs[cvIdx].editsAllowed = 5;
+          }
           cvs[cvIdx].paymentStatus = 'Paid';
           cvs[cvIdx].downloadStatus = 'UNLOCKED';
           cvs[cvIdx].identityLocked = true;

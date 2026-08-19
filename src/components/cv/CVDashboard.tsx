@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { CricketCVFull, DEMO_CV_DATA } from './CVTypes';
 import { 
   Lock, 
@@ -41,9 +41,8 @@ export default function CVDashboard({
   onPayAndDownload,
   onRenewSuccess,
   onRequestCorrection,
-  onSelectTemplate: onSelectTemp,
-  onSelectFont: onSelectFnt,
-  onSelectColour: onSelectClr
+  onSelectFont,
+  onSelectColour
 }: CVDashboardProps) {
   const editsLeft = cv.editsAllowed - cv.editsUsed;
   const [showRenewModal, setShowRenewModal] = useState(false);
@@ -51,6 +50,10 @@ export default function CVDashboard({
   const [isProcessing, setIsProcessing] = useState(false);
   // Local state for instant preview — updates immediately without waiting for parent re-render
   const [previewCv, setPreviewCv] = useState<CricketCVFull>(cv);
+
+  useEffect(() => {
+    setPreviewCv(cv);
+  }, [cv]);
 
   const templates = [
     {
@@ -166,20 +169,19 @@ export default function CVDashboard({
     setPreviewCv(prev => ({ ...prev, templateId: id, accentColour: newColor }));
     // Also propagate to parent for persistence
     const isStyleUpdate = cv.paymentStatus === 'Paid';
-    onSelectTemp(id, isStyleUpdate);
-    onSelectClr(newColor, isStyleUpdate);
+    onSelectTemplate(id, isStyleUpdate);
   };
 
   const handleSelectColour = (color: string) => {
     setPreviewCv(prev => ({ ...prev, accentColour: color }));
     const isStyleUpdate = cv.paymentStatus === 'Paid';
-    onSelectClr(color, isStyleUpdate);
+    onSelectColour(color, isStyleUpdate);
   };
 
   const handleSelectFont = (font: string) => {
     setPreviewCv(prev => ({ ...prev, font: font }));
     const isStyleUpdate = cv.paymentStatus === 'Paid';
-    onSelectFnt(font, isStyleUpdate);
+    onSelectFont(font, isStyleUpdate);
   };
 
   const handleEditDetailsClick = () => {

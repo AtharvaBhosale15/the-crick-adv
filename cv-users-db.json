@@ -92,5 +92,22 @@
     "email_verified": true,
     "verification_token": null,
     "created_at": "2026-08-19T11:03:43.619Z"
+  },
+  {
+    "id": "user_1787165729487",
+    "email": "atharvabhosale1@gmail.com",
+    "password_hash": "08a3ece8b4b3eec172595d7b0cee1ba75dfd3a723071690f2527dfe4fb41ed8acc5218423cbc5569dd358ab8ef64f21ce50c8ab75ccb0164434f39d78ee879ab",
+    "password_salt": "baed4ee45f5be33a47c2ab28551960b7",
+    "first_name": "Atharva",
+    "last_name": "Bhosale",
+    "country": "India",
+    "state_province": "Maharashtra",
+    "mobile_number": "821145678",
+    "nationality": "indian",
+    "date_of_birth": "2026-08-20",
+    "email_verified": true,
+    "verification_token": null,
+    "created_at": "2026-08-19T18:55:29.488Z",
+    "identityLocked": true
   }
 ]

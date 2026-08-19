@@ -67,7 +67,11 @@ export default function CVFinalView({ cv, onDownloadCleanPDF, onGoToDashboard }:
             <AlertCircle className="w-5 h-5 text-gold-400 shrink-0 mt-0.5" />
             <div>
               <span className="font-bold text-white block mb-0.5">Need to edit details?</span>
-              You have <strong>{cv.editsAllowed - cv.editsUsed} edits left</strong> for this year. You can update statistics or achievements from the dashboard at any time.
+              {cv.editsAllowed - cv.editsUsed > 0 ? (
+                <>You have <strong className="text-gold-400">{cv.editsAllowed - cv.editsUsed} edits left</strong> for this year. You can update statistics, career history, or achievements from the dashboard at any time.</>
+              ) : (
+                <>You have <strong className="text-red-400">0 edits left</strong> for this year. You can renew your plan from the dashboard to restore 5 edits or contact support for help.</>
+              )}
             </div>
           </div>
         </div>

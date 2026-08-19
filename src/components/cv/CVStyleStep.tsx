@@ -223,7 +223,7 @@ export default function CVStyleStep({ cv, onChange, onNext, onPrev }: CVStyleSte
           className="px-6 py-3 rounded-xl text-xs font-black flex items-center gap-1.5 cursor-pointer hover:opacity-90 transition text-slate-900"
           style={{ background: 'linear-gradient(135deg, #D4AF37, #B7942B)' }}
         >
-          Continue to Payment <ArrowRight className="w-4 h-4" />
+          {cv.paymentStatus === 'Paid' ? 'Proceed' : 'Continue to Payment'} <ArrowRight className="w-4 h-4" />
         </button>
       </div>
 

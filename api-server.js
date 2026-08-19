@@ -977,6 +977,7 @@ app.post('/api/cv-save', (req, res) => {
 });
 
 app.get('/api/cv-get', (req, res) => {
+  res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
   const authHeader = req.headers.authorization;
   if (!authHeader || !authHeader.startsWith('Bearer ')) return res.status(401).json({ error: 'Unauthorized' });
 
@@ -1033,6 +1034,10 @@ app.post('/api/cv-verify-payment', async (req, res) => {
   const cvs = getLocalCvs();
   const idx = cvs.findIndex(c => c.id === cvId);
   if (idx > -1) {
+    if (cvs[idx].paymentStatus === 'Paid') {
+      cvs[idx].editsUsed = 0;
+      cvs[idx].editsAllowed = 5;
+    }
     cvs[idx].paymentStatus = 'Paid';
     cvs[idx].downloadStatus = 'UNLOCKED';
     cvs[idx].identityLocked = true;
