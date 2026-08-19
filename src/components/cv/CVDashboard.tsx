@@ -49,6 +49,8 @@ export default function CVDashboard({
   const [showRenewModal, setShowRenewModal] = useState(false);
   const [showTokenConfirmModal, setShowTokenConfirmModal] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
+  // Local state for instant preview — updates immediately without waiting for parent re-render
+  const [previewCv, setPreviewCv] = useState<CricketCVFull>(cv);
 
   const templates = [
     {
@@ -159,18 +161,23 @@ export default function CVDashboard({
   };
 
   const handleSelectTemplate = (id: string) => {
-    // Check if paid or unpaid
+    const newColor = getOptimalColor(id);
+    // Update local preview immediately — no parent re-render delay
+    setPreviewCv(prev => ({ ...prev, templateId: id, accentColour: newColor }));
+    // Also propagate to parent for persistence
     const isStyleUpdate = cv.paymentStatus === 'Paid';
     onSelectTemp(id, isStyleUpdate);
-    onSelectClr(getOptimalColor(id), isStyleUpdate);
+    onSelectClr(newColor, isStyleUpdate);
   };
 
   const handleSelectColour = (color: string) => {
+    setPreviewCv(prev => ({ ...prev, accentColour: color }));
     const isStyleUpdate = cv.paymentStatus === 'Paid';
     onSelectClr(color, isStyleUpdate);
   };
 
   const handleSelectFont = (font: string) => {
+    setPreviewCv(prev => ({ ...prev, font: font }));
     const isStyleUpdate = cv.paymentStatus === 'Paid';
     onSelectFnt(font, isStyleUpdate);
   };
@@ -217,15 +224,15 @@ export default function CVDashboard({
   const isPaid = cv.paymentStatus === 'Paid';
 
   // For preview rendering:
-  // If user is paid: render the user's real CV
+  // If user is paid: render the user's real CV with local style overrides
   // If user is unpaid: render the Suresh Kothari DEMO_CV_DATA with selected styles applied
-  const previewCVData: CricketCVFull = isPaid 
-    ? cv 
+  const previewCVData: CricketCVFull = isPaid
+    ? previewCv
     : {
         ...DEMO_CV_DATA,
-        templateId: cv.templateId || 'executive',
-        font: cv.font || 'Inter',
-        accentColour: cv.accentColour || '#0B1A30'
+        templateId: previewCv.templateId || 'executive',
+        font: previewCv.font || 'Inter',
+        accentColour: previewCv.accentColour || '#0B1A30'
       };
 
   return (
@@ -402,7 +409,7 @@ export default function CVDashboard({
               <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider">Select Design</h4>
               <div className="space-y-3">
                 {templates.map((t) => {
-                  const isSelected = cv.templateId === t.id;
+                  const isSelected = previewCVData.templateId === t.id;
                   const optColor = getOptimalColor(t.id);
                   return (
                     <div 
@@ -452,7 +459,7 @@ export default function CVDashboard({
           </div>
 
           {/* Live Preview Container (col-span-7) */}
-          <div className="lg:col-span-7 h-[680px] rounded-xl overflow-hidden shadow-2xl border border-slate-850">
+          <div className="lg:col-span-7 h-[820px] rounded-xl overflow-hidden shadow-2xl border border-slate-850">
             <CVLivePreview cv={previewCVData} isPreview={true} />
           </div>
 

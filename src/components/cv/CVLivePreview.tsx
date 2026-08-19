@@ -1,116 +1,104 @@
 import React, { useState, useRef, useEffect } from 'react';
 import CVTemplateRenderer from './templates/CVTemplates';
 import { CricketCVFull } from './CVTypes';
-import { ZoomIn, ZoomOut, Maximize2, RefreshCw } from 'lucide-react';
+import { ZoomIn, ZoomOut, Maximize2 } from 'lucide-react';
 
 interface CVLivePreviewProps {
   cv: CricketCVFull;
   isPreview?: boolean;
 }
 
-export default function CVLivePreview({ cv, isPreview = true }: CVLivePreviewProps) {
-  const [zoom, setZoom] = useState<number>(0.85); // scaling factor
-  const containerRef = useRef<HTMLDivElement>(null);
-  const [containerWidth, setContainerWidth] = useState<number>(0);
+const A4_W = 794;
+const A4_H = 1123;
 
-  // Update container width for auto-fitting
-  const updateWidth = () => {
-    if (containerRef.current) {
-      setContainerWidth(containerRef.current.clientWidth);
-    }
+export default function CVLivePreview({ cv, isPreview = true }: CVLivePreviewProps) {
+  const [zoom, setZoom] = useState(0.6);
+  const [isManualZoom, setIsManualZoom] = useState(false);
+  const outerRef = useRef<HTMLDivElement>(null);
+
+  const computeFit = () => {
+    if (!outerRef.current) return;
+    const rect = outerRef.current.getBoundingClientRect();
+    if (rect.width < 10 || rect.height < 10) return;
+    const zoomX = (rect.width - 16) / A4_W;
+    const zoomY = (rect.height - 16) / A4_H;
+    setZoom(Math.max(Math.min(zoomX, zoomY, 1.0), 0.25));
   };
 
   useEffect(() => {
-    updateWidth();
-    window.addEventListener('resize', updateWidth);
-    return () => window.removeEventListener('resize', updateWidth);
+    computeFit();
+    const t = setTimeout(computeFit, 200);
+    const onResize = () => { if (!isManualZoom) computeFit(); };
+    window.addEventListener('resize', onResize);
+    return () => { clearTimeout(t); window.removeEventListener('resize', onResize); };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Base A4 dimensions at 96 DPI
-  const a4Width = 794;
-  const a4Height = 1123;
-
-  // Auto-scale to fit container on load or resize
   useEffect(() => {
-    if (containerWidth > 0) {
-      // Fit to container width with 32px padding
-      const fitZoom = (containerWidth - 32) / a4Width;
-      setZoom(Math.min(Math.max(fitZoom, 0.4), 1.2));
-    }
-  }, [containerWidth]);
+    if (!isManualZoom) computeFit();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isManualZoom]);
 
-  const handleZoomIn = () => setZoom(prev => Math.min(prev + 0.1, 1.5));
-  const handleZoomOut = () => setZoom(prev => Math.max(prev - 0.1, 0.4));
-  const handleResetZoom = () => {
-    if (containerWidth > 0) {
-      setZoom((containerWidth - 32) / a4Width);
-    }
-  };
+  const scaledW = Math.round(A4_W * zoom);
+  const scaledH = Math.round(A4_H * zoom);
 
   return (
-    <div className="flex flex-col h-full bg-slate-900 border border-slate-800 rounded-xl overflow-hidden relative">
-      {/* Control Bar */}
-      <div className="bg-slate-950/80 px-4 py-2.5 border-b border-slate-850 flex items-center justify-between text-xs text-slate-400 z-10">
-        <span className="font-semibold text-slate-200">
-          Live CV Preview ({cv.templateId.toUpperCase()})
+    <div className="flex flex-col h-full bg-slate-900 border border-slate-800 rounded-xl overflow-hidden">
+
+      {/* Top bar */}
+      <div className="shrink-0 bg-slate-950 px-4 py-2 border-b border-slate-800 flex items-center justify-between text-xs text-slate-400">
+        <span className="font-semibold text-slate-200 uppercase tracking-wide text-[10px]">
+          {cv.templateId} · live preview
         </span>
-        <div className="flex items-center gap-2">
-          <button 
-            onClick={handleZoomOut}
-            className="p-1.5 hover:bg-slate-850 hover:text-white rounded transition"
-            title="Zoom Out"
-          >
-            <ZoomOut className="w-4 h-4" />
-          </button>
-          <span className="font-mono text-[10px] bg-slate-850 px-2 py-0.5 rounded text-slate-300">
-            {Math.round(zoom * 100)}%
-          </span>
-          <button 
-            onClick={handleZoomIn}
-            className="p-1.5 hover:bg-slate-850 hover:text-white rounded transition"
-            title="Zoom In"
-          >
-            <ZoomIn className="w-4 h-4" />
-          </button>
-          <button 
-            onClick={handleResetZoom}
-            className="p-1.5 hover:bg-slate-850 hover:text-white rounded transition"
-            title="Fit to Width"
-          >
-            <Maximize2 className="w-4 h-4" />
-          </button>
+        <div className="flex items-center gap-1">
+          <button onClick={() => { setIsManualZoom(true); setZoom(z => Math.max(z - 0.05, 0.25)); }} className="p-1.5 rounded hover:bg-slate-800 hover:text-white transition" title="Zoom out"><ZoomOut className="w-3.5 h-3.5" /></button>
+          <span className="font-mono text-[10px] w-9 text-center bg-slate-800 rounded py-0.5">{Math.round(zoom * 100)}%</span>
+          <button onClick={() => { setIsManualZoom(true); setZoom(z => Math.min(z + 0.05, 1.5)); }} className="p-1.5 rounded hover:bg-slate-800 hover:text-white transition" title="Zoom in"><ZoomIn className="w-3.5 h-3.5" /></button>
+          <button onClick={() => setIsManualZoom(false)} className="p-1.5 rounded hover:bg-slate-800 hover:text-white transition ml-1" title="Fit page"><Maximize2 className="w-3.5 h-3.5" /></button>
         </div>
       </div>
 
-      {/* A4 Sandbox Container */}
-      <div 
-        ref={containerRef}
-        className="flex-1 overflow-auto p-4 flex justify-center items-start bg-slate-950/40 relative select-none"
-        style={{ minHeight: '400px' }}
+      {/* A4 viewport — no scroll, always centered */}
+      <div
+        ref={outerRef}
+        className="flex-1 overflow-hidden flex items-center justify-center"
+        style={{ background: '#0a0d1a' }}
       >
-        <div 
-          className="shadow-2xl origin-top transition-transform duration-100 flex-shrink-0"
-          style={{ 
-            width: `${a4Width}px`, 
-            height: `${a4Height}px`,
-            transform: `scale(${zoom})`,
-            marginBottom: `${a4Height * (zoom - 1)}px` // correct layout height collapse when scaled
-          }}
-        >
-          <CVTemplateRenderer 
-            cv={cv} 
-            accentColour={cv.accentColour} 
-            font={cv.font} 
-            isPreview={isPreview} 
-          />
+        {/* Wrapper exactly the scaled A4 size — prevents any browser overflow/clip */}
+        <div style={{ width: scaledW, height: scaledH, position: 'relative', flexShrink: 0 }} className="shadow-2xl">
+          {/* 
+            NO key here — we let React reconcile in-place.
+            Template switching is handled by CVTemplateRenderer's switch statement.
+            Using CSS transition on opacity to give a smooth crossfade.
+          */}
+          <div
+            style={{
+              width: A4_W,
+              height: A4_H,
+              transform: `scale(${zoom})`,
+              transformOrigin: 'top left',
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              transition: 'opacity 0.25s ease',
+            }}
+          >
+            <CVTemplateRenderer
+              cv={cv}
+              accentColour={cv.accentColour}
+              font={cv.font}
+              isPreview={isPreview}
+            />
+          </div>
         </div>
       </div>
 
-      {/* Page / Status Bar */}
-      <div className="bg-slate-950/80 px-4 py-2 border-t border-slate-850 flex items-center justify-between text-[10px] text-slate-500">
-        <span>A4 Format (210 × 297 mm)</span>
-        <span className="font-semibold text-gold-500/80">PAGE 1 OF 1</span>
+      {/* Status bar */}
+      <div className="shrink-0 bg-slate-950 px-4 py-1.5 border-t border-slate-800 flex items-center justify-between text-[10px] text-slate-500">
+        <span>A4 · 210 × 297 mm</span>
+        <span style={{ color: '#D4AF37' }} className="font-semibold">PAGE 1 OF 1</span>
       </div>
+
     </div>
   );
 }

@@ -89,8 +89,8 @@
     "mobile_number": "9321885233",
     "nationality": "Indian",
     "date_of_birth": "2026-08-01",
-    "email_verified": false,
-    "verification_token": "58c7eb302ca131c0ddd03533725817c82767bc3fd71b7a60b96c71d0fab57c48",
+    "email_verified": true,
+    "verification_token": null,
     "created_at": "2026-08-19T11:03:43.619Z"
   }
 ]

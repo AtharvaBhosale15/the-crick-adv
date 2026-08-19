@@ -3467,7 +3467,9 @@ END:VCALENDAR`;
         <div className="py-8 bg-slate-950 min-h-[85vh] text-slate-100 font-sans px-4">
           <CVStyleStep 
             cv={cvForm}
-            onChange={(updated) => setCvForm(updated)}
+            onChange={(updated) => {
+              setCvForm(updated);
+            }}
             onNext={async () => {
               // Save styles as style update (no edits token cost)
               await handleSaveCvDraft(cvForm, true);

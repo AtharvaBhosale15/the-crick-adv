@@ -425,6 +425,29 @@ export function ProfessionalTemplate({ cv, accentColour, font, isPreview }: Temp
 export function InternationalTemplate({ cv, accentColour, font, isPreview }: TemplateProps) {
   const fontStyle = { fontFamily: getFontFamily(font) };
 
+  // Robust fallback defaults to prevent rendering crashes on partial drafts
+  const firstName = cv?.firstName || '';
+  const lastName = cv?.lastName || '';
+  const profilePhoto = cv?.profilePhoto || '';
+  const nationality = cv?.nationality || '';
+  const countryOfResidence = cv?.countryOfResidence || '';
+  const dateOfBirth = cv?.dateOfBirth || '';
+  const playingRole = cv?.playingRole || '';
+  const battingStyle = cv?.battingStyle || '';
+  const bowlingStyle = cv?.bowlingStyle || '';
+  const aboutPlayer = cv?.aboutPlayer || '';
+  const availability = cv?.availability || '';
+  const email = cv?.email || '';
+  const phone = cv?.phone || '';
+  const personalWebsite = cv?.personalWebsite || '';
+  const referenceNumber = cv?.referenceNumber || '';
+
+  const overseasExperience = cv?.overseasExperience === true;
+  const internationalExperience = cv?.internationalExperience === true;
+
+  const careerHistory = Array.isArray(cv?.careerHistory) ? cv.careerHistory : [];
+  const statistics = Array.isArray(cv?.statistics) ? cv.statistics : [];
+
   return (
     <div 
       className="w-full bg-white text-slate-800 p-8 shadow-inner relative flex flex-col justify-between overflow-hidden" 
@@ -439,18 +462,18 @@ export function InternationalTemplate({ cv, accentColour, font, isPreview }: Tem
         {/* Identity Grid */}
         <div className="grid md:grid-cols-4 gap-6 items-center pb-6 border-b mb-6">
           <div className="md:col-span-1 flex justify-center">
-            <PlayerPhoto photo={cv.profilePhoto} name={`${cv.firstName} ${cv.lastName}`} />
+            <PlayerPhoto photo={profilePhoto} name={`${firstName} ${lastName}`} />
           </div>
           <div className="md:col-span-3 text-left">
-            <h1 className="text-3xl font-black text-slate-950">{cv.firstName} {cv.lastName}</h1>
+            <h1 className="text-3xl font-black text-slate-950">{firstName} {lastName}</h1>
             <p className="text-sm font-bold text-slate-500 uppercase tracking-widest mt-1">International Placement Profile</p>
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-y-2 gap-x-4 text-xs text-slate-700 mt-4 bg-slate-50 p-3 rounded-lg border border-slate-100">
-              <div>Nationality: <strong>{cv.nationality}</strong></div>
-              <div>Residence: <strong>{cv.countryOfResidence}</strong></div>
-              {cv.dateOfBirth && <div>DOB: <strong>{cv.dateOfBirth}</strong></div>}
-              <div>Role: <strong>{cv.playingRole}</strong></div>
-              {cv.battingStyle && <div>Batting: <strong>{cv.battingStyle}</strong></div>}
-              {cv.bowlingStyle && <div>Bowling: <strong>{cv.bowlingStyle}</strong></div>}
+              <div>Nationality: <strong>{nationality}</strong></div>
+              <div>Residence: <strong>{countryOfResidence}</strong></div>
+              {dateOfBirth && <div>DOB: <strong>{dateOfBirth}</strong></div>}
+              <div>Role: <strong>{playingRole}</strong></div>
+              {battingStyle && <div>Batting: <strong>{battingStyle}</strong></div>}
+              {bowlingStyle && <div>Bowling: <strong>{bowlingStyle}</strong></div>}
             </div>
           </div>
         </div>
@@ -459,19 +482,19 @@ export function InternationalTemplate({ cv, accentColour, font, isPreview }: Tem
         <div className="grid md:grid-cols-3 gap-6">
           {/* Main Info */}
           <div className="md:col-span-2 space-y-6">
-            {cv.aboutPlayer && (
+            {aboutPlayer && (
               <div>
                 <h3 className="text-xs font-black uppercase tracking-wider mb-2 text-slate-950" style={{ color: accentColour }}>Professional Ambition</h3>
-                <p className="text-xs text-slate-600 leading-relaxed whitespace-pre-line">{cv.aboutPlayer}</p>
+                <p className="text-xs text-slate-600 leading-relaxed whitespace-pre-line">{aboutPlayer}</p>
               </div>
             )}
 
-            {cv.careerHistory.length > 0 && (
+            {careerHistory.length > 0 && (
               <div>
                 <h3 className="text-xs font-black uppercase tracking-wider mb-3 text-slate-950" style={{ color: accentColour }}>Playing Career</h3>
                 <div className="space-y-4">
-                  {cv.careerHistory.map((item, idx) => (
-                    <div key={idx} className="bg-slate-50/50 p-3 rounded-lg border border-slate-100">
+                  {careerHistory.map((item, idx) => item && (
+                    <div key={item.id || idx} className="bg-slate-50/50 p-3 rounded-lg border border-slate-100">
                       <div className="flex justify-between font-bold text-xs text-slate-900">
                         <span>{item.teamName} ({item.country})</span>
                         <span style={{ color: accentColour }}>{item.startYear} - {item.endYear || 'Present'}</span>
@@ -490,12 +513,12 @@ export function InternationalTemplate({ cv, accentColour, font, isPreview }: Tem
           {/* Right sidebar info */}
           <div className="md:col-span-1 space-y-6">
             {/* Stats Block */}
-            {cv.statistics.length > 0 && (
+            {statistics.length > 0 && (
               <div>
                 <h3 className="text-xs font-black uppercase tracking-wider mb-3 text-slate-950 border-b pb-1">Stats Summary</h3>
                 <div className="space-y-3">
-                  {cv.statistics.map((stat, idx) => (
-                    <div key={idx} className="text-xs">
+                  {statistics.map((stat, idx) => stat && (
+                    <div key={stat.id || idx} className="text-xs">
                       <div className="font-bold text-slate-900 mb-1">{stat.format}</div>
                       <div className="grid grid-cols-2 gap-1 text-[10px] text-slate-700 bg-slate-50 p-2 rounded">
                         {stat.batRuns && <div>Runs: {stat.batRuns}</div>}
@@ -513,9 +536,9 @@ export function InternationalTemplate({ cv, accentColour, font, isPreview }: Tem
             <div className="bg-slate-50 p-4 rounded-xl border border-slate-100">
               <h3 className="text-xs font-black uppercase tracking-wider mb-2 text-slate-950">Availability</h3>
               <div className="space-y-2 text-xs text-slate-700">
-                {cv.availability && <div>Availability: <strong>{cv.availability}</strong></div>}
-                <div>Overseas Exp: <strong>{cv.overseasExperience ? 'Yes' : 'No'}</strong></div>
-                <div>Intl Exp: <strong>{cv.internationalExperience ? 'Yes' : 'No'}</strong></div>
+                {availability && <div>Availability: <strong>{availability}</strong></div>}
+                <div>Overseas Exp: <strong>{overseasExperience ? 'Yes' : 'No'}</strong></div>
+                <div>Intl Exp: <strong>{internationalExperience ? 'Yes' : 'No'}</strong></div>
               </div>
             </div>
 
@@ -523,9 +546,9 @@ export function InternationalTemplate({ cv, accentColour, font, isPreview }: Tem
             <div className="bg-slate-50 p-4 rounded-xl border border-slate-100">
               <h3 className="text-xs font-black uppercase tracking-wider mb-2 text-slate-950">Contact Info</h3>
               <div className="space-y-1 text-xs text-slate-700">
-                <div>Email: <strong>{cv.email}</strong></div>
-                {cv.phone && <div>Phone: <strong>{cv.phone}</strong></div>}
-                {cv.personalWebsite && <div className="truncate">Web: <strong>{cv.personalWebsite}</strong></div>}
+                <div>Email: <strong>{email}</strong></div>
+                {phone && <div>Phone: <strong>{phone}</strong></div>}
+                {personalWebsite && <div className="truncate">Web: <strong>{personalWebsite}</strong></div>}
               </div>
             </div>
           </div>
@@ -534,7 +557,7 @@ export function InternationalTemplate({ cv, accentColour, font, isPreview }: Tem
 
       {/* Footer */}
       <div className="mt-8 pt-4 border-t text-center text-[9px] text-slate-400 flex justify-between items-center">
-        <span>Verified Profile Ref: {cv.referenceNumber || 'TCA-PENDING'}</span>
+        <span>Verified Profile Ref: {referenceNumber || 'TCA-PENDING'}</span>
         <span>The Cricket Advisor CV Builder</span>
       </div>
     </div>
@@ -767,17 +790,30 @@ export function PerformanceTemplate({ cv, accentColour, font, isPreview }: Templ
 
 // Master Render Router Component
 export default function CVTemplateRenderer({ cv, accentColour, font, isPreview }: TemplateProps) {
-  switch (cv.templateId) {
+  // Safeguard: Ensure all lists are arrays and default values are defined to prevent rendering crashes
+  const safeCv = {
+    ...cv,
+    careerHistory: Array.isArray(cv?.careerHistory) ? cv.careerHistory : [],
+    statistics: Array.isArray(cv?.statistics) ? cv.statistics : [],
+    achievements: Array.isArray(cv?.achievements) ? cv.achievements : [],
+    experience: Array.isArray(cv?.experience) ? cv.experience : [],
+    education: Array.isArray(cv?.education) ? cv.education : [],
+    certifications: Array.isArray(cv?.certifications) ? cv.certifications : [],
+    references: Array.isArray(cv?.references) ? cv.references : [],
+    languages: Array.isArray(cv?.languages) ? cv.languages : [],
+  };
+
+  switch (safeCv.templateId) {
     case 'professional':
-      return <ProfessionalTemplate cv={cv} accentColour={accentColour} font={font} isPreview={isPreview} />;
+      return <ProfessionalTemplate cv={safeCv} accentColour={accentColour} font={font} isPreview={isPreview} />;
     case 'international':
-      return <InternationalTemplate cv={cv} accentColour={accentColour} font={font} isPreview={isPreview} />;
+      return <InternationalTemplate cv={safeCv} accentColour={accentColour} font={font} isPreview={isPreview} />;
     case 'classic':
-      return <ClassicTemplate cv={cv} accentColour={accentColour} font={font} isPreview={isPreview} />;
+      return <ClassicTemplate cv={safeCv} accentColour={accentColour} font={font} isPreview={isPreview} />;
     case 'performance':
-      return <PerformanceTemplate cv={cv} accentColour={accentColour} font={font} isPreview={isPreview} />;
+      return <PerformanceTemplate cv={safeCv} accentColour={accentColour} font={font} isPreview={isPreview} />;
     case 'executive':
     default:
-      return <ExecutiveTemplate cv={cv} accentColour={accentColour} font={font} isPreview={isPreview} />;
+      return <ExecutiveTemplate cv={safeCv} accentColour={accentColour} font={font} isPreview={isPreview} />;
   }
 }
