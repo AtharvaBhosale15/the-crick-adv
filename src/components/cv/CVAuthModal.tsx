@@ -51,7 +51,45 @@ export default function CVAuthModal({
 
   return (
     <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-xs flex items-center justify-center p-4 z-50 animate-fade-in">
-      <div className="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-sm overflow-hidden shadow-2xl relative">
+      <div className="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-sm overflow-hidden shadow-2xl relative cv-auth-modal-card">
+        <style dangerouslySetInnerHTML={{__html: `
+          .cv-auth-modal-card {
+            background-color: #ffffff !important;
+            border-color: #e2e8f0 !important;
+            color: #334155 !important;
+          }
+          .cv-auth-modal-card h2, 
+          .cv-auth-modal-card h3, 
+          .cv-auth-modal-card h4 {
+            color: #0B1A30 !important;
+          }
+          .cv-auth-modal-card label {
+            color: #334155 !important;
+            font-weight: 700 !important;
+          }
+          .cv-auth-modal-card input {
+            background-color: #ffffff !important;
+            border-color: #cbd5e1 !important;
+            color: #0F172A !important;
+          }
+          .cv-auth-modal-card input:focus {
+            border-color: #D4AF37 !important;
+            box-shadow: 0 0 0 1px #D4AF37 !important;
+          }
+          .cv-auth-modal-card button.text-slate-400 {
+            color: #64748b !important;
+          }
+          .cv-auth-modal-card button.text-slate-400:hover {
+            color: #0F172A !important;
+            background-color: #f1f5f9 !important;
+          }
+          .cv-auth-modal-card p.text-slate-400 {
+            color: #64748b !important;
+          }
+          .cv-auth-modal-card .text-white {
+            color: #0B1A30 !important;
+          }
+        `}} />
         {/* Close Button */}
         <button 
           onClick={onClose}

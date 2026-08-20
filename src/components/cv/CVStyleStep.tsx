@@ -4,6 +4,7 @@ import CVLivePreview from './CVLivePreview';
 import CVColourSelector from './CVColourSelector';
 import CVFontSelector from './CVFontSelector';
 import { Layers, ChevronLeft, ArrowRight, Sparkles, Check } from 'lucide-react';
+import { runTemplateLayoutTests } from './templates/registry/TemplateValidation';
 
 interface CVStyleStepProps {
   cv: CricketCVFull;
@@ -106,11 +107,34 @@ const templates = [
       </div>
     ),
   },
+  {
+    id: 'prestige',
+    name: 'The Prestige',
+    desc: 'Elite double-border layout featuring stumps decoration, a deep navy sidebar and warm cream aesthetics.',
+    character: 'Prestigious, Detailed',
+    accentDefault: '#c1904f',
+    preview: (color: string) => (
+      <div className="w-12 h-16 bg-[#faf8f4] rounded border border-slate-200 overflow-hidden flex shrink-0 select-none">
+        <div className="w-4 h-full bg-[#152238] flex flex-col justify-between p-0.5">
+          <div className="h-2 w-full rounded-sm" style={{ backgroundColor: color }} />
+          <div className="h-0.5 bg-slate-500 w-full" />
+        </div>
+        <div className="flex-1 p-1 space-y-1 flex flex-col justify-between">
+          <div className="border border-slate-300 p-0.5 space-y-0.5">
+            <div className="h-0.5 bg-slate-300 w-full" />
+            <div className="h-0.5 bg-slate-200 w-3/4" />
+          </div>
+          <div className="h-0.5 bg-slate-200 w-full" />
+        </div>
+      </div>
+    ),
+  },
 ];
 
 export default function CVStyleStep({ cv, onChange, onNext, onPrev }: CVStyleStepProps) {
-  // Local state for instant UI feedback — no waiting for parent re-render
   const [selectedId, setSelectedId] = useState(cv.templateId || 'executive');
+  const [testResults, setTestResults] = useState<any[] | null>(null);
+  const [isRunningTests, setIsRunningTests] = useState<boolean>(false);
 
   const handleSelectTemplate = (id: string) => {
     const t = templates.find(t => t.id === id);
@@ -123,7 +147,45 @@ export default function CVStyleStep({ cv, onChange, onNext, onPrev }: CVStyleSte
   };
 
   return (
-    <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5 md:p-8 text-left max-w-6xl mx-auto shadow-2xl font-sans">
+    <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5 md:p-8 text-left max-w-6xl mx-auto shadow-2xl font-sans cv-style-card">
+      <style dangerouslySetInnerHTML={{__html: `
+        .cv-style-card {
+          background-color: #ffffff !important;
+          border-color: #e2e8f0 !important;
+          color: #334155 !important;
+        }
+        .cv-style-card h2, 
+        .cv-style-card h3, 
+        .cv-style-card h4 {
+          color: #0B1A30 !important;
+        }
+        .cv-style-card p.text-slate-500 {
+          color: #64748b !important;
+        }
+        .cv-style-card .border-slate-800,
+        .cv-style-card .border-slate-850 {
+          border-color: #e2e8f0 !important;
+        }
+        .cv-style-card .bg-slate-950 {
+          background-color: #f8fafc !important;
+          border-color: #e2e8f0 !important;
+        }
+        .cv-style-card span.text-white {
+          color: #0F172A !important;
+        }
+        .cv-style-card span.text-slate-400 {
+          color: #64748b !important;
+        }
+        .cv-style-card div.border-slate-200 {
+          border-color: #e2e8f0 !important;
+        }
+        .cv-style-card .bg-slate-900 {
+          background-color: #f1f5f9 !important;
+        }
+        .cv-style-card .text-gold-500 {
+          color: #D4AF37 !important;
+        }
+      `}} />
 
       {/* Header */}
       <div className="border-b border-slate-800 pb-5 mb-6">
@@ -197,6 +259,44 @@ export default function CVStyleStep({ cv, onChange, onNext, onPrev }: CVStyleSte
               selectedFont={cv.font}
               onSelectFont={(f) => onChange({ ...cv, font: f })}
             />
+          </div>
+
+          {/* Page Layout Validator */}
+          <div className="border-t border-slate-800 pt-4 space-y-3 text-left">
+            <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
+              <Sparkles className="w-3.5 h-3.5 text-gold-500" /> Page Layout Validator
+            </h3>
+            <p className="text-[10px] text-slate-500 leading-relaxed">
+              Verify that page-breaks, heading placements, and block bounds comply with A4 constraints across all layouts.
+            </p>
+            <button
+              type="button"
+              onClick={() => {
+                setIsRunningTests(true);
+                setTimeout(() => {
+                  const res = runTemplateLayoutTests(cv, {});
+                  setTestResults(res);
+                  setIsRunningTests(false);
+                }, 400);
+              }}
+              disabled={isRunningTests}
+              className="w-full py-2 border border-slate-800 hover:border-gold-500 hover:text-slate-200 rounded-lg text-[10px] font-bold text-slate-400 transition cursor-pointer"
+            >
+              {isRunningTests ? "Validating Layouts..." : "Run Layout Verification"}
+            </button>
+
+            {testResults && (
+              <div className="space-y-2 mt-2 p-3 bg-slate-950/40 rounded-lg border border-slate-850">
+                {testResults.map(res => (
+                  <div key={res.templateId} className="flex justify-between items-center text-[10px] border-b border-slate-800/40 pb-1.5 last:border-0 last:pb-0">
+                    <span className="font-semibold text-slate-400">{res.name}</span>
+                    <span className={`font-bold ${res.passed ? 'text-green-500' : 'text-red-500'}`}>
+                      {res.passed ? '✅ Passed' : '❌ Failed'} ({res.pageCount} Pages)
+                    </span>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         </div>
 

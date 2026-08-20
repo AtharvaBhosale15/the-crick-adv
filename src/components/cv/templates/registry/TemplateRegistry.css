@@ -1,0 +1,56 @@
+/* Template-specific Page Dimensions CSS Variables Contract */
+
+.template-executive {
+  --page-width: 210mm;
+  --page-height: 297mm;
+  --page-margin-top: 15mm;
+  --page-margin-bottom: 15mm;
+  --page-margin-left: 15mm;
+  --page-margin-right: 15mm;
+  --section-gap: 6mm;
+}
+
+.template-professional {
+  --page-width: 210mm;
+  --page-height: 297mm;
+  --page-margin-top: 12mm;
+  --page-margin-bottom: 12mm;
+  --page-margin-left: 12mm;
+  --page-margin-right: 12mm;
+  --section-gap: 5mm;
+}
+
+.template-international {
+  --page-width: 210mm;
+  --page-height: 297mm;
+  --page-margin-top: 10mm;
+  --page-margin-bottom: 10mm;
+  --page-margin-left: 10mm;
+  --page-margin-right: 10mm;
+  --section-gap: 4mm;
+}
+
+.template-elite {
+  --page-width: 210mm;
+  --page-height: 297mm;
+  --page-margin-top: 14mm;
+  --page-margin-bottom: 14mm;
+  --page-margin-left: 14mm;
+  --page-margin-right: 14mm;
+  --section-gap: 6mm;
+}
+
+.template-classic {
+  --page-width: 210mm;
+  --page-height: 297mm;
+  --page-margin-top: 16mm;
+  --page-margin-bottom: 16mm;
+  --page-margin-left: 16mm;
+  --page-margin-right: 16mm;
+  --section-gap: 8mm;
+}
+
+/* Atomic wrapper helpers */
+.cv-atomic-block {
+  margin-bottom: var(--section-gap);
+}

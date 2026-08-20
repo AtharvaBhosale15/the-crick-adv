@@ -44,12 +44,85 @@ export interface StatisticsBlock {
   fieldStumpings?: string;
 }
 
+export interface FormatStats {
+  hasStats: boolean;
+  
+  // Batting
+  batMatches: number;
+  batInnings: number;
+  batNotOuts: number;
+  batRuns: number;
+  batHighestScore: number;
+  batHighestNotOut: boolean;
+  batBallsFaced: number;
+  batFifties: number;
+  batHundreds: number;
+  batTwoHundreds?: number; // Only for Multi-Day
+
+  // Bowling
+  bowlMatches: number;
+  bowlInnings: number;
+  bowlOvers: number;
+  bowlBalls: number;
+  bowlRunsConceded: number;
+  bowlWickets: number;
+  bowlBestWickets: number;
+  bowlBestRuns: number;
+  bowlFourWickets: number;
+  bowlFiveWickets: number;
+  bowlTenWickets?: number; // Only for Multi-Day
+
+  // Fielding
+  fieldCatches: number;
+  fieldRunOuts: number;
+  fieldStumpings: number;
+}
+
+export const createDefaultFormatStats = (isMultiDay = false): FormatStats => ({
+  hasStats: false,
+  batMatches: 0,
+  batInnings: 0,
+  batNotOuts: 0,
+  batRuns: 0,
+  batHighestScore: 0,
+  batHighestNotOut: false,
+  batBallsFaced: 0,
+  batFifties: 0,
+  batHundreds: 0,
+  ...(isMultiDay ? { batTwoHundreds: 0 } : {}),
+
+  bowlMatches: 0,
+  bowlInnings: 0,
+  bowlOvers: 0,
+  bowlBalls: 0,
+  bowlRunsConceded: 0,
+  bowlWickets: 0,
+  bowlBestWickets: 0,
+  bowlBestRuns: 0,
+  bowlFourWickets: 0,
+  bowlFiveWickets: 0,
+  ...(isMultiDay ? { bowlTenWickets: 0 } : {}),
+
+  fieldCatches: 0,
+  fieldRunOuts: 0,
+  fieldStumpings: 0
+});
+
 export interface Achievement {
   id: string;
   title: string;
   year: string;
   teamEvent: string;
+  opponentTeam?: string;
   description: string;
+}
+
+export interface CareerHighlight {
+  id: string;
+  achievement: string;
+  opponent: string;
+  tournament: string;
+  year: string;
 }
 
 export interface ProfessionalExperience {
@@ -68,6 +141,8 @@ export interface Education {
   school: string;
   degree: string;
   year: string;
+  educationType?: string;
+  educationLevel?: string;
 }
 
 export interface Certification {
@@ -137,8 +212,16 @@ export interface CricketCVFull {
   instagram: string;
   twitter: string;
   
+  // New Player Level fields
+  typeOfPlayerLevel?: string;
+  highestLevelPlayed?: string;
+  playerLevelCountry?: string;
+  espnLink?: string;
+  crickherosLink?: string;
+  
   // Section 2 — Cricket Profile
   playingRole: string;          // 'Batter' | 'Bowler' | 'All-Rounder' | 'Wicket-Keeper'
+  playingRoleDetail?: string;
   secondaryRole: string;
   battingStyle: string;         // 'Right-Handed' | 'Left-Handed'
   bowlingStyle: string;         // full bowling style
@@ -159,9 +242,15 @@ export interface CricketCVFull {
   
   // Section 4 — Statistics
   statistics: StatisticsBlock[];
+  oneDayStats?: FormatStats;
+  multiDayStats?: FormatStats;
+  t20Stats?: FormatStats;
   
   // Section 5 — Career Highlights / Achievements
   achievements: Achievement[];
+  
+  // Section 5.5 — Career Highlights
+  careerHighlights?: CareerHighlight[];
   
   // Section 6 — Professional Experience
   experience: ProfessionalExperience[];
@@ -169,6 +258,12 @@ export interface CricketCVFull {
   // Section 7 — Education & Certifications
   education: Education[];
   certifications: Certification[];
+  
+  // Section 7.5 — Fitness & Training
+  fitnessActivities?: string[];
+
+  // Section 7.6 — Hobbies
+  hobbies?: string[];
   
   // Section 8 — Contact
   email: string;
@@ -218,7 +313,14 @@ export const initialCVForm = (userId: string = '', email: string = '', firstName
   instagram: '',
   twitter: '',
   
+  typeOfPlayerLevel: '',
+  highestLevelPlayed: '',
+  playerLevelCountry: '',
+  espnLink: '',
+  crickherosLink: '',
+  
   playingRole: '',
+  playingRoleDetail: '',
   secondaryRole: '',
   battingStyle: '',
   bowlingStyle: '',
@@ -236,10 +338,16 @@ export const initialCVForm = (userId: string = '', email: string = '', firstName
   
   careerHistory: [],
   statistics: [],
+  oneDayStats: createDefaultFormatStats(false),
+  multiDayStats: createDefaultFormatStats(true),
+  t20Stats: createDefaultFormatStats(false),
   achievements: [],
+  careerHighlights: [],
   experience: [],
   education: [],
   certifications: [],
+  fitnessActivities: [],
+  hobbies: [],
   email,
   phone: '',
   
@@ -434,7 +542,86 @@ export const DEMO_CV_DATA: CricketCVFull = {
       year: '2022'
     }
   ],
-  
+  fitnessActivities: [],
+  hobbies: [],
+  careerHighlights: [],
+  oneDayStats: {
+    hasStats: true,
+    batMatches: 45,
+    batInnings: 42,
+    batNotOuts: 6,
+    batRuns: 1450,
+    batHighestScore: 92,
+    batHighestNotOut: true,
+    batBallsFaced: 1650,
+    batFifties: 11,
+    batHundreds: 0,
+    bowlMatches: 45,
+    bowlInnings: 38,
+    bowlOvers: 240,
+    bowlBalls: 2,
+    bowlRunsConceded: 1080,
+    bowlWickets: 52,
+    bowlBestWickets: 4,
+    bowlBestRuns: 28,
+    bowlFourWickets: 3,
+    bowlFiveWickets: 0,
+    fieldCatches: 18,
+    fieldRunOuts: 4,
+    fieldStumpings: 0
+  },
+  multiDayStats: {
+    hasStats: true,
+    batMatches: 12,
+    batInnings: 20,
+    batNotOuts: 2,
+    batRuns: 850,
+    batHighestScore: 145,
+    batHighestNotOut: false,
+    batBallsFaced: 1950,
+    batFifties: 5,
+    batHundreds: 2,
+    batTwoHundreds: 0,
+    bowlMatches: 12,
+    bowlInnings: 18,
+    bowlOvers: 190,
+    bowlBalls: 0,
+    bowlRunsConceded: 720,
+    bowlWickets: 35,
+    bowlBestWickets: 5,
+    bowlBestRuns: 45,
+    bowlFourWickets: 2,
+    bowlFiveWickets: 1,
+    bowlTenWickets: 0,
+    fieldCatches: 8,
+    fieldRunOuts: 1,
+    fieldStumpings: 0
+  },
+  t20Stats: {
+    hasStats: true,
+    batMatches: 65,
+    batInnings: 60,
+    batNotOuts: 12,
+    batRuns: 1820,
+    batHighestScore: 102,
+    batHighestNotOut: true,
+    batBallsFaced: 1380,
+    batFifties: 12,
+    batHundreds: 1,
+    bowlMatches: 65,
+    bowlInnings: 55,
+    bowlOvers: 198,
+    bowlBalls: 4,
+    bowlRunsConceded: 1485,
+    bowlWickets: 68,
+    bowlBestWickets: 5,
+    bowlBestRuns: 18,
+    bowlFourWickets: 2,
+    bowlFiveWickets: 1,
+    fieldCatches: 25,
+    fieldRunOuts: 8,
+    fieldStumpings: 0
+  },
   email: 'suresh.kothari@example.com',
   phone: '+91 98765 43210',
   

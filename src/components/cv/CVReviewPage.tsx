@@ -59,7 +59,55 @@ export default function CVReviewPage({ cv, onPay, onPrev }: CVReviewPageProps) {
   };
 
   return (
-    <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5 md:p-8 text-left max-w-4xl mx-auto shadow-2xl space-y-6 font-sans">
+    <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5 md:p-8 text-left max-w-4xl mx-auto shadow-2xl space-y-6 font-sans cv-review-card">
+      <style dangerouslySetInnerHTML={{__html: `
+        .cv-review-card {
+          background-color: #ffffff !important;
+          border-color: #e2e8f0 !important;
+          color: #334155 !important;
+        }
+        .cv-review-card h2, 
+        .cv-review-card h3, 
+        .cv-review-card h4 {
+          color: #0B1A30 !important;
+        }
+        .cv-review-card span.text-white {
+          color: #0F172A !important;
+        }
+        .cv-review-card .bg-slate-950 {
+          background-color: #f8fafc !important;
+          border-color: #e2e8f0 !important;
+        }
+        .cv-review-card .border-slate-850, 
+        .cv-review-card .border-slate-900, 
+        .cv-review-card .border-slate-800 {
+          border-color: #e2e8f0 !important;
+        }
+        .cv-review-card input {
+          background-color: #ffffff !important;
+          border-color: #cbd5e1 !important;
+          color: #0F172A !important;
+        }
+        .cv-review-card input:focus {
+          border-color: #D4AF37 !important;
+          box-shadow: 0 0 0 1px #D4AF37 !important;
+        }
+        .cv-review-card p {
+          color: #64748b !important;
+        }
+        .cv-review-card label {
+          color: #334155 !important;
+        }
+        .cv-review-card .text-slate-300 {
+          color: #475569 !important;
+        }
+        .cv-review-card .text-slate-400 {
+          color: #64748b !important;
+        }
+        .cv-review-card .bg-slate-900 {
+          background-color: #f1f5f9 !important;
+        }
+      `}} />
       
       {/* Page Header */}
       <div className="border-b border-slate-800 pb-4">

@@ -14,14 +14,28 @@ const A4_H = 1123;
 export default function CVLivePreview({ cv, isPreview = true }: CVLivePreviewProps) {
   const [zoom, setZoom] = useState(0.6);
   const [isManualZoom, setIsManualZoom] = useState(false);
+  const [pageCount, setPageCount] = useState(1);
   const outerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handlePageCount = (e: Event) => {
+      const detail = (e as CustomEvent).detail;
+      if (typeof detail === 'number' && detail > 0) {
+        setPageCount(detail);
+      }
+    };
+    window.addEventListener('cv-page-count', handlePageCount);
+    return () => window.removeEventListener('cv-page-count', handlePageCount);
+  }, []);
+
+  const unscaledH = A4_H * pageCount + (pageCount - 1) * 24;
 
   const computeFit = () => {
     if (!outerRef.current) return;
     const rect = outerRef.current.getBoundingClientRect();
     if (rect.width < 10 || rect.height < 10) return;
-    const zoomX = (rect.width - 16) / A4_W;
-    const zoomY = (rect.height - 16) / A4_H;
+    const zoomX = (rect.width - 32) / A4_W;
+    const zoomY = (rect.height - 32) / unscaledH;
     setZoom(Math.max(Math.min(zoomX, zoomY, 1.0), 0.25));
   };
 
@@ -32,7 +46,7 @@ export default function CVLivePreview({ cv, isPreview = true }: CVLivePreviewPro
     window.addEventListener('resize', onResize);
     return () => { clearTimeout(t); window.removeEventListener('resize', onResize); };
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [pageCount]);
 
   useEffect(() => {
     if (!isManualZoom) computeFit();
@@ -40,7 +54,7 @@ export default function CVLivePreview({ cv, isPreview = true }: CVLivePreviewPro
   }, [isManualZoom]);
 
   const scaledW = Math.round(A4_W * zoom);
-  const scaledH = Math.round(A4_H * zoom);
+  const scaledH = Math.round(unscaledH * zoom);
 
   return (
     <div className="flex flex-col h-full bg-slate-900 border border-slate-800 rounded-xl overflow-hidden">
@@ -58,23 +72,18 @@ export default function CVLivePreview({ cv, isPreview = true }: CVLivePreviewPro
         </div>
       </div>
 
-      {/* A4 viewport — no scroll, always centered */}
+      {/* A4 viewport — scrolls vertically if multi-page */}
       <div
         ref={outerRef}
-        className="flex-1 overflow-hidden flex items-center justify-center"
+        className="flex-1 overflow-y-auto flex items-start justify-center p-4"
         style={{ background: '#0a0d1a' }}
       >
         {/* Wrapper exactly the scaled A4 size — prevents any browser overflow/clip */}
         <div style={{ width: scaledW, height: scaledH, position: 'relative', flexShrink: 0 }} className="shadow-2xl">
-          {/* 
-            NO key here — we let React reconcile in-place.
-            Template switching is handled by CVTemplateRenderer's switch statement.
-            Using CSS transition on opacity to give a smooth crossfade.
-          */}
           <div
             style={{
               width: A4_W,
-              height: A4_H,
+              height: unscaledH,
               transform: `scale(${zoom})`,
               transformOrigin: 'top left',
               position: 'absolute',
@@ -96,7 +105,7 @@ export default function CVLivePreview({ cv, isPreview = true }: CVLivePreviewPro
       {/* Status bar */}
       <div className="shrink-0 bg-slate-950 px-4 py-1.5 border-t border-slate-800 flex items-center justify-between text-[10px] text-slate-500">
         <span>A4 · 210 × 297 mm</span>
-        <span style={{ color: '#D4AF37' }} className="font-semibold">PAGE 1 OF 1</span>
+        <span style={{ color: '#D4AF37' }} className="font-semibold uppercase">PAGE 1 OF {pageCount}</span>
       </div>
 
     </div>

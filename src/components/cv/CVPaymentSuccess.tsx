@@ -52,6 +52,47 @@ export default function CVPaymentSuccess({ cv, onNext }: CVPaymentSuccessProps) 
             background-color: #f1f5f9 !important;
           }
         }
+        @media screen {
+          .print-receipt-container {
+            background-color: #ffffff !important;
+            border-color: #e2e8f0 !important;
+            color: #334155 !important;
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.05), 0 2px 4px -2px rgb(0 0 0 / 0.05) !important;
+          }
+          .print-receipt-container h2 {
+            color: #0B1A30 !important;
+          }
+          .print-receipt-container p.text-slate-400 {
+            color: #64748b !important;
+          }
+          .print-receipt-container .bg-slate-950 {
+            background-color: #f8fafc !important;
+            border-color: #e2e8f0 !important;
+          }
+          .print-receipt-container .bg-slate-950 h3 {
+            color: #0B1A30 !important;
+          }
+          .print-receipt-container .border-slate-850,
+          .print-receipt-container .border-slate-900 {
+            border-color: #e2e8f0 !important;
+          }
+          .print-receipt-container span.text-white {
+            color: #0F172A !important;
+          }
+          .print-receipt-container span.text-slate-400 {
+            color: #64748b !important;
+          }
+          .print-receipt-container .bg-slate-950\/40 {
+            background-color: #f8fafc !important;
+            border-color: #e2e8f0 !important;
+          }
+          .print-receipt-container .bg-slate-950\/40 span {
+            color: #0B1A30 !important;
+          }
+          .print-receipt-container .bg-slate-950\/40 p {
+            color: #64748b !important;
+          }
+        }
       `}} />
       
       {/* Animated Success Banner */}

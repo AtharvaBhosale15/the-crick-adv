@@ -757,7 +757,8 @@ export default function App() {
   const [adminUsername, setAdminUsername] = useState('');
   const [adminPassword, setAdminPassword] = useState('');
   const [adminError, setAdminError] = useState('');
-  const [adminSubTab, setAdminSubTab] = useState<'all' | 'bank' | 'bookings' | 'assessments' | 'prices' | 'dates' | 'players' | 'calendar' | 'settings' | 'cvs'>('all');
+  const [adminSubTab, setAdminSubTab] = useState<'all' | 'bank' | 'bookings' | 'assessments' | 'prices' | 'dates' | 'players' | 'calendar' | 'settings' | 'cvs' | 'economics'>('all');
+  const [economicsTimeframe, setEconomicsTimeframe] = useState<'daily' | 'weekly' | 'monthly' | 'quarterly' | 'yearly' | 'all-time'>('monthly');
   const [selectedInvoiceBooking, setSelectedInvoiceBooking] = useState<Booking | null>(null);
   const [editingBooking, setEditingBooking] = useState<Booking | null>(null);
   const [copiedLink, setCopiedLink] = useState(false);
@@ -3392,35 +3393,31 @@ END:VCALENDAR`;
       }
 
       try {
-        const canvas = await html2canvas(element, {
-          scale: 2, // 2x scale for sharp text & shapes
-          useCORS: true,
-          allowTaint: true,
-          logging: false,
-          backgroundColor: '#ffffff'
-        });
-        
-        const imgWidth = 210; // A4 width in mm
-        const pageHeight = 297; // A4 height in mm
-        const imgHeight = (canvas.height * imgWidth) / canvas.width;
-        let heightLeft = imgHeight;
-        
+        const pages = element.getElementsByClassName('cv-page-container');
+        if (pages.length === 0) {
+          throw new Error('No CV pages found to render.');
+        }
+
         const pdf = new jsPDF('p', 'mm', 'a4');
-        let position = 0;
-        
-        const imgData = canvas.toDataURL('image/jpeg', 1.0);
-        
-        // Add Page 1
-        pdf.addImage(imgData, 'JPEG', 0, position, imgWidth, imgHeight);
-        heightLeft -= pageHeight;
-        
-        // Add extra pages only if remaining height is significantly more than zero
-        // Using threshold > 1 to avoid floating-point edge case adding a blank page
-        while (heightLeft > 1) {
-          position = heightLeft - imgHeight;
-          pdf.addPage();
-          pdf.addImage(imgData, 'JPEG', 0, position, imgWidth, imgHeight);
-          heightLeft -= pageHeight;
+
+        for (let i = 0; i < pages.length; i++) {
+          const pageEl = pages[i] as HTMLElement;
+          const canvas = await html2canvas(pageEl, {
+            scale: 2, // 2x scale for sharp text & shapes
+            useCORS: true,
+            allowTaint: true,
+            logging: false,
+            backgroundColor: '#ffffff'
+          });
+          
+          const imgWidth = 210; // A4 width in mm
+          const imgHeight = 297; // A4 height in mm
+          const imgData = canvas.toDataURL('image/jpeg', 1.0);
+          
+          if (i > 0) {
+            pdf.addPage();
+          }
+          pdf.addImage(imgData, 'JPEG', 0, 0, imgWidth, imgHeight);
         }
         
         pdf.save(`Cricket_CV_${cvForm.firstName || 'Player'}_${cvForm.lastName || 'Profile'}.pdf`);
@@ -3439,7 +3436,7 @@ END:VCALENDAR`;
     const renderDashboardView = () => {
 
       return (
-        <div className="py-12 bg-slate-950 min-h-[85vh] text-slate-100 font-sans px-4">
+        <div className="py-12 bg-slate-50 min-h-[85vh] text-slate-800 font-sans px-4">
           <CVDashboard 
             cv={cvForm}
             cvToken={cvToken || ''}
@@ -3475,7 +3472,7 @@ END:VCALENDAR`;
 
     const renderFormBuilderView = () => {
       return (
-        <div className="py-8 bg-slate-950 min-h-[85vh] text-slate-100 font-sans">
+        <div className="py-8 bg-slate-50 min-h-[85vh] text-slate-800 font-sans">
           <div className="max-w-3xl mx-auto px-4">
             <CVBuilderForm 
               cv={cvForm}
@@ -3496,7 +3493,7 @@ END:VCALENDAR`;
 
     const renderStylingStepView = () => {
       return (
-        <div className="py-8 bg-slate-950 min-h-[85vh] text-slate-100 font-sans px-4">
+        <div className="py-8 bg-slate-50 min-h-[85vh] text-slate-800 font-sans px-4">
           <CVStyleStep 
             cv={cvForm}
             onChange={(updated) => {
@@ -3622,7 +3619,7 @@ END:VCALENDAR`;
       };
 
       return (
-        <div className="py-12 bg-slate-950 min-h-[85vh] text-slate-100 font-sans px-4">
+        <div className="py-12 bg-slate-50 min-h-[85vh] text-slate-800 font-sans px-4">
           <CVReviewPage 
             cv={cvForm}
             onPrev={() => setCvView(cvForm.paymentStatus === 'Paid' ? 'dashboard' : 'styling')}
@@ -3634,7 +3631,7 @@ END:VCALENDAR`;
 
     const renderPaymentSuccessView = () => {
       return (
-        <div className="py-12 bg-slate-950 min-h-[85vh] text-slate-100 font-sans px-4">
+        <div className="py-12 bg-slate-50 min-h-[85vh] text-slate-800 font-sans px-4">
           <CVPaymentSuccess 
             cv={cvForm}
             onNext={() => setCvView('final-cv')}
@@ -3645,7 +3642,7 @@ END:VCALENDAR`;
 
     const renderFinalCvView = () => {
       return (
-        <div className="py-12 bg-slate-950 min-h-[85vh] text-slate-100 font-sans px-4">
+        <div className="py-12 bg-slate-50 min-h-[85vh] text-slate-800 font-sans px-4">
           <CVFinalView 
             cv={cvForm}
             onDownloadCleanPDF={handleDownloadCleanPDF}
@@ -3656,7 +3653,7 @@ END:VCALENDAR`;
     };
 
     return (
-      <div className="min-h-[85vh] bg-slate-950 text-slate-100 font-sans relative">
+      <div className="min-h-[85vh] bg-slate-50 text-slate-800 font-sans relative">
         {/* Render Auth Dialog if open */}
         {showCVAuthModal && (
           <CVAuthModal
@@ -6499,6 +6496,13 @@ END:VCALENDAR`;
                       <span>Cricket CVs ({cvList.length})</span>
                     </button>
                     <button 
+                      onClick={() => setAdminSubTab('economics')}
+                      className={`px-4 py-2 text-xs font-bold rounded-lg uppercase tracking-wider transition flex items-center space-x-1.5 cursor-pointer ${adminSubTab === 'economics' ? 'bg-navy-900 text-white shadow-md font-extrabold' : 'bg-slate-100 text-slate-700 hover:bg-slate-200 border border-slate-200'}`}
+                    >
+                      <DollarSign className="h-4 w-4 text-amber-500" />
+                      <span>Financial Performance</span>
+                    </button>
+                    <button 
                       onClick={() => setAdminSubTab('all')}
                       className={`px-4 py-2 text-xs font-bold rounded-lg uppercase tracking-wider transition flex items-center space-x-1.5 cursor-pointer ${adminSubTab === 'all' ? 'bg-navy-900 text-white shadow-md font-extrabold' : 'bg-slate-100 text-slate-700 hover:bg-slate-200 border border-slate-200'}`}
                     >
@@ -8121,7 +8125,7 @@ END:VCALENDAR`;
                           <th className="py-3 px-4">Level & Role</th>
                           <th className="py-3 px-4">Status</th>
                           <th className="py-3 px-4">Updates Left</th>
-                          <th className="py-3 px-4 text-right">Actions</th>
+                          <th className="py-3 px-4">Purchase Date</th>
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-slate-150">
@@ -8146,23 +8150,15 @@ END:VCALENDAR`;
                                   cv.paymentStatus === 'Paid' 
                                     ? 'bg-emerald-50 text-emerald-700 border-emerald-200' 
                                     : 'bg-amber-50 text-amber-700 border-amber-200'
-                                }`}>
+                                }}`}>
                                   {cv.paymentStatus}
                                 </span>
                               </td>
-                              <td className="py-3.5 px-4 font-semibold text-slate-600">{cv.updateBalance} of 3</td>
-                              <td className="py-3.5 px-4 text-right space-x-2">
-                                <button 
-                                  onClick={() => {
-                                    setCvForm(cv);
-                                    setCvView('preview');
-                                    setActiveTab('cricket-cv');
-                                    window.scrollTo({ top: 0, behavior: 'smooth' });
-                                  }}
-                                  className="px-2.5 py-1 bg-navy-100 hover:bg-navy-200 text-navy-800 font-bold rounded transition cursor-pointer"
-                                >
-                                  View CV
-                                </button>
+                              <td className="py-3.5 px-4 font-semibold text-slate-650">
+                                {((cv.editsAllowed || 5) - (cv.editsUsed || 0))} / {cv.editsAllowed || 5}
+                              </td>
+                              <td className="py-3.5 px-4 text-slate-500">
+                                {cv.purchaseDate ? new Date(cv.purchaseDate).toLocaleDateString('en-IN') : (cv.paymentStatus === 'Paid' ? new Date(cv.createdAt).toLocaleDateString('en-IN') : '-')}
                               </td>
                             </tr>
                           ))
@@ -8170,6 +8166,272 @@ END:VCALENDAR`;
                       </tbody>
                     </table>
                   </div>
+                </div>
+              )}
+
+              {adminSubTab === 'economics' && (
+                <div className="bg-white rounded-2xl shadow-xl border border-navy-100 p-6 sm:p-8 space-y-8 animate-fade-in text-slate-800">
+                  <div className="flex flex-col md:flex-row justify-between md:items-center border-b border-slate-150 pb-5 gap-4">
+                    <div>
+                      <div className="flex items-center space-x-2">
+                        <DollarSign className="h-6 w-6 text-amber-500" />
+                        <h3 className="text-xl font-bold font-display text-navy-900 uppercase">Financial Insights & Economic Performance</h3>
+                      </div>
+                      <p className="text-xs text-slate-500 mt-1">
+                        Analyze revenues, service breakdowns, and sales volumes across different timeframes.
+                      </p>
+                    </div>
+                    {/* Timeframe Filter Buttons */}
+                    <div className="flex flex-wrap gap-1.5 bg-slate-50 p-1.5 rounded-xl border border-slate-200">
+                      {(['daily', 'weekly', 'monthly', 'quarterly', 'yearly', 'all-time'] as const).map((tf) => (
+                        <button
+                          key={tf}
+                          onClick={() => setEconomicsTimeframe(tf)}
+                          className={`px-3.5 py-1.5 rounded-lg text-xs font-bold uppercase tracking-wider transition ${
+                            economicsTimeframe === tf
+                              ? 'bg-navy-900 text-white shadow-sm font-extrabold'
+                              : 'text-slate-650 hover:bg-slate-100'
+                          }`}
+                        >
+                          {tf.replace('-', ' ')}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Calculations Block */}
+                  {(() => {
+                    const now = new Date();
+
+                    const filterTx = (dateStr?: string) => {
+                      if (!dateStr) return false;
+                      const txDate = new Date(dateStr);
+                      if (isNaN(txDate.getTime())) return false;
+
+                      if (economicsTimeframe === 'daily') {
+                        return txDate.getFullYear() === now.getFullYear() &&
+                               txDate.getMonth() === now.getMonth() &&
+                               txDate.getDate() === now.getDate();
+                      }
+                      if (economicsTimeframe === 'weekly') {
+                        const sevenDaysAgo = new Date();
+                        sevenDaysAgo.setDate(now.getDate() - 7);
+                        return txDate >= sevenDaysAgo;
+                      }
+                      if (economicsTimeframe === 'monthly') {
+                        return txDate.getFullYear() === now.getFullYear() &&
+                               txDate.getMonth() === now.getMonth();
+                      }
+                      if (economicsTimeframe === 'quarterly') {
+                        const currentQuarter = Math.floor(now.getMonth() / 3);
+                        const txQuarter = Math.floor(txDate.getMonth() / 3);
+                        return txDate.getFullYear() === now.getFullYear() && txQuarter === currentQuarter;
+                      }
+                      if (economicsTimeframe === 'yearly') {
+                        return txDate.getFullYear() === now.getFullYear();
+                      }
+                      return true; // all-time
+                    };
+
+                    // 1. Consultation Bookings Revenue
+                    const bookingTxs = bookings
+                      .filter(b => b.paymentStatus === 'Paid' && filterTx(b.createdAt || b.date))
+                      .map(b => ({
+                        service: 'Consultation',
+                        customer: b.fullName,
+                        email: b.email,
+                        amount: Number(b.price) || 0,
+                        date: b.createdAt || b.date,
+                        ref: b.id
+                      }));
+                    const bookingRevenue = bookingTxs.reduce((sum, tx) => sum + tx.amount, 0);
+
+                    // 2. Eligibility Checks Revenue
+                    const assessmentTxs = assessments
+                      .filter(a => a.paymentStatus === 'Paid' && filterTx(a.createdAt))
+                      .map(a => ({
+                        service: 'Eligibility Check',
+                        customer: `${a.firstName} ${a.lastName}`,
+                        email: a.email,
+                        amount: Number(a.paymentAmount) || 500,
+                        date: a.createdAt || '',
+                        ref: a.referenceNumber || 'N/A'
+                      }));
+                    const assessmentRevenue = assessmentTxs.reduce((sum, tx) => sum + tx.amount, 0);
+
+                    // 3. CV Builder Revenue (Initial + Renewals)
+                    const cvTxs: Array<{ service: string; customer: string; email: string; amount: number; date: string; ref: string }> = [];
+                    cvList.forEach(cv => {
+                      if (cv.paymentStatus === 'Paid') {
+                        const purchases = cv.purchases && Array.isArray(cv.purchases) ? cv.purchases : [];
+                        if (purchases.length === 0) {
+                          // Legacy fallback: single initial purchase
+                          if (filterTx(cv.createdAt)) {
+                            cvTxs.push({
+                              service: 'CV Builder (Initial)',
+                              customer: `${cv.firstName} ${cv.lastName}`,
+                              email: cv.email,
+                              amount: 999,
+                              date: cv.createdAt,
+                              ref: cv.referenceNumber
+                            });
+                          }
+                        } else {
+                          purchases.forEach((p: any) => {
+                            if (filterTx(p.date)) {
+                              cvTxs.push({
+                                service: p.type === 'renewal' ? 'CV Builder (Renewal)' : 'CV Builder (Initial)',
+                                customer: `${cv.firstName} ${cv.lastName}`,
+                                email: cv.email,
+                                amount: Number(p.amount) || (p.type === 'renewal' ? 699 : 999),
+                                date: p.date,
+                                ref: p.invoiceNumber || cv.referenceNumber
+                              });
+                            }
+                          });
+                        }
+                      }
+                    });
+                    const cvRevenue = cvTxs.reduce((sum, tx) => sum + tx.amount, 0);
+
+                    const totalRevenue = bookingRevenue + assessmentRevenue + cvRevenue;
+                    const totalSalesCount = bookingTxs.length + assessmentTxs.length + cvTxs.length;
+
+                    // Combine all transactions sorted by date descending
+                    const allTransactions = [...bookingTxs, ...assessmentTxs, ...cvTxs].sort(
+                      (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
+                    );
+
+                    return (
+                      <div className="space-y-8 animate-fade-in text-left">
+                        {/* Overall Metrics Cards Grid */}
+                        <div className="grid grid-cols-1 md:grid-cols-4 gap-5">
+                          <div className="bg-slate-50 p-5 rounded-2xl border border-slate-200 space-y-1">
+                            <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest block">Overall Revenue</span>
+                            <h2 className="text-2xl font-black text-navy-950 font-mono">₹{totalRevenue.toLocaleString('en-IN')}.00</h2>
+                            <p className="text-[9px] text-slate-400 font-semibold">{totalSalesCount} successful transactions</p>
+                          </div>
+                          <div className="bg-slate-50 p-5 rounded-2xl border border-slate-200 space-y-1">
+                            <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest block">Bookings Service</span>
+                            <h2 className="text-2xl font-black text-navy-900 font-mono">₹{bookingRevenue.toLocaleString('en-IN')}.00</h2>
+                            <p className="text-[9px] text-slate-400 font-semibold">{bookingTxs.length} paid sessions ({totalRevenue > 0 ? Math.round((bookingRevenue / totalRevenue) * 100) : 0}% share)</p>
+                          </div>
+                          <div className="bg-slate-50 p-5 rounded-2xl border border-slate-200 space-y-1">
+                            <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest block">Eligibility Checks</span>
+                            <h2 className="text-2xl font-black text-navy-900 font-mono">₹{assessmentRevenue.toLocaleString('en-IN')}.00</h2>
+                            <p className="text-[9px] text-slate-400 font-semibold">{assessmentTxs.length} paid reports ({totalRevenue > 0 ? Math.round((assessmentRevenue / totalRevenue) * 100) : 0}% share)</p>
+                          </div>
+                          <div className="bg-slate-50 p-5 rounded-2xl border border-slate-200 space-y-1">
+                            <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest block">CV Builder Service</span>
+                            <h2 className="text-2xl font-black text-navy-900 font-mono">₹{cvRevenue.toLocaleString('en-IN')}.00</h2>
+                            <p className="text-[9px] text-slate-400 font-semibold">{cvTxs.length} activations/renewals ({totalRevenue > 0 ? Math.round((cvRevenue / totalRevenue) * 100) : 0}% share)</p>
+                          </div>
+                        </div>
+
+                        {/* Individual Services Performance Section */}
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                          {/* Bookings performance card */}
+                          <div className="bg-white p-5 rounded-xl border border-slate-200 space-y-4">
+                            <h4 className="text-xs font-bold text-navy-900 uppercase tracking-wider border-b border-slate-100 pb-2">Consultation Booking Performance</h4>
+                            <div className="space-y-3 text-xs">
+                              <div className="flex justify-between">
+                                <span className="text-slate-500">Total Sales:</span>
+                                <span className="font-semibold text-slate-800">{bookingTxs.length} paid bookings</span>
+                              </div>
+                              <div className="flex justify-between">
+                                <span className="text-slate-500">Average Booking Value:</span>
+                                <span className="font-semibold text-slate-800 font-mono">₹{bookingTxs.length > 0 ? Math.round(bookingRevenue / bookingTxs.length).toLocaleString('en-IN') : 0}</span>
+                              </div>
+                              <div className="w-full bg-slate-100 h-1.5 rounded-full overflow-hidden">
+                                <div className="bg-navy-900 h-full" style={{ width: `${totalRevenue > 0 ? (bookingRevenue / totalRevenue) * 100 : 0}%` }} />
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* Assessments performance card */}
+                          <div className="bg-white p-5 rounded-xl border border-slate-200 space-y-4">
+                            <h4 className="text-xs font-bold text-navy-900 uppercase tracking-wider border-b border-slate-100 pb-2">Eligibility Check Performance</h4>
+                            <div className="space-y-3 text-xs">
+                              <div className="flex justify-between">
+                                <span className="text-slate-500">Total Sales:</span>
+                                <span className="font-semibold text-slate-800">{assessmentTxs.length} paid reports</span>
+                              </div>
+                              <div className="flex justify-between">
+                                <span className="text-slate-500">Average Report Value:</span>
+                                <span className="font-semibold text-slate-800 font-mono">₹{assessmentTxs.length > 0 ? Math.round(assessmentRevenue / assessmentTxs.length).toLocaleString('en-IN') : 0}</span>
+                              </div>
+                              <div className="w-full bg-slate-100 h-1.5 rounded-full overflow-hidden">
+                                <div className="bg-gold-500 h-full" style={{ width: `${totalRevenue > 0 ? (assessmentRevenue / totalRevenue) * 100 : 0}%` }} />
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* CV Builder performance card */}
+                          <div className="bg-white p-5 rounded-xl border border-slate-200 space-y-4">
+                            <h4 className="text-xs font-bold text-navy-900 uppercase tracking-wider border-b border-slate-100 pb-2">CV Builder Performance</h4>
+                            <div className="space-y-3 text-xs">
+                              <div className="flex justify-between">
+                                <span className="text-slate-500">Activations:</span>
+                                <span className="font-semibold text-slate-800">{cvTxs.filter(tx => tx.service.includes('Initial')).length} (₹999)</span>
+                              </div>
+                              <div className="flex justify-between">
+                                <span className="text-slate-500">Renewals:</span>
+                                <span className="font-semibold text-slate-800">{cvTxs.filter(tx => tx.service.includes('Renewal')).length} (₹699)</span>
+                              </div>
+                              <div className="flex justify-between">
+                                <span className="text-slate-500">Average Order Value:</span>
+                                <span className="font-semibold text-slate-800 font-mono">₹{cvTxs.length > 0 ? Math.round(cvRevenue / cvTxs.length).toLocaleString('en-IN') : 0}</span>
+                              </div>
+                              <div className="w-full bg-slate-100 h-1.5 rounded-full overflow-hidden">
+                                <div className="bg-emerald-600 h-full" style={{ width: `${totalRevenue > 0 ? (cvRevenue / totalRevenue) * 100 : 0}%` }} />
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Recent Transactions List */}
+                        <div className="space-y-4">
+                          <h4 className="text-sm font-bold text-navy-950 uppercase tracking-wider">Transaction Ledger ({allTransactions.length})</h4>
+                          <div className="overflow-x-auto max-h-[400px] border border-slate-250 rounded-xl">
+                            <table className="w-full text-left text-xs border-collapse">
+                              <thead>
+                                <tr className="border-b border-slate-200 bg-slate-50 text-slate-500 font-bold uppercase tracking-wider text-[10px]">
+                                  <th className="py-2.5 px-4">Date</th>
+                                  <th className="py-2.5 px-4">Ref/Order ID</th>
+                                  <th className="py-2.5 px-4">Service</th>
+                                  <th className="py-2.5 px-4">Customer</th>
+                                  <th className="py-2.5 px-4">Email</th>
+                                  <th className="py-2.5 px-4 text-right">Amount</th>
+                                </tr>
+                              </thead>
+                              <tbody className="divide-y divide-slate-150">
+                                {allTransactions.length === 0 ? (
+                                  <tr>
+                                    <td colSpan={6} className="py-8 text-center text-slate-400 font-medium">
+                                      No transactions found for the selected timeframe.
+                                    </td>
+                                  </tr>
+                                ) : (
+                                  allTransactions.map((tx, idx) => (
+                                    <tr key={idx} className="hover:bg-slate-50 transition">
+                                      <td className="py-2 px-4 text-slate-500">{new Date(tx.date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}</td>
+                                      <td className="py-2 px-4 font-mono text-[10px] text-navy-950">{tx.ref}</td>
+                                      <td className="py-2 px-4 text-slate-650 font-semibold">{tx.service}</td>
+                                      <td className="py-2 px-4 text-slate-700 font-medium">{tx.customer}</td>
+                                      <td className="py-2 px-4 text-slate-450">{tx.email}</td>
+                                      <td className="py-2 px-4 text-right font-bold text-navy-950 font-mono">₹{tx.amount.toLocaleString('en-IN')}.00</td>
+                                    </tr>
+                                  ))
+                                )}
+                              </tbody>
+                            </table>
+                          </div>
+                        </div>
+
+                      </div>
+                    );
+                  })()}
+
                 </div>
               )}
 
@@ -8821,7 +9083,7 @@ END:VCALENDAR`;
       {/* Hidden print capture container for high-fidelity PDF downloads */}
       {cvToken && cvForm && (
         <div style={{ position: 'absolute', left: '-9999px', top: '-9999px', pointerEvents: 'none' }} aria-hidden="true">
-          <div id="cv-download-print-capture" style={{ width: '794px', minHeight: '1123px', position: 'relative', backgroundColor: '#ffffff', overflow: 'hidden' }}>
+          <div id="cv-download-print-capture" style={{ width: '794px', position: 'relative', backgroundColor: '#ffffff' }}>
             <CVTemplateRenderer cv={cvForm} accentColour={cvForm.accentColour} font={cvForm.font} isPreview={false} />
           </div>
         </div>

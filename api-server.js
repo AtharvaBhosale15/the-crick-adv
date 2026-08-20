@@ -1038,6 +1038,26 @@ app.post('/api/cv-verify-payment', async (req, res) => {
     const invoiceNum = `INV-${refNum}-${Date.now().toString().slice(-4)}`;
     cvs[idx].latestInvoiceNumber = invoiceNum;
 
+    if (!cvs[idx].purchases) {
+      cvs[idx].purchases = [];
+    }
+    const isRenewal = cvs[idx].paymentStatus === 'Paid';
+    if (!isRenewal && cvs[idx].purchases.length === 0) {
+      cvs[idx].purchases.push({
+        type: 'initial',
+        amount: 999,
+        date: new Date().toISOString(),
+        invoiceNumber: invoiceNum
+      });
+    } else if (isRenewal) {
+      cvs[idx].purchases.push({
+        type: 'renewal',
+        amount: 699,
+        date: new Date().toISOString(),
+        invoiceNumber: invoiceNum
+      });
+    }
+
     if (cvs[idx].paymentStatus === 'Paid') {
       cvs[idx].editsUsed = 0;
       cvs[idx].editsAllowed = 5;
@@ -1045,6 +1065,7 @@ app.post('/api/cv-verify-payment', async (req, res) => {
     cvs[idx].paymentStatus = 'Paid';
     cvs[idx].downloadStatus = 'UNLOCKED';
     cvs[idx].identityLocked = true;
+    cvs[idx].purchaseDate = new Date().toISOString();
     saveLocalCvs(cvs);
 
     const users = getLocalUsers();

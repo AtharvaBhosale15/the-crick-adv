@@ -102,6 +102,26 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           const cvData = JSON.parse(cvRow.cv_data);
           cvData.latestInvoiceNumber = invoiceNum;
 
+          if (!cvData.purchases) {
+            cvData.purchases = [];
+          }
+          const isRenewal = cvData.paymentStatus === 'Paid';
+          if (!isRenewal && cvData.purchases.length === 0) {
+            cvData.purchases.push({
+              type: 'initial',
+              amount: 999,
+              date: new Date().toISOString(),
+              invoiceNumber: invoiceNum
+            });
+          } else if (isRenewal) {
+            cvData.purchases.push({
+              type: 'renewal',
+              amount: 699,
+              date: new Date().toISOString(),
+              invoiceNumber: invoiceNum
+            });
+          }
+
           if (cvData.paymentStatus === 'Paid') {
             cvData.editsUsed = 0;
             cvData.editsAllowed = 5;
@@ -109,6 +129,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           cvData.paymentStatus = 'Paid';
           cvData.downloadStatus = 'UNLOCKED';
           cvData.identityLocked = true;
+          cvData.purchaseDate = new Date().toISOString();
 
           // Update CV status & Lock Identity details
           await sql`
@@ -134,6 +155,26 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           invoiceNum = `INV-${refNum}-${Date.now().toString().slice(-4)}`;
           cvs[cvIdx].latestInvoiceNumber = invoiceNum;
 
+          if (!cvs[cvIdx].purchases) {
+            cvs[cvIdx].purchases = [];
+          }
+          const isRenewalLocal = cvs[cvIdx].paymentStatus === 'Paid';
+          if (!isRenewalLocal && cvs[cvIdx].purchases.length === 0) {
+            cvs[cvIdx].purchases.push({
+              type: 'initial',
+              amount: 999,
+              date: new Date().toISOString(),
+              invoiceNumber: invoiceNum
+            });
+          } else if (isRenewalLocal) {
+            cvs[cvIdx].purchases.push({
+              type: 'renewal',
+              amount: 699,
+              date: new Date().toISOString(),
+              invoiceNumber: invoiceNum
+            });
+          }
+
           if (cvs[cvIdx].paymentStatus === 'Paid') {
             cvs[cvIdx].editsUsed = 0;
             cvs[cvIdx].editsAllowed = 5;
@@ -141,6 +182,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           cvs[cvIdx].paymentStatus = 'Paid';
           cvs[cvIdx].downloadStatus = 'UNLOCKED';
           cvs[cvIdx].identityLocked = true;
+          cvs[cvIdx].purchaseDate = new Date().toISOString();
           saveLocalCvs(cvs);
 
           email = cvs[cvIdx].email;

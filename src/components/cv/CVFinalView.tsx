@@ -11,7 +11,49 @@ interface CVFinalViewProps {
 
 export default function CVFinalView({ cv, onDownloadCleanPDF, onGoToDashboard }: CVFinalViewProps) {
   return (
-    <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5 md:p-8 text-left max-w-5xl mx-auto shadow-2xl space-y-8 font-sans">
+    <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5 md:p-8 text-left max-w-5xl mx-auto shadow-2xl space-y-8 font-sans cv-final-card">
+      <style dangerouslySetInnerHTML={{__html: `
+        .cv-final-card {
+          background-color: #ffffff !important;
+          border-color: #e2e8f0 !important;
+          color: #334155 !important;
+        }
+        .cv-final-card h2, 
+        .cv-final-card h3, 
+        .cv-final-card h4 {
+          color: #0B1A30 !important;
+        }
+        .cv-final-card p.text-slate-400 {
+          color: #64748b !important;
+        }
+        .cv-final-card .bg-slate-950 {
+          background-color: #f8fafc !important;
+          border-color: #e2e8f0 !important;
+        }
+        .cv-final-card .bg-slate-950\/40 {
+          background-color: #f8fafc !important;
+          border-color: #e2e8f0 !important;
+        }
+        .cv-final-card .border-slate-850, 
+        .cv-final-card .border-slate-800,
+        .cv-final-card .border-slate-900 {
+          border-color: #e2e8f0 !important;
+        }
+        .cv-final-card button.border-slate-800 {
+          border-color: #cbd5e1 !important;
+          color: #475569 !important;
+        }
+        .cv-final-card button.border-slate-800:hover {
+          background-color: #f1f5f9 !important;
+          color: #0F172A !important;
+        }
+        .cv-final-card strong.text-white {
+          color: #0F172A !important;
+        }
+        .cv-final-card .text-slate-350 {
+          color: #475569 !important;
+        }
+      `}} />
       
       {/* View Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center border-b border-slate-800 pb-4 gap-4">
