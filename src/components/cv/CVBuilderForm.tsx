@@ -115,10 +115,10 @@ export default function CVBuilderForm({
     { num: 2, name: 'Cricket Profile', desc: 'Playing Role & Style' },
     { num: 3, name: 'Experience & Teams', desc: 'Teams & Clubs' },
     { num: 4, name: 'Statistics', desc: 'Stats Log' },
-    { num: 5, name: 'Achievements', desc: 'Major Highlights' },
-    { num: 6, name: 'Career Highlights', desc: 'Athletic Highlights' },
-    { num: 7, name: 'Education', desc: 'Academic & Qualifications' },
-    { num: 8, name: 'Fitness & Training', desc: 'Athletic Conditioning' },
+    { num: 5, name: 'Specialist Cricket Skills', desc: 'Core Skills' },
+    { num: 6, name: 'Achievements', desc: 'Major Highlights' },
+    { num: 7, name: 'Career Highlights', desc: 'Athletic Highlights' },
+    { num: 8, name: 'Education', desc: 'Academic & Qualifications' },
     { num: 9, name: 'Contact', desc: 'Contact Info' },
     { num: 10, name: 'Languages & Hobbies', desc: 'Interests & Languages' }
   ];
@@ -233,6 +233,17 @@ export default function CVBuilderForm({
       const err = validateStep2();
       if (err) {
         setValidationError(err);
+        return;
+      }
+    }
+    if (currentStep === 5) {
+      const selectedCount = cv.specialistSkills?.length || 0;
+      if (selectedCount === 0) {
+        setValidationError("Please select at least 1 specialist skill.");
+        return;
+      }
+      if (selectedCount > 5) {
+        setValidationError("You can select a maximum of 5 specialist skills.");
         return;
       }
     }
@@ -1308,6 +1319,57 @@ export default function CVBuilderForm({
                 </p>
               </div>
 
+              {/* Statistics Display Settings Card */}
+              <div className="bg-slate-900/60 p-4 rounded-xl border border-slate-800/80 space-y-3 mb-4">
+                <span className="text-[11px] font-extrabold text-gold-400 uppercase tracking-wider block">
+                  Statistics Display Settings
+                </span>
+                <p className="text-[10px] text-slate-400 leading-relaxed font-semibold">
+                  Note: Use the toggle switches below to select which career statistics categories (Batting, Bowling, Fielding) you want to display on your printed and online CV. By default, all categories are enabled.
+                </p>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-3 pt-1">
+                  {/* Batting Toggle */}
+                  <div className="flex items-center justify-between bg-slate-950 p-3 rounded-xl border border-slate-850">
+                    <span className="text-[11px] text-white font-bold tracking-wide uppercase">Batting</span>
+                    <label className="relative inline-flex items-center cursor-pointer shrink-0">
+                      <input 
+                        type="checkbox" 
+                        checked={cv.showBatting !== false}
+                        onChange={(e) => updateCVField('showBatting', e.target.checked)}
+                        className="sr-only peer"
+                      />
+                      <div className="w-8 h-4 bg-slate-800 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-slate-305 after:border-slate-305 after:border after:rounded-full after:h-3 after:w-3 after:transition-all peer-checked:bg-gold-500"></div>
+                    </label>
+                  </div>
+                  {/* Bowling Toggle */}
+                  <div className="flex items-center justify-between bg-slate-950 p-3 rounded-xl border border-slate-850">
+                    <span className="text-[11px] text-white font-bold tracking-wide uppercase">Bowling</span>
+                    <label className="relative inline-flex items-center cursor-pointer shrink-0">
+                      <input 
+                        type="checkbox" 
+                        checked={cv.showBowling !== false}
+                        onChange={(e) => updateCVField('showBowling', e.target.checked)}
+                        className="sr-only peer"
+                      />
+                      <div className="w-8 h-4 bg-slate-800 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-slate-305 after:border-slate-305 after:border after:rounded-full after:h-3 after:w-3 after:transition-all peer-checked:bg-gold-500"></div>
+                    </label>
+                  </div>
+                  {/* Fielding Toggle */}
+                  <div className="flex items-center justify-between bg-slate-950 p-3 rounded-xl border border-slate-850">
+                    <span className="text-[11px] text-white font-bold tracking-wide uppercase">Fielding</span>
+                    <label className="relative inline-flex items-center cursor-pointer shrink-0">
+                      <input 
+                        type="checkbox" 
+                        checked={cv.showFielding !== false}
+                        onChange={(e) => updateCVField('showFielding', e.target.checked)}
+                        className="sr-only peer"
+                      />
+                      <div className="w-8 h-4 bg-slate-800 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-slate-305 after:border-slate-305 after:border after:rounded-full after:h-3 after:w-3 after:transition-all peer-checked:bg-gold-500"></div>
+                    </label>
+                  </div>
+                </div>
+              </div>
+
               {/* Tabs */}
               <div className="flex border-b border-slate-800 mb-4">
                 {(['oneDay', 'multiDay', 't20'] as const).map(tab => (
@@ -1617,8 +1679,143 @@ export default function CVBuilderForm({
           );
         })()}
 
-        {/* STEP 5: ACHIEVEMENTS */}
+        
+        {/* STEP 5: SPECIALIST CRICKET SKILLS */}
         {currentStep === 5 && (
+          <div className="space-y-6 text-left animate-fade-in">
+            <div className="space-y-1 mb-2">
+              <h3 className="text-base font-bold text-white flex items-center gap-1.5">
+                <Activity className="w-4 h-4 text-gold-400" /> Specialist Cricket Skills
+              </h3>
+              <p className="text-[11px] text-slate-400 font-semibold leading-relaxed">
+                What are your strongest specialist cricket skills?
+              </p>
+            </div>
+
+            {/* Counter block */}
+            {(() => {
+              const selectedCount = cv.specialistSkills?.length || 0;
+              return (
+                <div className="bg-slate-900/60 p-4 rounded-xl border border-slate-800/80 flex justify-between items-center">
+                  <div>
+                    <span className="text-xs font-bold text-slate-300 uppercase tracking-wide">
+                      Select up to 5 skills
+                    </span>
+                    <p className="text-[10px] text-slate-500 mt-0.5">
+                      Choose 1 to 5 options that highlight your specific match play strengths.
+                    </p>
+                  </div>
+                  <div className={`text-xs font-extrabold px-3 py-1.5 rounded-lg border uppercase tracking-wider shrink-0 ${
+                    selectedCount === 5 
+                      ? 'bg-gold-500/10 text-gold-400 border-gold-500/30' 
+                      : 'bg-slate-950 text-slate-400 border-slate-800'
+                  }`}>
+                    {selectedCount === 5 
+                      ? '5 / 5 selected — Maximum reached' 
+                      : `${selectedCount} / 5 selected`}
+                  </div>
+                </div>
+              );
+            })()}
+
+            {/* Grid of options */}
+            {(() => {
+              const options = [
+                "Bowling Sharp Yorkers",
+                "Multiple Variations in  Bowling",
+                "Batting Against Pace",
+                "Batting Against Spin",
+                "Power Hitting",
+                "Finishing",
+                "Running Between the Wickets",
+                "Death Overs Bowling",
+                "Middle Overs Bowling",
+                "Bowling at the Death",
+                "Bowling Sharp Yorkers",
+                "Multiple Variations in  Bowling",
+                "Extra Ordinary Fielding"
+              ];
+              
+              const getIndicesFromSkills = (skills: string[]): number[] => {
+                const indices: number[] = [];
+                const tempSkills = [...skills];
+                options.forEach((option, idx) => {
+                  const foundIdx = tempSkills.indexOf(option);
+                  if (foundIdx > -1) {
+                    indices.push(idx);
+                    tempSkills.splice(foundIdx, 1);
+                  }
+                });
+                return indices;
+              };
+
+              const selectedIndices = getIndicesFromSkills(cv.specialistSkills || []);
+              const selectedCount = selectedIndices.length;
+
+              const handleToggleSkill = (idx: number) => {
+                let newIndices: number[];
+                if (selectedIndices.includes(idx)) {
+                  newIndices = selectedIndices.filter(i => i !== idx);
+                } else if (selectedCount < 5) {
+                  newIndices = [...selectedIndices, idx];
+                } else {
+                  return;
+                }
+                const newSkills = newIndices.map(i => options[i]);
+                updateCVField('specialistSkills', newSkills);
+              };
+
+              return (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  {options.map((option, idx) => {
+                    const isSelected = selectedIndices.includes(idx);
+                    const isDisabled = !isSelected && selectedCount >= 5;
+                    
+                    return (
+                      <button
+                        key={idx}
+                        type="button"
+                        disabled={isDisabled}
+                        onClick={() => handleToggleSkill(idx)}
+                        className={`flex items-center justify-between p-4 rounded-xl border transition text-left w-full cursor-pointer ${
+                          isSelected 
+                            ? 'bg-gold-500/10 border-gold-500 text-white font-bold' 
+                            : isDisabled
+                              ? 'bg-slate-900/20 border-slate-900 text-slate-600 cursor-not-allowed opacity-50'
+                              : 'bg-slate-950 border-slate-850 hover:border-slate-700 text-slate-300'
+                        }`}
+                      >
+                        <div className="flex items-center gap-3">
+                          <div className={`w-4 h-4 rounded border flex items-center justify-center shrink-0 ${
+                            isSelected 
+                              ? 'bg-gold-500 border-gold-500 text-navy-950' 
+                              : 'border-slate-700'
+                          }`}>
+                            {isSelected && (
+                              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-3 h-3 text-black">
+                                <path fillRule="evenodd" d="M16.704 4.153a.75.75 0 01.143 1.052l-8 10.5a.75.75 0 01-1.127.075l-4.5-4.5a.75.75 0 011.06-1.06l3.894 3.893 7.48-9.817a.75.75 0 011.05-.143z" clipRule="evenodd" />
+                              </svg>
+                            )}
+                          </div>
+                          <span className="text-xs uppercase tracking-wide">{option}</span>
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+              );
+            })()}
+
+            {validationError && (
+              <div className="text-red-500 text-xs font-bold pt-2">
+                {validationError}
+              </div>
+            )}
+          </div>
+        )}
+
+{/* STEP 5: ACHIEVEMENTS */}
+        {currentStep === 6 && (
           <div className="space-y-4 text-left animate-fade-in">
             <div className="flex justify-between items-center mb-2">
               <h3 className="text-base font-bold text-white flex items-center gap-1.5">
@@ -1730,7 +1927,7 @@ export default function CVBuilderForm({
         )}
 
         {/* STEP 6: CAREER HIGHLIGHTS */}
-        {currentStep === 6 && (
+        {currentStep === 7 && (
           <div className="space-y-4 text-left animate-fade-in">
             <div className="flex justify-between items-center mb-2">
               <div className="space-y-1">
@@ -1898,7 +2095,7 @@ export default function CVBuilderForm({
         )}
 
         {/* STEP 7: EDUCATION */}
-        {currentStep === 7 && (
+        {currentStep === 8 && (
           <div className="space-y-4 text-left animate-fade-in">
             <div className="flex justify-between items-center mb-2">
               <h3 className="text-base font-bold text-white flex items-center gap-1.5">
@@ -1992,52 +2189,6 @@ export default function CVBuilderForm({
                 ))}
               </div>
             )}
-          </div>
-        )}
-
-        {/* STEP 8: FITNESS & TRAINING */}
-        {currentStep === 8 && (
-          <div className="space-y-6 text-left animate-fade-in">
-            <div className="space-y-2">
-              <h3 className="text-base font-bold text-white flex items-center gap-1.5">
-                <Activity className="w-4 h-4 text-gold-400" /> Fitness & Training
-              </h3>
-              <p className="text-xs text-slate-400 leading-relaxed font-semibold">
-                Which fitness and training activities do you regularly participate in to maintain and improve your athletic performance?
-              </p>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 max-h-[450px] overflow-y-auto pr-1">
-              {FITNESS_OPTIONS.map((activity) => {
-                const isSelected = (cv.fitnessActivities || []).includes(activity);
-                return (
-                  <button
-                    key={activity}
-                    onClick={() => {
-                      const currentList = cv.fitnessActivities || [];
-                      const newList = isSelected
-                        ? currentList.filter(a => a !== activity)
-                        : [...currentList, activity];
-                      updateCVField('fitnessActivities', newList);
-                    }}
-                    className={`flex items-center justify-between p-3.5 rounded-xl border text-left transition-all ${
-                      isSelected 
-                        ? 'border-gold-500 bg-gold-950/20 text-white font-bold' 
-                        : 'border-slate-800 bg-slate-900/30 text-slate-400 hover:border-slate-700 hover:text-slate-200'
-                    }`}
-                  >
-                    <span className="text-xs font-sans">{activity}</span>
-                    <span className={`w-4 h-4 rounded flex items-center justify-center border transition-all ${
-                      isSelected 
-                        ? 'bg-gold-500 border-gold-500 text-slate-950' 
-                        : 'border-slate-700 bg-transparent'
-                    }`}>
-                      {isSelected && <Check className="w-3 h-3 stroke-[3]" />}
-                    </span>
-                  </button>
-                );
-              })}
-            </div>
           </div>
         )}
 

@@ -35,7 +35,7 @@ export default function CVLivePreview({ cv, isPreview = true }: CVLivePreviewPro
     const rect = outerRef.current.getBoundingClientRect();
     if (rect.width < 10 || rect.height < 10) return;
     const zoomX = (rect.width - 32) / A4_W;
-    const zoomY = (rect.height - 32) / unscaledH;
+    const zoomY = (rect.height - 32) / A4_H;
     setZoom(Math.max(Math.min(zoomX, zoomY, 1.0), 0.25));
   };
 
@@ -105,7 +105,7 @@ export default function CVLivePreview({ cv, isPreview = true }: CVLivePreviewPro
       {/* Status bar */}
       <div className="shrink-0 bg-slate-950 px-4 py-1.5 border-t border-slate-800 flex items-center justify-between text-[10px] text-slate-500">
         <span>A4 · 210 × 297 mm</span>
-        <span style={{ color: '#D4AF37' }} className="font-semibold uppercase">PAGE 1 OF {pageCount}</span>
+        <span style={{ color: '#D4AF37' }} className="font-semibold uppercase">{pageCount > 1 ? `${pageCount} PAGES` : '1 PAGE'}</span>
       </div>
 
     </div>

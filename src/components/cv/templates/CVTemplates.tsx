@@ -233,6 +233,26 @@ const CVFitnessBlock = ({ cv, accentColour }: { cv: CricketCVFull; accentColour:
   );
 };
 
+const CVSpecialistSkillsBlock = ({ cv }: { cv: CricketCVFull }) => {
+  if (!cv.specialistSkills || cv.specialistSkills.length === 0) return null;
+  return (
+    <div className="text-left">
+      <CVSectionHeading id="heading-specialist-skills">
+        <h2 className="text-xs font-bold uppercase tracking-widest border-b pb-1 mb-3 text-slate-900">Specialist Cricket Skills</h2>
+      </CVSectionHeading>
+      <CVAtomicBlock id="block-specialist-skills">
+        <div className="flex flex-wrap gap-1.5 animate-fade-in">
+          {cv.specialistSkills.map((skill) => (
+            <span key={skill} className="text-[10px] bg-slate-100 text-slate-700 px-2.5 py-1 rounded-md font-semibold border border-slate-200">
+              {skill}
+            </span>
+          ))}
+        </div>
+      </CVAtomicBlock>
+    </div>
+  );
+};
+
 const CVAchievementsBlock = ({ cv, accentColour }: { cv: CricketCVFull; accentColour: string }) => {
   if (!cv.achievements || cv.achievements.length === 0) return null;
   return (
@@ -471,6 +491,9 @@ export function ExecutiveTemplate({ cv, accentColour, font, isPreview }: Templat
 
             {/* Education & Certs */}
             <CVEducationBlock cv={cv} />
+
+            {/* Specialist Cricket Skills */}
+            <CVSpecialistSkillsBlock cv={cv} />
 
             {/* Fitness & Conditioning */}
             <CVFitnessBlock cv={cv} accentColour={accentColour} />
@@ -739,6 +762,20 @@ export function InternationalTemplate({ cv, accentColour, font, isPreview }: Tem
               </div>
             )}
 
+            {/* Specialist Cricket Skills */}
+            {cv.specialistSkills && cv.specialistSkills.length > 0 && (
+              <div className="bg-slate-50 p-4 rounded-xl border border-slate-100 text-left">
+                <h3 className="text-xs font-black uppercase tracking-wider mb-2 text-slate-950">Specialist Cricket Skills</h3>
+                <div className="flex flex-wrap gap-1.5">
+                  {cv.specialistSkills.map((skill) => (
+                    <span key={skill} className="text-[10px] bg-slate-200 text-slate-700 px-2 py-0.75 rounded-md font-semibold border border-slate-300">
+                      {skill}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
+
             {/* Education & Certs */}
             <div className="bg-slate-50 p-4 rounded-xl border border-slate-100">
               <h3 className="text-xs font-black uppercase tracking-wider mb-2 text-slate-950">Education & Certifications</h3>
@@ -865,6 +902,9 @@ export function ClassicTemplate({ cv, accentColour, font, isPreview }: TemplateP
           {/* Education & Certifications */}
           <CVEducationBlock cv={cv} />
 
+          {/* Specialist Cricket Skills */}
+          <CVSpecialistSkillsBlock cv={cv} />
+
           {/* Fitness & Conditioning */}
           <CVFitnessBlock cv={cv} accentColour={accentColour} />
 
@@ -967,6 +1007,13 @@ export function PerformanceTemplate({ cv, accentColour, font, isPreview }: Templ
         <div className="mb-6">
           <CVEducationBlock cv={cv} />
         </div>
+
+        {/* Specialist Cricket Skills */}
+        {cv.specialistSkills && cv.specialistSkills.length > 0 && (
+          <div className="mb-6">
+            <CVSpecialistSkillsBlock cv={cv} />
+          </div>
+        )}
 
         {/* Fitness & Conditioning */}
         {cv.fitnessActivities && cv.fitnessActivities.length > 0 && (
@@ -1081,6 +1128,11 @@ export function PrestigeTemplate({ cv, accentColour, font, isPreview }: Template
                            (cv.multiDayStats?.hasStats && cv.multiDayStats.fieldCatches > 0) ||
                            (cv.t20Stats?.hasStats && cv.t20Stats.fieldCatches > 0);
 
+  const battingVisible = hasBattingStats && cv.showBatting !== false;
+  const bowlingVisible = hasBowlingStats && cv.showBowling !== false;
+  const fieldingVisible = hasFieldingStats && cv.showFielding !== false;
+  const showStatsBlock = battingVisible || bowlingVisible || fieldingVisible;
+
   return (
     <div 
       className="w-full flex text-left relative overflow-hidden" 
@@ -1102,15 +1154,14 @@ export function PrestigeTemplate({ cv, accentColour, font, isPreview }: Template
           width: 33%;
           background: linear-gradient(180deg, var(--navy) 0%, var(--navy-2) 100%) !important;
           color: var(--text-light) !important;
-          padding: 34px 20px 34px 34px !important;
+          padding: 0 0 40px 0 !important;
           position: relative;
-          height: calc(100% + 68px) !important;
-          margin-top: -34px !important;
-          margin-bottom: -34px !important;
+          align-self: stretch;
+          height: auto;
           box-sizing: border-box;
           display: flex;
           flex-direction: column;
-          gap: 16px;
+          gap: 32px !important;
         }
 
         .template-prestige .photo-wrap {
@@ -1132,30 +1183,48 @@ export function PrestigeTemplate({ cv, accentColour, font, isPreview }: Template
         .template-prestige .photo-placeholder svg { width: 70px; height: 70px; opacity: .5; }
 
         .template-prestige .side-section {
-          padding: 12px 14px;
+          padding: 24px 20px !important;
+          margin: 14px 16px;
           border: 1.5px solid var(--cream);
           border-radius: 2px;
-          margin-bottom: 12px;
         }
+        .template-prestige .side-section:first-of-type { margin-top: 18px; }
 
         .template-prestige .side-heading {
-          color: #ffffff !important;
+          color: #f1c40f !important;
           font-size: 13px;
           font-weight: 700;
           letter-spacing: .12em;
           text-transform: uppercase;
-          border-bottom: 2px solid var(--gold);
+          border-bottom: 2px solid #f1c40f !important;
           padding-bottom: 6px;
           margin-bottom: 12px;
         }
 
-        .template-prestige .contact-list { list-style: none; display: flex; flex-direction: column; gap: 10px; font-size: 12px; }
-        .template-prestige .contact-list li { display: flex; gap: 10px; align-items: flex-start; }
+        .template-prestige .contact-list { 
+          list-style: none; 
+          display: flex; 
+          flex-direction: column; 
+          gap: 16px !important; 
+          font-size: 11.5px; 
+        }
+        .template-prestige .contact-list li { 
+          display: flex; 
+          gap: 10px; 
+          align-items: flex-start; 
+          word-break: break-all !important;
+          overflow-wrap: break-word !important;
+          white-space: normal !important;
+        }
+        .template-prestige .contact-list li span {
+          word-break: break-all !important;
+          white-space: normal !important;
+        }
         .template-prestige .contact-list .ico { flex: 0 0 16px; color: var(--gold); font-size: 13px; }
 
-        .template-prestige .profile-text { font-size: 11px; line-height: 1.6; color: var(--text-light); }
+        .template-prestige .profile-text { font-size: 12.3px; line-height: 1.6; color: var(--text-light); }
 
-        .template-prestige .skills-list { list-style: none; font-size: 12px; display: flex; flex-direction: column; gap: 7px; }
+        .template-prestige .skills-list { list-style: none; font-size: 12.5px; display: flex; flex-direction: column; gap: 7px; }
         .template-prestige .skills-list li { display: flex; gap: 8px; align-items: flex-start; }
         .template-prestige .skills-list li::before {
           content: '';
@@ -1167,42 +1236,37 @@ export function PrestigeTemplate({ cv, accentColour, font, isPreview }: Template
         .template-prestige .stat-table {
           width: 100% !important;
           border-collapse: collapse !important;
-          font-size: 8.5px !important;
-          margin-bottom: 12px !important;
-          border: 1.5px solid rgba(250,248,244,0.3) !important;
-          table-layout: fixed !important;
+          font-size: 10.5px !important;
+          margin-bottom: 14px !important;
+          border: 1px solid var(--cream) !important;
         }
         .template-prestige .stat-table caption {
-          text-align: left;
-          font-weight: 700;
-          color: #ffffff !important;
-          font-size: 11px;
-          margin-bottom: 4px;
-          letter-spacing: .04em;
-          text-transform: uppercase;
+          text-align: left; font-weight: 700; color: var(--gold-light);
+          font-size: 11.5px; margin-bottom: 6px; letter-spacing: .04em;
         }
         .template-prestige .stat-table th {
           background: rgba(255,255,255,.08);
-          color: #ffffff !important;
-          font-weight: 700;
-          padding: 4px 3px;
+          color: var(--gold-light) !important;
+          font-weight: 600;
+          padding: 5px 4px;
           text-align: left;
-          border-bottom: 1.5px solid rgba(250,248,244,0.3);
+          border-bottom: 1px solid var(--cream);
         }
         .template-prestige .stat-table td {
-          padding: 4px 3px;
+          padding: 5px 4px;
           color: var(--text-light);
-          border-bottom: 1px solid rgba(250,248,244,0.15);
-          overflow: hidden;
-          text-overflow: ellipsis;
-          white-space: nowrap;
+          border-bottom: 1px solid rgba(250,248,244,.35);
         }
+
+        .template-prestige .edu-block-dark { font-size: 12.5px; color: var(--text-light); line-height: 1.6; }
+        .template-prestige .edu-block-dark .degree-dark { font-weight: 700; color: #fff; font-size: 13px; }
+        .template-prestige .edu-block-dark .school-row-dark { margin-top: 3px; }
+        .template-prestige .edu-block-dark .year-dark { color: var(--gold-light); margin-top: 2px; font-size: 11.5px; }
 
         .template-prestige .main {
           width: 67%;
-          padding: 0px 40px 0px 34px !important;
+          padding: 34px 40px 34px 34px !important;
           position: relative;
-          height: 100%;
           box-sizing: border-box;
           background: var(--cream);
           color: var(--text-dark);
@@ -1218,55 +1282,61 @@ export function PrestigeTemplate({ cv, accentColour, font, isPreview }: Template
           padding: 18px 20px;
           border: 1.5px solid #000;
           border-radius: 2px;
-          margin-bottom: 12px;
+          margin-bottom: 4px;
         }
         .template-prestige .name-block h1 {
-          font-size: 32px;
+          font-size: 34px;
           letter-spacing: .02em;
           color: var(--navy);
           font-weight: 800;
         }
         .template-prestige .name-block .role {
           color: var(--gold);
-          font-size: 13px;
+          font-size: 13.5px;
           font-weight: 700;
           letter-spacing: .1em;
           text-transform: uppercase;
           margin-top: 4px;
         }
         .template-prestige .meta-row {
-          display: flex; flex-wrap: wrap; gap: 14px;
-          margin-top: 12px; font-size: 11px; color: #4b5568;
+          display: flex; flex-wrap: wrap; gap: 18px;
+          margin-top: 16px; font-size: 12px; color: #4b5568;
         }
         .template-prestige .meta-row span { display: flex; align-items: center; gap: 6px; }
-        .template-prestige .meta-row .ico { color: var(--navy); font-size: 12px; }
+        .template-prestige .meta-row .ico { color: var(--navy); font-size: 13px; }
 
         .template-prestige .section {
           border: 1.5px solid #000;
           border-radius: 2px;
-          padding: 16px 18px;
-          margin-bottom: 16px;
+          padding: 18px 20px;
+          margin-bottom: 4px;
         }
         .template-prestige .section-title {
           display: flex; align-items: center; gap: 12px;
-          margin-bottom: 12px;
+          margin-bottom: 14px;
         }
         .template-prestige .badge {
-          width: 28px; height: 28px; border-radius: 50%;
+          width: 30px; height: 30px; border-radius: 50%;
           background: var(--navy);
           display: flex; align-items: center; justify-content: center;
-          color: var(--gold); font-size: 13px; flex-shrink: 0;
+          color: var(--gold); font-size: 14px; flex-shrink: 0;
         }
         .template-prestige .section-title h2 {
-          font-size: 15px; letter-spacing: .03em; color: var(--navy);
+          font-size: 16px; letter-spacing: .03em; color: var(--navy);
           text-transform: uppercase; font-weight: 800;
           border-bottom: 2px solid var(--line);
-          flex: 1; padding-bottom: 6px;
+          flex: 1; padding-bottom: 8px;
         }
 
         .template-prestige .bullet-list { list-style: none; display: flex; flex-direction: column; gap: 8px; padding-left: 2px; }
+        .template-prestige .bullet-list.skills-two-col {
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          column-gap: 20px;
+          row-gap: 8px;
+        }
         .template-prestige .bullet-list li {
-          font-size: 12.5px; color: var(--text-dark); line-height: 1.5;
+          font-size: 13px; color: var(--text-dark); line-height: 1.5;
           display: flex; gap: 10px; align-items: flex-start;
         }
         .template-prestige .bullet-list li::before {
@@ -1274,39 +1344,111 @@ export function PrestigeTemplate({ cv, accentColour, font, isPreview }: Template
           background: var(--gold); margin-top: 6px; flex: 0 0 6px;
         }
 
-        .template-prestige .timeline { display: flex; flex-direction: column; gap: 8px; }
+        .template-prestige .timeline { display: flex; flex-direction: column; }
         .template-prestige .timeline-entry {
           display: grid;
-          grid-template-columns: 110px 1fr;
+          grid-template-columns: 130px 1fr;
           gap: 16px;
-          padding: 8px 0;
+          padding: 10px 0;
           border-bottom: 1px dashed var(--line);
-          font-size: 12.5px;
+          font-size: 13px;
         }
         .template-prestige .timeline-entry:last-child { border-bottom: none; }
         .template-prestige .timeline-entry .years { color: #5b6577; font-weight: 600; }
         .template-prestige .timeline-entry .team { font-weight: 700; color: var(--navy); }
-        .template-prestige .timeline-entry .role { color: #6b7280; font-size: 11.5px; margin-top: 2px; }
+        .template-prestige .timeline-entry .role { color: #6b7280; font-size: 12px; margin-top: 2px; }
 
-        .template-prestige .edu-block .degree { font-weight: 700; color: var(--navy); font-size: 13px; }
+        .template-prestige .edu-block .degree { font-weight: 700; color: var(--navy); font-size: 13.5px; }
         .template-prestige .edu-block .school-row {
-          display: flex; justify-content: space-between; font-size: 12px; color: #5b6577; margin-top: 3px;
+          display: flex; justify-content: space-between; font-size: 12.5px; color: #5b6577; margin-top: 3px;
         }
 
         .template-prestige .personal-grid {
-          display: grid; grid-template-columns: 120px 1fr; row-gap: 8px; font-size: 12.5px;
+          display: grid; grid-template-columns: 140px 1fr; row-gap: 8px; font-size: 12.5px;
         }
         .template-prestige .personal-grid dt { color: #5b6577; }
         .template-prestige .personal-grid dd { color: var(--text-dark); font-weight: 600; }
 
         .template-prestige .references-grid {
-          display: grid; grid-template-columns: 1fr 1fr; gap: 16px;
+          display: grid; grid-template-columns: 1fr 1fr; gap: 20px;
         }
-        .template-prestige .ref-card {
-          font-size: 12px; line-height: 1.6;
+
+        /* Stat tables when placed on the light/cream main column */
+        .template-prestige .section .stat-table {
+          border: 1px solid var(--line) !important;
+          margin-bottom: 0px !important;
+          table-layout: fixed !important;
+          border-radius: 4px !important;
+          box-shadow: 0 2px 4px rgba(0,0,0,0.02) !important;
         }
-        .template-prestige .ref-card .rname { font-weight: 700; color: var(--navy); }
-        .template-prestige .ref-card .rorg { color: #5b6577; }
+        .template-prestige .section .stat-table caption {
+          color: var(--navy);
+          font-weight: 800;
+          font-size: 13px;
+          letter-spacing: .06em;
+          text-transform: uppercase;
+          border-bottom: 2px solid var(--gold);
+          padding-bottom: 4px;
+          margin-bottom: 8px;
+        }
+        .template-prestige .section .stat-table th,
+        .template-prestige .section .stat-table td {
+          border: 1px solid var(--line) !important;
+          text-align: center;
+          padding: 7px 6px;
+          font-size: 11px;
+        }
+        .template-prestige .section .stat-table th {
+          background: var(--navy);
+          color: #f1c40f !important; /* Yellow font color */
+          border: 1px solid var(--navy) !important;
+          font-weight: 700;
+          text-transform: uppercase;
+          letter-spacing: 0.03em;
+        }
+        .template-prestige .section .stat-table td {
+          color: var(--text-dark);
+        }
+        .template-prestige .section .stat-table th:first-child,
+        .template-prestige .section .stat-table td:first-child {
+          text-align: left;
+          padding-left: 8px;
+        }
+        /* Alternating row styling */
+        .template-prestige .section .stat-table tbody tr:nth-child(even) td {
+          background: rgba(0, 0, 0, 0.02);
+        }
+        /* Hover highlit row */
+        .template-prestige .section .stat-table tr:hover td {
+          background: rgba(193, 144, 79, 0.08) !important;
+        }
+
+        .template-prestige .stats-grid {
+          display: flex;
+          flex-direction: column;
+          gap: 16px;
+        }
+        
+        /* References sidebar card styles */
+        .template-prestige .sidebar .ref-card {
+          font-size: 12.5px;
+          line-height: 1.6;
+        }
+        .template-prestige .sidebar .ref-card .rname {
+          font-weight: 700;
+          color: #ffffff !important;
+        }
+        .template-prestige .sidebar .ref-card .rorg {
+          color: var(--text-light) !important;
+          font-size: 11.5px;
+          margin-top: 2px;
+        }
+        .template-prestige .sidebar .ref-card .rcontact {
+          color: var(--text-light) !important;
+          opacity: 0.8;
+          font-size: 11.5px;
+          margin-top: 2px;
+        }
       ` }} />
 
       {/* ============ SIDEBAR ============ */}
@@ -1335,120 +1477,38 @@ export function PrestigeTemplate({ cv, accentColour, font, isPreview }: Template
           </CVAtomicBlock>
         )}
 
-        {cv.aboutPlayer && (
-          <CVAtomicBlock id="side-profile" className="side-section">
-            <div className="side-heading">Profile</div>
-            <p className="profile-text whitespace-pre-line">{cv.aboutPlayer}</p>
+        {cv.education && cv.education.length > 0 && (
+          <CVAtomicBlock id="side-education" className="side-section">
+            <div className="side-heading">Education</div>
+            <div className="space-y-5">
+              {cv.education.map((edu, idx) => (
+                <div key={idx} className="edu-block-dark">
+                  <div className="degree-dark">{edu.degree}</div>
+                  <div className="school-row-dark">{edu.school || 'Education'}</div>
+                  <div className="year-dark">{edu.year || ''}</div>
+                </div>
+              ))}
+            </div>
           </CVAtomicBlock>
         )}
 
-        {(cv.playingRole || cv.battingStyle || cv.bowlingStyle || cv.throwingArm || cv.currentClub || cv.availability) && (
-          <CVAtomicBlock id="side-skills" className="side-section">
-            <div className="side-heading">Skills</div>
-            <ul className="skills-list">
-              {cv.playingRole && <li>{cv.playingRoleDetail || cv.playingRole}</li>}
-              {cv.battingStyle && <li>{cv.battingStyle} Hand Bat</li>}
-              {cv.bowlingStyle && <li>{cv.bowlingStyle}</li>}
-              {cv.throwingArm && <li>{cv.throwingArm} Arm Throw</li>}
-              {cv.currentClub && <li>Club: {cv.currentClub}</li>}
-              {cv.availability && <li>Availability: {cv.availability}</li>}
-            </ul>
+        {cv.showReferences === 'show' && cv.references && cv.references.length > 0 && (
+          <CVAtomicBlock id="side-references" className="side-section">
+            <div className="side-heading">References</div>
+            <div className="space-y-5">
+              {cv.references.map((ref, idx) => (
+                <div key={ref.id || idx} className="ref-card">
+                  <div className="rname">{ref.name}</div>
+                  <div className="rorg">{ref.position} &mdash; {ref.organisation}</div>
+                  {(ref.phone || ref.email) && (
+                    <div className="rcontact font-sans">
+                      {ref.email} {ref.email && ref.phone ? '|' : ''} {ref.phone}
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
           </CVAtomicBlock>
-        )}
-
-        {/* Career Stats Tables */}
-        {(hasBattingStats || hasBowlingStats || hasFieldingStats) && (
-          <div className="side-section">
-            <div className="side-heading">Career Stats</div>
-
-            {hasBattingStats && (
-              <CVAtomicBlock id="side-stats-batting">
-                <table className="stat-table">
-                  <colgroup>
-                    <col style={{ width: '22%' }} />
-                    <col style={{ width: '8%' }} />
-                    <col style={{ width: '14%' }} />
-                    <col style={{ width: '14%' }} />
-                    <col style={{ width: '15%' }} />
-                    <col style={{ width: '27%' }} />
-                  </colgroup>
-                  <caption>Batting</caption>
-                  <thead>
-                    <tr><th>Format</th><th>M</th><th>Runs</th><th>Avg</th><th>SR</th><th>100/50</th></tr>
-                  </thead>
-                  <tbody>
-                    {mdBat.matches > 0 && (
-                      <tr><td>Multi-Day</td><td>{mdBat.matches}</td><td>{mdBat.runs}</td><td>{mdBat.average}</td><td>{mdBat.strikeRate}</td><td>{mdBat.hundreds}/{mdBat.fifties}</td></tr>
-                    )}
-                    {odBat.matches > 0 && (
-                      <tr><td>One Day</td><td>{odBat.matches}</td><td>{odBat.runs}</td><td>{odBat.average}</td><td>{odBat.strikeRate}</td><td>{odBat.hundreds}/{odBat.fifties}</td></tr>
-                    )}
-                    {t20Bat.matches > 0 && (
-                      <tr><td>T20</td><td>{t20Bat.matches}</td><td>{t20Bat.runs}</td><td>{t20Bat.average}</td><td>{t20Bat.strikeRate}</td><td>{t20Bat.hundreds}/{t20Bat.fifties}</td></tr>
-                    )}
-                  </tbody>
-                </table>
-              </CVAtomicBlock>
-            )}
-
-            {hasBowlingStats && (
-              <CVAtomicBlock id="side-stats-bowling">
-                <table className="stat-table">
-                  <colgroup>
-                    <col style={{ width: '22%' }} />
-                    <col style={{ width: '8%' }} />
-                    <col style={{ width: '14%' }} />
-                    <col style={{ width: '14%' }} />
-                    <col style={{ width: '15%' }} />
-                    <col style={{ width: '27%' }} />
-                  </colgroup>
-                  <caption>Bowling</caption>
-                  <thead>
-                    <tr><th>Format</th><th>M</th><th>Wkts</th><th>Avg</th><th>Econ</th><th>BBI</th></tr>
-                  </thead>
-                  <tbody>
-                    {mdBowl.matches > 0 && (
-                      <tr><td>Multi-Day</td><td>{mdBowl.matches}</td><td>{mdBowl.wickets}</td><td>{mdBowl.bowlingAverage}</td><td>{mdBowl.economy}</td><td>{mdBowl.bestWickets}/{mdBowl.bestRuns}</td></tr>
-                    )}
-                    {odBowl.matches > 0 && (
-                      <tr><td>One Day</td><td>{odBowl.matches}</td><td>{odBowl.wickets}</td><td>{odBowl.bowlingAverage}</td><td>{odBowl.economy}</td><td>{odBowl.bestWickets}/{odBowl.bestRuns}</td></tr>
-                    )}
-                    {t20Bowl.matches > 0 && (
-                      <tr><td>T20</td><td>{t20Bowl.matches}</td><td>{t20Bowl.wickets}</td><td>{t20Bowl.bowlingAverage}</td><td>{t20Bowl.economy}</td><td>{t20Bowl.bestWickets}/{t20Bowl.bestRuns}</td></tr>
-                    )}
-                  </tbody>
-                </table>
-              </CVAtomicBlock>
-            )}
-
-            {hasFieldingStats && (
-              <CVAtomicBlock id="side-stats-fielding">
-                <table className="stat-table">
-                  <colgroup>
-                    <col style={{ width: '28%' }} />
-                    <col style={{ width: '12%' }} />
-                    <col style={{ width: '30%' }} />
-                    <col style={{ width: '30%' }} />
-                  </colgroup>
-                  <caption>Fielding</caption>
-                  <thead>
-                    <tr><th>Format</th><th>M</th><th>Catches</th><th>Stump</th></tr>
-                  </thead>
-                  <tbody>
-                    {mdField.matches > 0 && (
-                      <tr><td>Multi-Day</td><td>{mdField.matches}</td><td>{mdField.catches}</td><td>{mdField.stumpings}</td></tr>
-                    )}
-                    {odField.matches > 0 && (
-                      <tr><td>One Day</td><td>{odField.matches}</td><td>{odField.catches}</td><td>{odField.stumpings}</td></tr>
-                    )}
-                    {t20Field.matches > 0 && (
-                      <tr><td>T20</td><td>{t20Field.matches}</td><td>{t20Field.catches}</td><td>{t20Field.stumpings}</td></tr>
-                    )}
-                  </tbody>
-                </table>
-              </CVAtomicBlock>
-            )}
-          </div>
         )}
       </CVColumn>
 
@@ -1461,31 +1521,63 @@ export function PrestigeTemplate({ cv, accentColour, font, isPreview }: Template
             <div className="role">{cv.playingRoleDetail || cv.playingRole || 'Professional Cricket Player'}</div>
             <div className="meta-row">
               {cv.dateOfBirth && <span><span className="ico">&#128197;</span>{cv.dateOfBirth}</span>}
-              {cv.height && <span><span className="ico">&#128207;</span>Height: {cv.height} cm</span>}
               {cv.battingStyle && <span><span className="ico">&#127951;</span>{cv.battingStyle} Bat</span>}
               {cv.bowlingStyle && <span><span className="ico">&#127951;</span>{cv.bowlingStyle}</span>}
             </div>
           </div>
         </CVAtomicBlock>
 
-        {cv.careerHighlights && cv.careerHighlights.length > 0 && (
-          <CVAtomicBlock id="main-section-highlights">
+        {(cv.dateOfBirth || cv.height || cv.nationality || (cv.languages && cv.languages.length > 0) || (cv.hobbies && cv.hobbies.length > 0)) && (
+          <CVAtomicBlock id="main-section-personal">
             <div className="section">
               <div className="section-title">
-                <div className="badge">&#127942;</div>
-                <h2>Career Highlights</h2>
+                <div className="badge">&#128100;</div>
+                <h2>Personal Information</h2>
               </div>
-              <ul className="bullet-list">
-                {cv.careerHighlights.map((hl, idx) => (
-                  <li key={hl.id || idx}>
-                    {hl.achievement === 'Scored a Match-Winning 100' ? 'Scored a Match-Winning 100' :
-                     hl.achievement === 'Scored a Match-Winning 50' ? 'Scored a Match-Winning 50' :
-                     hl.achievement === 'Took a Match-Winning 5-Wicket Haul' ? 'Took a Match-Winning 5-Wicket Haul' :
-                     hl.achievement === 'Took 10 Wickets in a Match' ? 'Took 10 Wickets in a Match' : hl.achievement} 
-                     {' '}vs {hl.opponent} — {hl.tournament}, {hl.year}
-                  </li>
-                ))}
-              </ul>
+              <dl className="personal-grid">
+                {cv.dateOfBirth && (
+                  <>
+                    <dt>Date of Birth</dt>
+                    <dd>{cv.dateOfBirth}</dd>
+                  </>
+                )}
+                {cv.height && (
+                  <>
+                    <dt>Height</dt>
+                    <dd>{cv.height} cm</dd>
+                  </>
+                )}
+                {cv.nationality && (
+                  <>
+                    <dt>Nationality</dt>
+                    <dd>{cv.nationality}</dd>
+                  </>
+                )}
+                {cv.languages && cv.languages.length > 0 && (
+                  <>
+                    <dt>Languages</dt>
+                    <dd>{cv.languages.join(', ')}</dd>
+                  </>
+                )}
+                {cv.hobbies && cv.hobbies.length > 0 && (
+                  <>
+                    <dt>Hobbies</dt>
+                    <dd>{cv.hobbies.join(', ')}</dd>
+                  </>
+                )}
+              </dl>
+            </div>
+          </CVAtomicBlock>
+        )}
+
+        {cv.aboutPlayer && (
+          <CVAtomicBlock id="main-section-profile">
+            <div className="section">
+              <div className="section-title">
+                <div className="badge">&#128221;</div>
+                <h2>About Me</h2>
+              </div>
+              <p className="text-sm whitespace-pre-line leading-relaxed text-slate-700">{cv.aboutPlayer}</p>
             </div>
           </CVAtomicBlock>
         )}
@@ -1512,6 +1604,24 @@ export function PrestigeTemplate({ cv, accentColour, font, isPreview }: Template
           </CVAtomicBlock>
         )}
 
+        {cv.careerHighlights && cv.careerHighlights.length > 0 && (
+          <CVAtomicBlock id="main-section-highlights">
+            <div className="section">
+              <div className="section-title">
+                <div className="badge">&#127942;</div>
+                <h2>Career Highlights</h2>
+              </div>
+              <ul className="bullet-list">
+                {cv.careerHighlights.map((hl, idx) => (
+                  <li key={hl.id || idx}>
+                    {hl.achievement} — {hl.opponent}, {hl.tournament} ({hl.year})
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </CVAtomicBlock>
+        )}
+
         {cv.achievements && cv.achievements.length > 0 && (
           <CVAtomicBlock id="main-section-achievements">
             <div className="section">
@@ -1530,100 +1640,111 @@ export function PrestigeTemplate({ cv, accentColour, font, isPreview }: Template
           </CVAtomicBlock>
         )}
 
-        {cv.fitnessActivities && cv.fitnessActivities.length > 0 && (
-          <CVAtomicBlock id="main-section-fitness">
+        {cv.specialistSkills && cv.specialistSkills.length > 0 && (
+          <CVAtomicBlock id="main-section-skills">
             <div className="section">
               <div className="section-title">
-                <div className="badge">&#128170;</div>
-                <h2>Fitness</h2>
+                <div className="badge">&#127951;</div>
+                <h2>Specialist Cricket Skills</h2>
               </div>
-              <ul className="bullet-list">
-                {cv.fitnessActivities.map((act, idx) => (
-                  <li key={idx}>{act}</li>
+              <ul className="bullet-list skills-two-col">
+                {cv.specialistSkills.map((skill, idx) => (
+                  <li key={idx}>{skill}</li>
                 ))}
               </ul>
             </div>
           </CVAtomicBlock>
         )}
 
-        {cv.education && cv.education.length > 0 && (
-          <CVAtomicBlock id="main-section-education">
+        {showStatsBlock && (
+          <CVAtomicBlock id="main-section-stats">
             <div className="section">
               <div className="section-title">
-                <div className="badge">&#127891;</div>
-                <h2>Education</h2>
+                <div className="badge">&#128202;</div>
+                <h2>Career Statistics</h2>
               </div>
-              <div className="space-y-3">
-                {cv.education.map((edu, idx) => (
-                  <div key={idx} className="edu-block">
-                    <div className="degree">{edu.degree}</div>
-                    <div className="school-row">
-                      <span>{edu.school || 'Education'}</span>
-                      <span>{edu.year || ''}</span>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </CVAtomicBlock>
-        )}
+              <div className="stats-grid">
+                {battingVisible && (
+                  <table className={`stat-table ${!bowlingVisible ? 'fielding-span' : ''}`}>
+                    <colgroup>
+                      <col style={{ width: '20%' }} />
+                      <col style={{ width: '10%' }} />
+                      <col style={{ width: '16%' }} />
+                      <col style={{ width: '16%' }} />
+                      <col style={{ width: '18%' }} />
+                      <col style={{ width: '20%' }} />
+                    </colgroup>
+                    <caption>Batting</caption>
+                    <thead>
+                      <tr><th>Format</th><th>M</th><th>Runs</th><th>Avg</th><th>SR</th><th>100/50</th></tr>
+                    </thead>
+                    <tbody>
+                      {mdBat.matches > 0 && (
+                        <tr><td>Multi-Day</td><td>{mdBat.matches}</td><td>{mdBat.runs}</td><td>{mdBat.average}</td><td>{mdBat.strikeRate}</td><td>{mdBat.hundreds}/{mdBat.fifties}</td></tr>
+                      )}
+                      {odBat.matches > 0 && (
+                        <tr><td>One Day</td><td>{odBat.matches}</td><td>{odBat.runs}</td><td>{odBat.average}</td><td>{odBat.strikeRate}</td><td>{odBat.hundreds}/{odBat.fifties}</td></tr>
+                      )}
+                      {t20Bat.matches > 0 && (
+                        <tr><td>T20</td><td>{t20Bat.matches}</td><td>{t20Bat.runs}</td><td>{t20Bat.average}</td><td>{t20Bat.strikeRate}</td><td>{t20Bat.hundreds}/{t20Bat.fifties}</td></tr>
+                      )}
+                    </tbody>
+                  </table>
+                )}
 
-        {(cv.dateOfBirth || cv.nationality || (cv.languages && cv.languages.length > 0) || (cv.hobbies && cv.hobbies.length > 0)) && (
-          <CVAtomicBlock id="main-section-personal">
-            <div className="section">
-              <div className="section-title">
-                <div className="badge">&#128100;</div>
-                <h2>Personal Information</h2>
-              </div>
-              <dl className="personal-grid">
-                {cv.dateOfBirth && (
-                  <>
-                    <dt>Date of Birth</dt>
-                    <dd>{cv.dateOfBirth}</dd>
-                  </>
+                {bowlingVisible && (
+                  <table className={`stat-table ${!battingVisible ? 'fielding-span' : ''}`}>
+                    <colgroup>
+                      <col style={{ width: '20%' }} />
+                      <col style={{ width: '10%' }} />
+                      <col style={{ width: '16%' }} />
+                      <col style={{ width: '16%' }} />
+                      <col style={{ width: '18%' }} />
+                      <col style={{ width: '20%' }} />
+                    </colgroup>
+                    <caption>Bowling</caption>
+                    <thead>
+                      <tr><th>Format</th><th>M</th><th>Wkts</th><th>Avg</th><th>Econ</th><th>BBI</th></tr>
+                    </thead>
+                    <tbody>
+                      {mdBowl.matches > 0 && (
+                        <tr><td>Multi-Day</td><td>{mdBowl.matches}</td><td>{mdBowl.wickets}</td><td>{mdBowl.bowlingAverage}</td><td>{mdBowl.economy}</td><td>{mdBowl.bestWickets}/{mdBowl.bestRuns}</td></tr>
+                      )}
+                      {odBowl.matches > 0 && (
+                        <tr><td>One Day</td><td>{odBowl.matches}</td><td>{odBowl.wickets}</td><td>{odBowl.bowlingAverage}</td><td>{odBowl.economy}</td><td>{odBowl.bestWickets}/{odBowl.bestRuns}</td></tr>
+                      )}
+                      {t20Bowl.matches > 0 && (
+                        <tr><td>T20</td><td>{t20Bowl.matches}</td><td>{t20Bowl.wickets}</td><td>{t20Bowl.bowlingAverage}</td><td>{t20Bowl.economy}</td><td>{t20Bowl.bestWickets}/{t20Bowl.bestRuns}</td></tr>
+                      )}
+                    </tbody>
+                  </table>
                 )}
-                {cv.nationality && (
-                  <>
-                    <dt>Nationality</dt>
-                    <dd>{cv.nationality}</dd>
-                  </>
-                )}
-                {cv.languages && cv.languages.length > 0 && (
-                  <>
-                    <dt>Languages</dt>
-                    <dd>{cv.languages.join(', ')}</dd>
-                  </>
-                )}
-                {cv.hobbies && cv.hobbies.length > 0 && (
-                  <>
-                    <dt>Hobbies</dt>
-                    <dd>{cv.hobbies.join(', ')}</dd>
-                  </>
-                )}
-              </dl>
-            </div>
-          </CVAtomicBlock>
-        )}
 
-        {cv.showReferences === 'show' && cv.references && cv.references.length > 0 && (
-          <CVAtomicBlock id="main-section-references">
-            <div className="section">
-              <div className="section-title">
-                <div className="badge">&#128101;</div>
-                <h2>References</h2>
-              </div>
-              <div className="references-grid">
-                {cv.references.map((ref, idx) => (
-                  <div key={ref.id || idx} className="ref-card">
-                    <div className="rname">{ref.name}</div>
-                    <div className="rorg">{ref.position} &mdash; {ref.organisation}</div>
-                    {(ref.phone || ref.email) && (
-                      <div className="text-slate-500 font-sans mt-0.5" style={{ fontSize: '10.5px' }}>
-                        {ref.email} {ref.email && ref.phone ? '|' : ''} {ref.phone}
-                      </div>
-                    )}
-                  </div>
-                ))}
+                {fieldingVisible && (
+                  <table className="stat-table fielding-span">
+                    <colgroup>
+                      <col style={{ width: '28%' }} />
+                      <col style={{ width: '16%' }} />
+                      <col style={{ width: '28%' }} />
+                      <col style={{ width: '28%' }} />
+                    </colgroup>
+                    <caption>Fielding</caption>
+                    <thead>
+                      <tr><th>Format</th><th>Matches</th><th>Catches</th><th>Stumpings</th></tr>
+                    </thead>
+                    <tbody>
+                      {mdField.matches > 0 && (
+                        <tr><td>Multi-Day</td><td>{mdField.matches}</td><td>{mdField.catches}</td><td>{mdField.stumpings}</td></tr>
+                      )}
+                      {odField.matches > 0 && (
+                        <tr><td>One Day</td><td>{odField.matches}</td><td>{odField.catches}</td><td>{odField.stumpings}</td></tr>
+                      )}
+                      {t20Field.matches > 0 && (
+                        <tr><td>T20</td><td>{t20Field.matches}</td><td>{t20Field.catches}</td><td>{t20Field.stumpings}</td></tr>
+                      )}
+                    </tbody>
+                  </table>
+                )}
               </div>
             </div>
           </CVAtomicBlock>
@@ -1633,7 +1754,6 @@ export function PrestigeTemplate({ cv, accentColour, font, isPreview }: Template
     </div>
   );
 }
-
 // Master Render Router Component
 export default function CVTemplateRenderer({ cv, accentColour, font, isPreview, isCapture }: TemplateProps) {
   // Safeguard: Ensure all lists are arrays and default values are defined to prevent rendering crashes

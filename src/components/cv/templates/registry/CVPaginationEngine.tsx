@@ -95,12 +95,14 @@ export const CVPaginatedRenderer = ({
   accentColour,
   font,
   isPreview,
+  isCapture,
   TemplateComponent
 }: {
   cv: CricketCVFull;
   accentColour: string;
   font: string;
   isPreview?: boolean;
+  isCapture?: boolean;
   TemplateComponent: React.ComponentType<any>;
 }) => {
   const [pages, setPages] = useState<PageAssignment[] | null>(null);
@@ -184,9 +186,10 @@ export const CVPaginatedRenderer = ({
       // Synced column page boundary breaks
       const maxPages = Math.max(rightPages.length, leftPages.length, 1);
       const assignments: PageAssignment[] = [];
+      const allLeftBlockIds = leftBlocks.map((b) => b.id);
       for (let i = 0; i < maxPages; i++) {
         assignments.push({
-          left: leftPages[i] || [],
+          left: cv.templateId === 'prestige' ? allLeftBlockIds : (leftPages[i] || []),
           right: rightPages[i] || []
         });
       }
@@ -220,9 +223,21 @@ export const CVPaginatedRenderer = ({
   );
 
   if (!pages) {
-    // If pages are not computed yet, render standard full sandbox in loading state
+    // While pages are computing, render inside a properly-sized container so
+    // templates that use height:100% (e.g. Prestige) resolve correctly for
+    // the measurement pass.
     return (
-      <div ref={sandboxRef} style={{ width: `${templateConfig.width}px` }} className={`relative bg-white template-${cv.templateId}`}>
+      <div
+        ref={sandboxRef}
+        style={{
+          width: `${templateConfig.width}px`,
+          height: `${templateConfig.height}px`,
+          overflow: 'hidden',
+          position: 'relative',
+        }}
+        className={`bg-white template-${cv.templateId}`}
+      >
+        {isPreview && <Watermark />}
         <PageContext.Provider value={{ allowedIds: null, isPreview }}>
           <TemplateComponent cv={cv} accentColour={accentColour} font={font} isPreview={isPreview} />
         </PageContext.Provider>
@@ -233,15 +248,20 @@ export const CVPaginatedRenderer = ({
   // Render paginated pages
   return (
     <div className="cv-document-paginated" style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-      {/* Offscreen Sandbox for continuous measurement */}
+      {/* Offscreen Sandbox for continuous measurement – rendered without a
+          fixed height so all blocks are measured at their natural positions.
+          Templates that need a height context for render (like Prestige with
+          its sidebar stretching trick) should use min-height:100% on their
+          root element rather than height:100%.                              */}
       <div 
         ref={sandboxRef} 
         style={{ 
           position: 'absolute', 
           left: '-9999px', 
           top: '-9999px', 
-          width: `${templateConfig.width}px`, 
-          pointerEvents: 'none' 
+          width: `${templateConfig.width}px`,
+          pointerEvents: 'none',
+          overflow: 'visible',
         }} 
         aria-hidden="true"
         className={`template-${cv.templateId}`}
@@ -254,6 +274,7 @@ export const CVPaginatedRenderer = ({
       {/* Actual Paginated Output */}
       {pages.map((pageData, index) => {
         const allowedIds = [...pageData.left, ...pageData.right];
+        const isPrestige = cv.templateId === 'prestige';
         return (
           <div 
             key={index}
@@ -261,10 +282,10 @@ export const CVPaginatedRenderer = ({
             style={{
               width: `${templateConfig.width}px`,
               height: `${templateConfig.height}px`,
-              paddingTop: `${templateConfig.marginTop}px`,
-              paddingBottom: `${templateConfig.marginBottom}px`,
-              paddingLeft: `${templateConfig.marginLeft}px`,
-              paddingRight: `${templateConfig.marginRight}px`,
+              paddingTop: `${isPrestige ? 0 : templateConfig.marginTop}px`,
+              paddingBottom: `${isPrestige ? 0 : templateConfig.marginBottom}px`,
+              paddingLeft: `${isPrestige ? 0 : templateConfig.marginLeft}px`,
+              paddingRight: `${isPrestige ? 0 : templateConfig.marginRight}px`,
               boxSizing: 'border-box'
             }}
           >

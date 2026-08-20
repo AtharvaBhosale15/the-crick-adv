@@ -281,6 +281,14 @@ export interface CricketCVFull {
   editsUsed: number;
   editPeriodStart: string;
   editPeriodEnd: string;
+
+  // Stats visibility settings
+  showBatting?: boolean;
+  showBowling?: boolean;
+  showFielding?: boolean;
+
+  // Specialist Skills
+  specialistSkills?: string[];
 }
 
 export const initialCVForm = (userId: string = '', email: string = '', firstName: string = '', lastName: string = ''): CricketCVFull => ({
@@ -358,7 +366,12 @@ export const initialCVForm = (userId: string = '', email: string = '', firstName
   editsAllowed: 5,
   editsUsed: 0,
   editPeriodStart: new Date().toISOString(),
-  editPeriodEnd: new Date(new Date().setFullYear(new Date().getFullYear() + 1)).toISOString()
+  editPeriodEnd: new Date(new Date().setFullYear(new Date().getFullYear() + 1)).toISOString(),
+
+  showBatting: true,
+  showBowling: true,
+  showFielding: true,
+  specialistSkills: []
 });
 
 export const DEMO_CV_DATA: CricketCVFull = {
@@ -643,5 +656,11 @@ export const DEMO_CV_DATA: CricketCVFull = {
   editsAllowed: 5,
   editsUsed: 0,
   editPeriodStart: new Date().toISOString(),
-  editPeriodEnd: new Date(new Date().setFullYear(new Date().getFullYear() + 1)).toISOString()
+  editPeriodEnd: new Date(new Date().setFullYear(new Date().getFullYear() + 1)).toISOString(),
+
+  specialistSkills: [
+    "Bowling Sharp Yorkers",
+    "Power Hitting",
+    "Death Overs Bowling"
+  ]
 };
