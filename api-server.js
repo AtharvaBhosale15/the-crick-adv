@@ -1034,6 +1034,10 @@ app.post('/api/cv-verify-payment', async (req, res) => {
   const cvs = getLocalCvs();
   const idx = cvs.findIndex(c => c.id === cvId);
   if (idx > -1) {
+    const refNum = cvs[idx].referenceNumber || 'TCA-9999';
+    const invoiceNum = `INV-${refNum}-${Date.now().toString().slice(-4)}`;
+    cvs[idx].latestInvoiceNumber = invoiceNum;
+
     if (cvs[idx].paymentStatus === 'Paid') {
       cvs[idx].editsUsed = 0;
       cvs[idx].editsAllowed = 5;
@@ -1052,7 +1056,6 @@ app.post('/api/cv-verify-payment', async (req, res) => {
 
     const email = cvs[idx].email;
     const firstName = cvs[idx].firstName || 'Player';
-    const refNum = cvs[idx].referenceNumber || '';
 
     // Dispatch Verification/Receipt Email
     const resendApiKey = process.env.RESEND_API_KEY;
@@ -1078,7 +1081,7 @@ app.post('/api/cv-verify-payment', async (req, res) => {
                 <table style="width: 100%; border-collapse: collapse;">
                   <tr>
                     <td style="color: #64748b; padding: 4px 0;">Invoice Number:</td>
-                    <td style="text-align: right; font-weight: bold; padding: 4px 0;">INV-${refNum}</td>
+                    <td style="text-align: right; font-weight: bold; padding: 4px 0;">${invoiceNum}</td>
                   </tr>
                   <tr>
                     <td style="color: #64748b; padding: 4px 0;">Date:</td>

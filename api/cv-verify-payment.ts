@@ -89,6 +89,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       let email = '';
       let firstName = 'Player';
       let refNum = '';
+      let invoiceNum = '';
 
       if (hasPostgres()) {
         const cvRes = await sql`SELECT * FROM cvs WHERE id = ${cvId} LIMIT 1`;
@@ -97,7 +98,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           email = cvRow.email;
           firstName = cvRow.first_name;
           refNum = cvRow.reference_number;
+          invoiceNum = `INV-${refNum}-${Date.now().toString().slice(-4)}`;
           const cvData = JSON.parse(cvRow.cv_data);
+          cvData.latestInvoiceNumber = invoiceNum;
 
           if (cvData.paymentStatus === 'Paid') {
             cvData.editsUsed = 0;
@@ -127,6 +130,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         const cvs = getLocalCvs();
         const cvIdx = cvs.findIndex((c: any) => c.id === cvId);
         if (cvIdx > -1) {
+          refNum = cvs[cvIdx].referenceNumber || 'TCA-9999';
+          invoiceNum = `INV-${refNum}-${Date.now().toString().slice(-4)}`;
+          cvs[cvIdx].latestInvoiceNumber = invoiceNum;
+
           if (cvs[cvIdx].paymentStatus === 'Paid') {
             cvs[cvIdx].editsUsed = 0;
             cvs[cvIdx].editsAllowed = 5;
@@ -138,7 +145,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
           email = cvs[cvIdx].email;
           firstName = cvs[cvIdx].firstName;
-          refNum = cvs[cvIdx].referenceNumber;
         }
 
         const users = getLocalUsers();
@@ -173,7 +179,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
                   <table style="width: 100%; border-collapse: collapse;">
                     <tr>
                       <td style="color: #64748b; padding: 4px 0;">Invoice Number:</td>
-                      <td style="text-align: right; font-weight: bold; padding: 4px 0;">INV-${refNum}</td>
+                      <td style="text-align: right; font-weight: bold; padding: 4px 0;">${invoiceNum}</td>
                     </tr>
                     <tr>
                       <td style="color: #64748b; padding: 4px 0;">Date:</td>

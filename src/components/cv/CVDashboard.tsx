@@ -29,6 +29,7 @@ interface CVDashboardProps {
   onSelectFont: (font: string, isStyleUpdate?: boolean) => void;
   onSelectColour: (colour: string, isStyleUpdate?: boolean) => void;
   onPayAndDownload?: () => void;
+  onRenewPlanCheckout?: () => void;
 }
 
 export default function CVDashboard({
@@ -42,7 +43,8 @@ export default function CVDashboard({
   onRenewSuccess,
   onRequestCorrection,
   onSelectFont,
-  onSelectColour
+  onSelectColour,
+  onRenewPlanCheckout
 }: CVDashboardProps) {
   const editsLeft = cv.editsAllowed - cv.editsUsed;
   const [showRenewModal, setShowRenewModal] = useState(false);
@@ -198,6 +200,20 @@ export default function CVDashboard({
     onEditCV();
   };
 
+  const loadRazorpayScript = (): Promise<boolean> => {
+    return new Promise((resolve) => {
+      if ((window as any).Razorpay) {
+        resolve(true);
+        return;
+      }
+      const script = document.createElement('script');
+      script.src = 'https://checkout.razorpay.com/v1/checkout.js';
+      script.onload = () => resolve(true);
+      script.onerror = () => resolve(false);
+      document.body.appendChild(script);
+    });
+  };
+
   const handleSimulatePayment = async () => {
     setIsProcessing(true);
     try {
@@ -219,6 +235,104 @@ export default function CVDashboard({
     } catch (err: any) {
       alert(`Error simulating payment: ${err.message}`);
     } finally {
+      setIsProcessing(false);
+    }
+  };
+
+  const handleRazorpayRenewal = async () => {
+    setIsProcessing(true);
+    try {
+      const isLoaded = await loadRazorpayScript();
+      if (!isLoaded) {
+        alert('Failed to load Razorpay payment SDK. Please check your internet connection.');
+        setIsProcessing(false);
+        return;
+      }
+
+      const amountInPaise = 699 * 100;
+      const orderRes = await fetch('/api/create-order', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ amount: amountInPaise })
+      });
+
+      if (!orderRes.ok) {
+        const errorText = await orderRes.text();
+        throw new Error(errorText || 'Failed to create order on server');
+      }
+
+      const orderData = await orderRes.json();
+      if (!orderData.id) {
+        throw new Error('Order creation did not return a valid order ID');
+      }
+
+      const razorpayKeyId = import.meta.env.VITE_RAZORPAY_KEY_ID || '';
+      const options = {
+        key: razorpayKeyId,
+        amount: orderData.amount,
+        currency: orderData.currency || 'INR',
+        name: 'The Cricket Advisor',
+        description: 'Cricket CV 5-Edit Renewal',
+        order_id: orderData.id,
+        handler: async function (response: any) {
+          try {
+            const verifyRes = await fetch('/api/cv-verify-payment', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                razorpay_order_id: response.razorpay_order_id,
+                razorpay_payment_id: response.razorpay_payment_id,
+                razorpay_signature: response.razorpay_signature,
+                cvId: cv.id,
+                userId: cv.userId
+              })
+            });
+
+            if (verifyRes.ok) {
+              const getRes = await fetch(`/api/cv-get?t=${Date.now()}`, {
+                headers: {
+                  'Authorization': `Bearer ${cvToken}`
+                }
+              });
+              if (getRes.ok) {
+                const getData = await getRes.json();
+                alert('Payment Verified! Plan renewed successfully. 5 edits restored.');
+                onRenewSuccess(getData.cv);
+                setShowRenewModal(false);
+              } else {
+                alert('Payment verified, but failed to fetch updated CV details. Please reload the page.');
+              }
+            } else {
+              const data = await verifyRes.json();
+              alert(`Verification failed: ${data.error || 'Unknown error'}`);
+            }
+          } catch (err: any) {
+            console.error(err);
+            alert(`Verification error: ${err.message}`);
+          } finally {
+            setIsProcessing(false);
+          }
+        },
+        prefill: {
+          name: `${cv.firstName || ''} ${cv.lastName || ''}`,
+          email: cv.email || '',
+          contact: cv.phone || ''
+        },
+        theme: {
+          color: '#0B1A30'
+        },
+        modal: {
+          ondismiss: function () {
+            setIsProcessing(false);
+          }
+        }
+      };
+
+      const rzp = new (window as any).Razorpay(options);
+      rzp.open();
+    } catch (err: any) {
+      console.error('Razorpay renewal failed:', err);
+      alert(`Payment failed to initialize: ${err.message}`);
       setIsProcessing(false);
     }
   };
@@ -371,7 +485,7 @@ export default function CVDashboard({
                   </div>
                   
                   <button 
-                    onClick={() => setShowRenewModal(true)}
+                    onClick={onRenewPlanCheckout || (() => setShowRenewModal(true))}
                     className="w-full py-2.5 bg-red-650 hover:bg-red-700 text-white rounded-lg text-xs font-bold transition flex items-center justify-center gap-2 cursor-pointer font-sans shadow-md"
                   >
                     <RefreshCw className="w-3.5 h-3.5" /> RENEW PLAN / ADD EDITS
@@ -530,7 +644,7 @@ export default function CVDashboard({
                 <CreditCard className="w-5 h-5 text-gold-400" />
               </div>
               <div>
-                <h3 className="text-base font-bold text-white uppercase tracking-wider">Simulate Payment Gateway</h3>
+                <h3 className="text-base font-bold text-white uppercase tracking-wider">Plan Renewal Checkout</h3>
                 <p className="text-[10px] text-slate-400 mt-0.5">The Cricket Advisor Secure Checkout</p>
               </div>
             </div>
@@ -548,32 +662,43 @@ export default function CVDashboard({
               </div>
 
               <p className="text-[11px] text-slate-400 leading-relaxed">
-                By clicking simulate, you will bypass the active Razorpay API checkout dialogue and trigger a simulated successful response directly to our backend server.
+                You can choose to pay securely using Razorpay, or bypass checkout directly by clicking the simulation button below for testing.
               </p>
             </div>
 
-            <div className="flex gap-3 font-sans">
+            <div className="flex flex-col gap-3 font-sans">
+              <div className="flex gap-3">
+                <button 
+                  onClick={() => setShowRenewModal(false)}
+                  disabled={isProcessing}
+                  className="px-4 py-3 border border-slate-800 hover:bg-slate-850 text-slate-400 hover:text-white rounded-xl text-xs font-bold transition cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button 
+                  onClick={handleRazorpayRenewal}
+                  disabled={isProcessing}
+                  className="flex-1 py-3 bg-gold-gradient text-navy-950 rounded-xl text-xs font-black hover:opacity-90 transition flex items-center justify-center gap-1.5 cursor-pointer uppercase animate-pulse-subtle"
+                >
+                  {isProcessing ? (
+                    <>
+                      <RefreshCw className="w-3.5 h-3.5 animate-spin" /> Processing...
+                    </>
+                  ) : (
+                    <>
+                      <CreditCard className="w-3.5 h-3.5" /> Pay ₹699 Securely
+                    </>
+                  )}
+                </button>
+              </div>
+
               <button 
-                onClick={() => setShowRenewModal(false)}
-                disabled={isProcessing}
-                className="flex-1 py-3 border border-slate-800 hover:bg-slate-850 text-slate-400 hover:text-white rounded-xl text-xs font-bold transition cursor-pointer"
-              >
-                Cancel
-              </button>
-              <button 
+                type="button"
                 onClick={handleSimulatePayment}
                 disabled={isProcessing}
-                className="flex-1 py-3 bg-gold-gradient text-navy-950 rounded-xl text-xs font-black hover:opacity-90 transition flex items-center justify-center gap-1.5 cursor-pointer"
+                className="w-full py-2 rounded-xl border border-dashed border-blue-500/50 hover:border-blue-400 text-blue-400 hover:text-blue-300 bg-blue-950/20 hover:bg-blue-950/40 transition text-center text-[10px] font-bold uppercase tracking-wider cursor-pointer"
               >
-                {isProcessing ? (
-                  <>
-                    <RefreshCw className="w-3.5 h-3.5 animate-spin" /> Processing...
-                  </>
-                ) : (
-                  <>
-                    <CheckCircle2 className="w-3.5 h-3.5" /> Simulate Success
-                  </>
-                )}
+                Simulate Renewal Success (Bypass)
               </button>
             </div>
           </div>

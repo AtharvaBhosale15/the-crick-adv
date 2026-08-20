@@ -3467,6 +3467,7 @@ END:VCALENDAR`;
               setCvForm(updatedCv);
             }}
             onRequestCorrection={() => alert('Profile correction request logged. Admin support has been notified.')}
+            onRenewPlanCheckout={() => setCvView('preview')}
           />
         </div>
       );
@@ -3517,25 +3518,106 @@ END:VCALENDAR`;
     };
 
     const renderReviewAndUnlockView = () => {
-      const handleCheckoutPayment = async () => {
-        try {
-          const res = await fetch('/api/cv-verify-payment', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              razorpay_order_id: `order_${Date.now()}`,
-              razorpay_payment_id: 'test_payment_id',
-              razorpay_signature: 'signature_test',
-              cvId: cvForm.id,
-              userId: cvUser?.id
-            })
-          });
-          if (res.ok) {
-            await fetchUserCV(cvToken || '');
-            setCvView('success');
+      const handleCheckoutPayment = async (isSimulated: boolean) => {
+        if (isSimulated) {
+          try {
+            const res = await fetch('/api/cv-verify-payment', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                razorpay_order_id: `order_${Date.now()}`,
+                razorpay_payment_id: 'test_payment_id',
+                razorpay_signature: 'signature_test',
+                cvId: cvForm.id,
+                userId: cvUser?.id
+              })
+            });
+            if (res.ok) {
+              await fetchUserCV(cvToken || '');
+              setCvView('success');
+            } else {
+              const data = await res.json();
+              alert(`Verification failed: ${data.error || 'Unknown error'}`);
+            }
+          } catch (err: any) {
+            console.error(err);
+            alert(`Error: ${err.message}`);
           }
-        } catch (err) {
-          console.error(err);
+        } else {
+          try {
+            const isLoaded = await loadRazorpayScript();
+            if (!isLoaded) {
+              alert('Failed to load Razorpay payment SDK. Please check your internet connection.');
+              return;
+            }
+
+            const amountInPaise = 699 * 100;
+            const orderRes = await fetch('/api/create-order', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ amount: amountInPaise })
+            });
+
+            if (!orderRes.ok) {
+              const errorText = await orderRes.text();
+              throw new Error(errorText || 'Failed to create order on server');
+            }
+
+            const orderData = await orderRes.json();
+            if (!orderData.id) {
+              throw new Error('Order creation did not return a valid order ID');
+            }
+
+            const razorpayKeyId = import.meta.env.VITE_RAZORPAY_KEY_ID || '';
+            const options = {
+              key: razorpayKeyId,
+              amount: orderData.amount,
+              currency: orderData.currency || 'INR',
+              name: 'The Cricket Advisor',
+              description: 'Premium Cricket CV Package',
+              order_id: orderData.id,
+              handler: async function (response: any) {
+                try {
+                  const verifyRes = await fetch('/api/cv-verify-payment', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                      razorpay_order_id: response.razorpay_order_id,
+                      razorpay_payment_id: response.razorpay_payment_id,
+                      razorpay_signature: response.razorpay_signature,
+                      cvId: cvForm.id,
+                      userId: cvUser?.id
+                    })
+                  });
+
+                  if (verifyRes.ok) {
+                    await fetchUserCV(cvToken || '');
+                    setCvView('success');
+                  } else {
+                    const data = await verifyRes.json();
+                    alert(`Verification failed: ${data.error || 'Unknown error'}`);
+                  }
+                } catch (err: any) {
+                  console.error(err);
+                  alert(`Verification error: ${err.message}`);
+                }
+              },
+              prefill: {
+                name: `${cvForm.firstName || ''} ${cvForm.lastName || ''}`,
+                email: cvForm.email || '',
+                contact: cvForm.phone || ''
+              },
+              theme: {
+                color: '#0B1A30'
+              }
+            };
+
+            const rzp = new (window as any).Razorpay(options);
+            rzp.open();
+          } catch (err: any) {
+            console.error('Razorpay check failed:', err);
+            alert(`Payment failed to initialize: ${err.message}`);
+          }
         }
       };
 
@@ -3543,7 +3625,7 @@ END:VCALENDAR`;
         <div className="py-12 bg-slate-950 min-h-[85vh] text-slate-100 font-sans px-4">
           <CVReviewPage 
             cv={cvForm}
-            onPrev={() => setCvView('styling')}
+            onPrev={() => setCvView(cvForm.paymentStatus === 'Paid' ? 'dashboard' : 'styling')}
             onPay={handleCheckoutPayment}
           />
         </div>
@@ -3676,7 +3758,7 @@ END:VCALENDAR`;
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 flex items-center justify-between">
           
           {/* Logo Brand area */}
-          <div className="flex items-center space-x-3 cursor-pointer" onClick={() => { setActiveTab('main'); scrollToSection('home'); }}>
+          <div className="flex items-center space-x-3 cursor-pointer shrink-0" onClick={() => { setActiveTab('main'); scrollToSection('home'); }}>
             <img 
               src={logoImg} 
               alt="The Cricket Advisor Logo" 
@@ -3693,7 +3775,7 @@ END:VCALENDAR`;
           </div>
 
           {/* Desktop Navigation Menu */}
-          <nav className="hidden lg:flex items-center space-x-5 xl:space-x-7 text-[13px] xl:text-[14px] font-sans font-bold tracking-wider uppercase">
+          <nav className="hidden xl:flex items-center space-x-1.5 xl:space-x-3.5 text-[11px] xl:text-[12px] font-sans font-bold tracking-wider uppercase ml-auto mr-2 xl:mr-4">
             <button onClick={() => scrollToSection('home')} className="relative py-2 text-[#0B1A30] hover:text-[#D4AF37] transition cursor-pointer">
               Home
               {activeTab === 'main' && (
@@ -3703,39 +3785,37 @@ END:VCALENDAR`;
             <button onClick={() => scrollToSection('why-choose-me')} className="py-2 text-[#0B1A30] hover:text-[#D4AF37] transition cursor-pointer whitespace-nowrap">Why Choose Me</button>
             <button onClick={() => scrollToSection('about-me')} className="py-2 text-[#0B1A30] hover:text-[#D4AF37] transition cursor-pointer whitespace-nowrap">About Me</button>
             <button onClick={() => scrollToSection('services')} className="py-2 text-[#0B1A30] hover:text-[#D4AF37] transition cursor-pointer whitespace-nowrap">My Services</button>
-            <button 
-              onClick={() => { setActiveTab('cricket-cv'); setCvView('landing'); setCvStep(1); }} 
-              className="relative py-2 text-[#0B1A30] hover:text-[#D4AF37] transition cursor-pointer whitespace-nowrap font-bold"
-            >
-              Cricket CV
-              {activeTab === 'cricket-cv' && (
-                <span className="absolute bottom-0 left-0 w-full h-[3px] bg-[#D4AF37] rounded-full"></span>
-              )}
-            </button>
             <button onClick={() => scrollToSection('faq')} className="py-2 text-[#0B1A30] hover:text-[#D4AF37] transition cursor-pointer">FAQ</button>
             <button onClick={() => scrollToSection('contact')} className="py-2 text-[#0B1A30] hover:text-[#D4AF37] transition cursor-pointer font-sans whitespace-nowrap">Contact</button>
           </nav>
 
-          {/* Action buttons (Check Eligibility & Book Now) & Mobile Hamburger */}
-          <div className="flex items-center space-x-2 sm:space-x-3">
+          {/* Action buttons (Check Eligibility, Book Now, Create My Cricket CV) & Mobile Hamburger */}
+          <div className="flex items-center space-x-1 sm:space-x-1.5 xl:space-x-2.5 shrink-0">
             <button 
               onClick={() => { try { sessionStorage.setItem('tcc_active_tab', 'eligibility'); sessionStorage.removeItem('tcc_eligibility_step'); sessionStorage.removeItem('tcc_confirmed_assessment'); } catch {} setActiveTab('eligibility'); setEligibilityStep(1); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
-              className="px-4 py-2.5 text-xs font-extrabold bg-[#F5C451] hover:bg-[#E2AF3C] text-[#0B1A30] rounded-lg shadow-sm hover:scale-105 hover:shadow transition transform duration-150 uppercase tracking-widest cursor-pointer font-sans whitespace-nowrap"
+              className="px-2 sm:px-2.5 py-2 text-[10px] xl:text-[11px] font-extrabold bg-[#F5C451] hover:bg-[#E2AF3C] text-[#0B1A30] rounded-lg shadow-sm hover:scale-105 hover:shadow transition transform duration-150 uppercase tracking-widest cursor-pointer font-sans whitespace-nowrap"
             >
-              Check Eligibility - UK 2027
+              Check Eligibility <span className="hidden xl:inline">- UK 2027</span>
             </button>
 
             <button 
               onClick={() => { setActiveTab('book'); setBookingStep(1); }}
-              className="hidden lg:inline-block px-4 py-2.5 text-xs font-extrabold bg-[#0B1A30] hover:bg-[#1A2E4C] text-white rounded-lg hover:scale-105 hover:shadow-lg transition transform duration-150 uppercase tracking-widest cursor-pointer font-sans whitespace-nowrap"
+              className="hidden lg:inline-block px-2 sm:px-2.5 py-2 text-[10px] xl:text-[11px] font-extrabold bg-[#0B1A30] hover:bg-[#1A2E4C] text-white rounded-lg hover:scale-105 hover:shadow-lg transition transform duration-150 uppercase tracking-widest cursor-pointer font-sans whitespace-nowrap"
             >
               Book Now
+            </button>
+
+            <button 
+              onClick={() => { setActiveTab('cricket-cv'); setCvView('landing'); setCvStep(1); }}
+              className="hidden lg:inline-block px-2 sm:px-2.5 py-2 text-[10px] xl:text-[11px] font-extrabold bg-[#F5C451] hover:bg-[#E2AF3C] text-[#0B1A30] rounded-lg shadow-sm hover:scale-105 hover:shadow transition transform duration-150 uppercase tracking-widest cursor-pointer font-sans whitespace-nowrap"
+            >
+              Create My Cricket CV
             </button>
 
             {/* Hamburger Toggle Button */}
             <button 
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="lg:hidden p-2 text-[#0B1A30] hover:text-[#D4AF37] rounded hover:bg-slate-100 transition-all"
+              className="xl:hidden p-2 text-[#0B1A30] hover:text-[#D4AF37] rounded hover:bg-slate-100 transition-all"
               title="Toggle Navigation Menu"
               aria-label="Toggle Navigation Menu"
             >
@@ -3747,7 +3827,7 @@ END:VCALENDAR`;
 
         {/* Mobile Dropdown Navigation Menu */}
         {mobileMenuOpen && (
-          <div className="lg:hidden bg-[#0B1A30] border-t border-navy-700/55 px-4 py-3 shadow-xl animate-fade-in">
+          <div className="xl:hidden bg-[#0B1A30] border-t border-navy-700/55 px-4 py-3 shadow-xl animate-fade-in">
             <nav className="flex flex-col space-y-2 text-sm font-sans font-normal tracking-wider uppercase text-slate-100">
               <button 
                 onClick={() => scrollToSection('home')} 
@@ -3775,9 +3855,9 @@ END:VCALENDAR`;
               </button>
               <button 
                 onClick={() => { setActiveTab('cricket-cv'); setCvView('landing'); setCvStep(1); setMobileMenuOpen(false); }} 
-                className="text-left py-2 border-b border-navy-800/60 hover:text-gold-400 transition"
+                className="text-left py-2 border-b border-navy-800/60 hover:text-gold-400 text-gold-400 font-bold transition"
               >
-                Cricket CV
+                Create My Cricket CV
               </button>
               <button 
                 onClick={() => { setActiveTab('eligibility'); setEligibilityStep(1); setMobileMenuOpen(false); }} 

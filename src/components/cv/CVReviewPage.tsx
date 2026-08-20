@@ -13,7 +13,7 @@ import {
 
 interface CVReviewPageProps {
   cv: CricketCVFull;
-  onPay: () => void;
+  onPay: (isSimulated: boolean) => void;
   onPrev: () => void;
 }
 
@@ -82,7 +82,9 @@ export default function CVReviewPage({ cv, onPay, onPrev }: CVReviewPageProps) {
             <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider">Order Summary</h3>
             <div className="flex justify-between items-center border-b border-slate-900 pb-2">
               <div>
-                <span className="font-bold text-white text-sm">Professional Cricket CV</span>
+                <span className="font-bold text-white text-sm">
+                  {cv.paymentStatus === 'Paid' ? 'Cricket CV 5-Edit Renewal' : 'Professional Cricket CV'}
+                </span>
                 <p className="text-[10px] text-slate-500 mt-0.5">Template: {cv.templateId.toUpperCase()}</p>
               </div>
               <div className="text-right">
@@ -244,20 +246,30 @@ export default function CVReviewPage({ cv, onPay, onPrev }: CVReviewPageProps) {
           </div>
 
           {/* Submit Actions */}
-          <div className="flex gap-3 pt-2">
-            <button 
-              onClick={onPrev}
-              className="px-4 py-3 rounded-xl border border-slate-850 text-slate-400 hover:text-white hover:bg-slate-900 transition text-xs font-bold text-center flex items-center justify-center gap-1 cursor-pointer"
-            >
-              <ChevronLeft className="w-4 h-4" /> Styling
-            </button>
+          <div className="flex flex-col gap-3 pt-2">
+            <div className="flex gap-3">
+              <button 
+                onClick={onPrev}
+                className="px-4 py-3 rounded-xl border border-slate-850 text-slate-400 hover:text-white hover:bg-slate-900 transition text-xs font-bold text-center flex items-center justify-center gap-1 cursor-pointer"
+              >
+                <ChevronLeft className="w-4 h-4" /> Styling
+              </button>
+              
+              <button 
+                disabled={!isFormValid()}
+                onClick={() => onPay(false)}
+                className="flex-1 py-3.5 rounded-xl font-black bg-gold-gradient text-navy-950 hover:opacity-90 disabled:opacity-30 disabled:cursor-not-allowed transition flex items-center justify-center gap-2 text-xs cursor-pointer shadow-md shadow-gold-500/10 uppercase"
+              >
+                <Wallet className="w-4 h-4" /> {cv.paymentStatus === 'Paid' ? 'RENEW PLAN ₹699' : 'PAY ₹699 SECURELY'}
+              </button>
+            </div>
             
             <button 
-              disabled={!isFormValid()}
-              onClick={onPay}
-              className="flex-1 py-3.5 rounded-xl font-black bg-gold-gradient text-navy-950 hover:opacity-90 disabled:opacity-30 disabled:cursor-not-allowed transition flex items-center justify-center gap-2 text-xs cursor-pointer shadow-md shadow-gold-500/10 uppercase"
+              type="button"
+              onClick={() => onPay(true)}
+              className="w-full py-2.5 rounded-xl border border-dashed border-blue-500/50 hover:border-blue-400 text-blue-400 hover:text-blue-300 bg-blue-950/20 hover:bg-blue-950/40 transition text-center text-[10px] font-bold uppercase tracking-wider cursor-pointer"
             >
-              <Wallet className="w-4 h-4" /> PAY ₹699 & ACTIVATE CV
+              Simulate Successful Payment (Bypass)
             </button>
           </div>
 

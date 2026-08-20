@@ -119,6 +119,7 @@ export interface CricketCVFull {
   updatedAt: string;
   paymentStatus: 'Pending' | 'Paid';
   downloadStatus: 'LOCKED' | 'UNLOCKED';
+  latestInvoiceNumber?: string;
   
   // Section 1 — Personal
   firstName: string;
