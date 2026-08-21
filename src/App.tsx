@@ -3300,7 +3300,7 @@ END:VCALENDAR`;
                   </div>
                   <div className="grid grid-cols-2 py-1.5">
                     <span className="font-semibold text-slate-400">Email Address</span>
-                    <span className="font-bold text-slate-900">{cvForm.email}</span>
+                    <span className="font-bold text-slate-900 no-capitalize">{cvForm.email}</span>
                   </div>
                 </div>
 
