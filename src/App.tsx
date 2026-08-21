@@ -1537,7 +1537,7 @@ END:VCALENDAR`;
           if (res.ok) {
             const data = await res.json();
             setCvUser(data.user);
-            await fetchUserCV(cvToken);
+            await fetchUserCV(cvToken, data.user);
           } else {
             handleCvLogout();
           }
@@ -1551,7 +1551,7 @@ END:VCALENDAR`;
     validateToken();
   }, []);
 
-  const fetchUserCV = async (tokenStr: string) => {
+  const fetchUserCV = async (tokenStr: string, activeUser?: any) => {
     try {
       const res = await fetch(`/api/cv-get?t=${Date.now()}`, {
         headers: { 'Authorization': `Bearer ${tokenStr}` }
@@ -1563,6 +1563,27 @@ END:VCALENDAR`;
             ...initialCVFormFull('', '', '', ''),
             ...data.cv
           };
+
+          const targetUser = activeUser || cvUser || (() => {
+            try {
+              const u = sessionStorage.getItem('cv_user');
+              return u ? JSON.parse(u) : null;
+            } catch {
+              return null;
+            }
+          })();
+
+          if (targetUser) {
+            if (!mergedCv.firstName) mergedCv.firstName = targetUser.firstName || '';
+            if (!mergedCv.lastName) mergedCv.lastName = targetUser.lastName || '';
+            if (!mergedCv.email) mergedCv.email = targetUser.email || '';
+            if (!mergedCv.phone) mergedCv.phone = targetUser.mobileNumber || '';
+            if (!mergedCv.countryOfResidence) mergedCv.countryOfResidence = targetUser.country || '';
+            if (!mergedCv.currentCity) mergedCv.currentCity = targetUser.stateProvince || '';
+            if (!mergedCv.nationality) mergedCv.nationality = targetUser.nationality || '';
+            if (!mergedCv.dateOfBirth) mergedCv.dateOfBirth = targetUser.dateOfBirth || '';
+          }
+
           setCvForm(mergedCv);
           if (mergedCv.paymentStatus === 'Paid') {
             setCvView('dashboard');
@@ -1609,7 +1630,7 @@ END:VCALENDAR`;
     setCvUser(user);
     sessionStorage.setItem('cv_token', token);
     sessionStorage.setItem('cv_user', JSON.stringify(user));
-    fetchUserCV(token);
+    fetchUserCV(token, user);
     setCvView('dashboard');
     setShowCVAuthModal(false);
   };
