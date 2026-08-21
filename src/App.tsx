@@ -4298,12 +4298,14 @@ END:VCALENDAR`;
               Book Now
             </button>
 
+            {/* 
             <button 
               onClick={() => { setActiveTab('cricket-cv'); setCvView('landing'); setCvStep(1); }}
               className="hidden lg:inline-block px-2 sm:px-2.5 py-2 text-[10px] xl:text-[11px] font-extrabold bg-[#F5C451] hover:bg-[#E2AF3C] text-[#0B1A30] rounded-lg shadow-sm hover:scale-105 hover:shadow transition transform duration-150 uppercase tracking-widest cursor-pointer font-sans whitespace-nowrap"
             >
               Create My Cricket CV
             </button>
+            */}
 
             {/* Hamburger Toggle Button */}
             <button 
@@ -4346,12 +4348,14 @@ END:VCALENDAR`;
               >
                 My Services
               </button>
+              {/* 
               <button 
                 onClick={() => { setActiveTab('cricket-cv'); setCvView('landing'); setCvStep(1); setMobileMenuOpen(false); }} 
                 className="text-left py-2 border-b border-navy-800/60 hover:text-gold-400 text-gold-400 font-bold transition"
               >
                 Create My Cricket CV
               </button>
+              */}
               <button 
                 onClick={() => { setActiveTab('eligibility'); setEligibilityStep(1); setMobileMenuOpen(false); }} 
                 className="text-left py-2 border-b border-navy-800/60 hover:text-gold-400 transition"
@@ -4494,6 +4498,7 @@ END:VCALENDAR`;
 
                   {/* CTA Buttons */}
                   <div className="pt-2 flex flex-col sm:flex-row flex-wrap gap-4">
+                    {/* 
                     <button 
                       onClick={() => { setActiveTab('cricket-cv'); setCvView('landing'); setCvStep(1); }}
                       className="w-full sm:w-auto px-6 py-3.5 bg-[#F5C451] hover:bg-[#E2AF3C] text-[#0B1A30] font-extrabold rounded-lg shadow-md hover:scale-105 transform transition duration-150 uppercase tracking-wider text-xs flex items-center justify-center space-x-1.5 cursor-pointer font-sans"
@@ -4501,6 +4506,7 @@ END:VCALENDAR`;
                       <span>Create My Cricket CV</span>
                       <ChevronRight className="h-4 w-4" />
                     </button>
+                    */}
 
                     <button 
                       onClick={() => { try { sessionStorage.setItem('tcc_active_tab', 'eligibility'); sessionStorage.removeItem('tcc_eligibility_step'); sessionStorage.removeItem('tcc_confirmed_assessment'); } catch {} setActiveTab('eligibility'); setEligibilityStep(1); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
