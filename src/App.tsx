@@ -682,6 +682,7 @@ export default function App() {
   const [cvStep, setCvStep] = useState<number>(1);
   const [cvForm, setCvForm] = useState<CricketCVFull>(() => initialCVFormFull('', '', '', ''));
   const [age, setAge] = useState<number | ''>('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [showConfirmView, setShowConfirmView] = useState(false);
   const [loginEmail, setLoginEmail] = useState('');
   const [loginPassword, setLoginPassword] = useState('');
@@ -3204,8 +3205,13 @@ END:VCALENDAR`;
       };
 
       const handleOnboardSubmit = () => {
-        if (!cvForm.firstName || !cvForm.lastName || !cvForm.nationality || !cvForm.dateOfBirth || !cvForm.countryOfResidence || !cvForm.currentCity || !cvForm.phone || !cvForm.email || !cvForm.password) {
+        if (!cvForm.firstName || !cvForm.lastName || !cvForm.nationality || !cvForm.dateOfBirth || !cvForm.countryOfResidence || !cvForm.currentCity || !cvForm.phone || !cvForm.email || !cvForm.password || !confirmPassword) {
           alert("Please fill in all the required fields.");
+          return;
+        }
+
+        if (cvForm.password !== confirmPassword) {
+          alert("Passwords do not match. Please verify your passwords.");
           return;
         }
 
@@ -3506,6 +3512,19 @@ END:VCALENDAR`;
                   )}
                 </div>
 
+                {/* Confirm Password */}
+                <div className="space-y-1.5 font-sans">
+                  <label className="block text-xs font-bold text-slate-700 uppercase">Confirm Password *</label>
+                  <input 
+                    type="password" 
+                    required
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    placeholder="Re-enter account password"
+                    className="w-full text-xs p-3 border border-slate-300 rounded-xl focus:outline-none focus:border-[#D4AF37] bg-white text-slate-800 font-semibold font-mono"
+                  />
+                </div>
+
                 {/* Navigation Buttons */}
                 <div className="flex justify-between items-center pt-6 border-t border-slate-100 font-sans">
                   <button 
@@ -3519,7 +3538,7 @@ END:VCALENDAR`;
                     type="submit"
                     className="px-6 py-2.5 bg-[#0B1A30] text-white rounded-lg text-xs font-bold hover:bg-navy-950 transition cursor-pointer"
                   >
-                    Submit Profile
+                    Submit
                   </button>
                 </div>
               </form>

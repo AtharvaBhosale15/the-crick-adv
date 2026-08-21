@@ -200,7 +200,7 @@ const CVReferencesBlock = ({ cv }: { cv: CricketCVFull }) => {
                 <div className="text-[10px] text-slate-500">{ref.position} - {ref.organisation}</div>
                 {ref.relationship && <div className="text-[9px] text-slate-400">Relationship: {ref.relationship}</div>}
                 {(ref.email || ref.phone) && (
-                  <div className="text-[10px]">{ref.email} {ref.email && ref.phone ? '|' : ''} {ref.phone}</div>
+                  <div className="text-[10px]"><span className="no-capitalize">{ref.email}</span> {ref.email && ref.phone ? '|' : ''} {ref.phone}</div>
                 )}
               </div>
             </CVAtomicBlock>
@@ -1629,7 +1629,7 @@ export function PrestigeTemplate({ cv, accentColour, font, isPreview }: Template
                   <div className="rorg">{ref.position} &mdash; {ref.organisation}</div>
                   {(ref.phone || ref.email) && (
                     <div className="rcontact font-sans">
-                      {ref.email} {ref.email && ref.phone ? '|' : ''} {ref.phone}
+                      <span className="no-capitalize">{ref.email}</span> {ref.email && ref.phone ? '|' : ''} {ref.phone}
                     </div>
                   )}
                 </div>

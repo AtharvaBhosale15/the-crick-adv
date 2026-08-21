@@ -142,7 +142,7 @@ export default function CVPaymentSuccess({ cv, onNext }: CVPaymentSuccessProps) 
         <div className="text-xs text-slate-300 space-y-1">
           <span className="font-bold text-white block">Email Confirmation Sent</span>
           <p className="text-slate-400 leading-relaxed">
-            A copy of this invoice has been sent to your registered email address <strong>{cv.email}</strong>.
+            A copy of this invoice has been sent to your registered email address <strong className="no-capitalize">{cv.email}</strong>.
           </p>
         </div>
       </div>
