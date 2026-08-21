@@ -1503,19 +1503,28 @@ END:VCALENDAR`;
   // Sync session on mount and URL query params
   useEffect(() => {
     const checkParams = () => {
-      const params = new URLSearchParams(window.location.search);
-      const verify = params.get('verify');
-      const reset = params.get('reset');
+      let params = new URLSearchParams(window.location.search);
+      let verify = params.get('verify');
+      let reset = params.get('reset');
+
+      // Check hash query params (in case of /#cricket-cv?verify=token)
+      const hash = window.location.hash;
+      if (hash.includes('?')) {
+        const hashParams = new URLSearchParams(hash.substring(hash.indexOf('?')));
+        if (!verify) verify = hashParams.get('verify');
+        if (!reset) reset = hashParams.get('reset');
+      }
+
       if (verify) {
         setVerificationToken(verify);
         setActiveTab('cricket-cv');
-        setCvView('landing');
+        setCvView('login');
       }
       if (reset) {
         setForgotPasswordToken(reset);
         setShowForgotPasswordModal(true);
         setActiveTab('cricket-cv');
-        setCvView('landing');
+        setCvView('login');
       }
     };
 
@@ -3239,8 +3248,10 @@ END:VCALENDAR`;
           const data = await res.json();
           if (!res.ok) throw new Error(data.error || 'Registration failed');
 
-          if (data.token || res.ok) {
-            alert('Registration Successful! Please log in to access your account.');
+          if (res.ok) {
+            alert("Please verify your email via the email sent on your registered mail id.");
+            setConfirmPassword('');
+            setShowConfirmView(false);
             setCvView('login');
           } else {
             alert(data.message || 'Registration completed successfully! Please verify your email.');
