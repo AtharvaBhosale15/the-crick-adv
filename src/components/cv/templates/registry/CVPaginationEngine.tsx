@@ -211,7 +211,10 @@ export const CVPaginatedRenderer = ({
 
   // Watermark Component
   const Watermark = () => (
-    <div className="absolute inset-0 flex items-center justify-center pointer-events-none overflow-hidden select-none z-50">
+    <div 
+      className="absolute inset-0 flex items-center justify-center pointer-events-none overflow-hidden select-none z-50"
+      style={{ pointerEvents: 'none', touchAction: 'none' }}
+    >
       <div 
         className="text-slate-400/20 text-4xl md:text-5xl font-black uppercase tracking-widest border-4 border-slate-400/20 px-8 py-4 rounded-xl rotate-[-30deg] text-center"
         style={{ whiteSpace: 'nowrap' }}

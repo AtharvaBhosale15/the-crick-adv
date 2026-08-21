@@ -3706,6 +3706,47 @@ END:VCALENDAR`;
             pdf.addPage();
           }
           pdf.addImage(imgData, 'JPEG', 0, 0, imgWidth, imgHeight);
+
+          // ── Stamp real, clickable PDF hyperlink annotations on top of the image ──
+          // html2canvas flattens the page to pixels, so we manually find every <a href>
+          // element on the page, compute its position relative to the page container,
+          // and add a pdf.link() annotation so the link is genuine in PDF readers
+          // (including mobile iOS/Android viewers like Adobe, Chrome, Safari PDF viewer).
+          const pageRect = pageEl.getBoundingClientRect();
+          const pagePixelWidth  = pageEl.offsetWidth;
+          const pagePixelHeight = pageEl.offsetHeight;
+          const scaleX = imgWidth  / pagePixelWidth;   // mm per pixel X
+          const scaleY = imgHeight / pagePixelHeight;  // mm per pixel Y
+
+          const anchors = pageEl.querySelectorAll('a[href]');
+          anchors.forEach((anchor) => {
+            const anchorEl = anchor as HTMLAnchorElement;
+            const url = anchorEl.href;
+            if (!url || url.startsWith('javascript:')) return;
+
+            const anchorRect = anchorEl.getBoundingClientRect();
+
+            // Position relative to the page container (in px)
+            const relLeft   = anchorRect.left   - pageRect.left;
+            const relTop    = anchorRect.top    - pageRect.top;
+            const relWidth  = anchorRect.width;
+            const relHeight = anchorRect.height;
+
+            // Skip degenerate (invisible) links
+            if (relWidth <= 0 || relHeight <= 0) return;
+
+            // Convert px to mm for the PDF coordinate space
+            const pdfX      = relLeft   * scaleX;
+            const pdfY      = relTop    * scaleY;
+            const pdfWidth  = Math.max(relWidth  * scaleX, 1);  // minimum 1mm hit area
+            const pdfHeight = Math.max(relHeight * scaleY, 1);
+
+            try {
+              pdf.link(pdfX, pdfY, pdfWidth, pdfHeight, { url });
+            } catch (_) {
+              // Silently ignore if the annotation fails for any link
+            }
+          });
         }
         
         pdf.save(`Cricket_CV_${cvForm.firstName || 'Player'}_${cvForm.lastName || 'Profile'}.pdf`);

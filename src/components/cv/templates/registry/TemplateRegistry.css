@@ -93,3 +93,20 @@ svg *,
   text-transform: none !important;
 }
 
+/* Expand hit target of links for mobile devices when scaled */
+.cv-document-paginated a {
+  position: relative;
+  cursor: pointer !important;
+  pointer-events: auto !important;
+}
+.cv-document-paginated a::after {
+  content: '';
+  position: absolute;
+  top: -12px;
+  bottom: -12px;
+  left: -12px;
+  right: -12px;
+  pointer-events: auto !important;
+}
+
+

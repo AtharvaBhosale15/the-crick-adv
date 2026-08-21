@@ -84,12 +84,14 @@ export default function CVLivePreview({ cv, isPreview = true }: CVLivePreviewPro
             style={{
               width: A4_W,
               height: unscaledH,
-              transform: `scale(${zoom})`,
+              transform: `scale(${zoom}) translateZ(0)`,
+              WebkitTransform: `scale(${zoom}) translateZ(0)`,
               transformOrigin: 'top left',
               position: 'absolute',
               top: 0,
               left: 0,
               transition: 'opacity 0.25s ease',
+              willChange: 'transform',
             }}
           >
             <CVTemplateRenderer
