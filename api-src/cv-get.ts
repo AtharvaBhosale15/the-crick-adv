@@ -62,19 +62,29 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       dbCv = cvs.find((c: any) => c.userId === decoded.userId);
     }
 
+    let userDetails: any = null;
+    if (hasPostgres()) {
+      const u = await sql`SELECT * FROM cv_users WHERE id = ${decoded.userId} LIMIT 1`;
+      if (u.rows.length > 0) userDetails = u.rows[0];
+    } else {
+      const users = getLocalUsers();
+      userDetails = users.find((u: any) => u.id === decoded.userId);
+    }
+
     if (dbCv) {
       const cvData = hasPostgres() ? JSON.parse(dbCv.cv_data) : dbCv;
+      if (userDetails) {
+        if (!cvData.firstName) cvData.firstName = userDetails.first_name || userDetails.firstName || '';
+        if (!cvData.lastName) cvData.lastName = userDetails.last_name || userDetails.lastName || '';
+        if (!cvData.email) cvData.email = userDetails.email || decoded.email || '';
+        if (!cvData.phone) cvData.phone = userDetails.mobile_number || userDetails.mobileNumber || '';
+        if (!cvData.countryOfResidence) cvData.countryOfResidence = userDetails.country || '';
+        if (!cvData.currentCity) cvData.currentCity = userDetails.state_province || userDetails.stateProvince || '';
+        if (!cvData.nationality) cvData.nationality = userDetails.nationality || '';
+        if (!cvData.dateOfBirth) cvData.dateOfBirth = userDetails.date_of_birth || userDetails.dateOfBirth || '';
+      }
       return res.status(200).json({ cv: cvData });
     } else {
-      // Find user details to initialize CV pre-fills
-      let userDetails: any = null;
-      if (hasPostgres()) {
-        const u = await sql`SELECT * FROM cv_users WHERE id = ${decoded.userId} LIMIT 1`;
-        if (u.rows.length > 0) userDetails = u.rows[0];
-      } else {
-        const users = getLocalUsers();
-        userDetails = users.find((u: any) => u.id === decoded.userId);
-      }
 
       const initialCv = {
         id: `cv_${Date.now()}`,

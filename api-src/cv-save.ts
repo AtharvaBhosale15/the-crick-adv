@@ -139,13 +139,33 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       identityLocked: isPaid // Lock if paid
     };
 
+    let userDetails: any = null;
+    if (hasPostgres()) {
+      const u = await sql`SELECT * FROM cv_users WHERE id = ${decoded.userId} LIMIT 1`;
+      if (u.rows.length > 0) userDetails = u.rows[0];
+    } else {
+      const users = getLocalUsers();
+      userDetails = users.find((u: any) => u.id === decoded.userId);
+    }
+
+    if (userDetails) {
+      if (!updatedCv.firstName) updatedCv.firstName = userDetails.first_name || userDetails.firstName || '';
+      if (!updatedCv.lastName) updatedCv.lastName = userDetails.last_name || userDetails.lastName || '';
+      if (!updatedCv.email) updatedCv.email = userDetails.email || decoded.email || '';
+      if (!updatedCv.phone) updatedCv.phone = userDetails.mobile_number || userDetails.mobileNumber || '';
+      if (!updatedCv.countryOfResidence) updatedCv.countryOfResidence = userDetails.country || '';
+      if (!updatedCv.currentCity) updatedCv.currentCity = userDetails.state_province || userDetails.stateProvince || '';
+      if (!updatedCv.nationality) updatedCv.nationality = userDetails.nationality || '';
+      if (!updatedCv.dateOfBirth) updatedCv.dateOfBirth = userDetails.date_of_birth || userDetails.dateOfBirth || '';
+    }
+
     // If identity is locked, keep the original name/DOB/nationality
     if (isLocked && existingCv) {
-      const originalData = JSON.parse(existingCv.cv_data);
-      updatedCv.firstName = originalData.firstName;
-      updatedCv.lastName = originalData.lastName;
-      updatedCv.nationality = originalData.nationality;
-      updatedCv.dateOfBirth = originalData.dateOfBirth;
+      const originalData = typeof existingCv.cv_data === 'string' ? JSON.parse(existingCv.cv_data) : existingCv;
+      if (originalData.firstName) updatedCv.firstName = originalData.firstName;
+      if (originalData.lastName) updatedCv.lastName = originalData.lastName;
+      if (originalData.nationality) updatedCv.nationality = originalData.nationality;
+      if (originalData.dateOfBirth) updatedCv.dateOfBirth = originalData.dateOfBirth;
     }
 
     if (hasPostgres()) {

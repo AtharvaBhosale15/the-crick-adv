@@ -969,6 +969,19 @@ app.post('/api/cv-save', (req, res) => {
     identityLocked: isPaid
   };
 
+  const users = getLocalUsers();
+  const userDetails = users.find(u => u.id === decoded.userId);
+  if (userDetails) {
+    if (!updatedCv.firstName) updatedCv.firstName = userDetails.first_name || userDetails.firstName || '';
+    if (!updatedCv.lastName) updatedCv.lastName = userDetails.last_name || userDetails.lastName || '';
+    if (!updatedCv.email) updatedCv.email = userDetails.email || decoded.email || '';
+    if (!updatedCv.phone) updatedCv.phone = userDetails.mobile_number || userDetails.mobileNumber || '';
+    if (!updatedCv.countryOfResidence) updatedCv.countryOfResidence = userDetails.country || '';
+    if (!updatedCv.currentCity) updatedCv.currentCity = userDetails.state_province || userDetails.stateProvince || '';
+    if (!updatedCv.nationality) updatedCv.nationality = userDetails.nationality || '';
+    if (!updatedCv.dateOfBirth) updatedCv.dateOfBirth = userDetails.date_of_birth || userDetails.dateOfBirth || '';
+  }
+
   const idx = cvs.findIndex(c => c.id === cvId);
   if (idx > -1) {
     cvs[idx] = updatedCv;
@@ -993,10 +1006,22 @@ app.get('/api/cv-get', (req, res) => {
   const cvs = getLocalCvs();
   const dbCv = cvs.find(c => c.userId === decoded.userId);
 
-  if (dbCv) return res.status(200).json({ cv: dbCv });
-
   const users = getLocalUsers();
   const userDetails = users.find(u => u.id === decoded.userId);
+
+  if (dbCv) {
+    if (userDetails) {
+      if (!dbCv.firstName) dbCv.firstName = userDetails.first_name || userDetails.firstName || '';
+      if (!dbCv.lastName) dbCv.lastName = userDetails.last_name || userDetails.lastName || '';
+      if (!dbCv.email) dbCv.email = userDetails.email || decoded.email || '';
+      if (!dbCv.phone) dbCv.phone = userDetails.mobile_number || userDetails.mobileNumber || '';
+      if (!dbCv.countryOfResidence) dbCv.countryOfResidence = userDetails.country || '';
+      if (!dbCv.currentCity) dbCv.currentCity = userDetails.state_province || userDetails.stateProvince || '';
+      if (!dbCv.nationality) dbCv.nationality = userDetails.nationality || '';
+      if (!dbCv.dateOfBirth) dbCv.dateOfBirth = userDetails.date_of_birth || userDetails.dateOfBirth || '';
+    }
+    return res.status(200).json({ cv: dbCv });
+  }
 
   const initialCv = {
     id: `cv_${Date.now()}`,
