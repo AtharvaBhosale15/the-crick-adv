@@ -90,6 +90,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       let firstName = 'Player';
       let refNum = '';
       let invoiceNum = '';
+      let amountPaid = 999;
 
       if (hasPostgres()) {
         const cvRes = await sql`SELECT * FROM cvs WHERE id = ${cvId} LIMIT 1`;
@@ -106,6 +107,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             cvData.purchases = [];
           }
           const isRenewal = cvData.paymentStatus === 'Paid';
+          amountPaid = isRenewal ? 699 : 999;
           if (!isRenewal && cvData.purchases.length === 0) {
             cvData.purchases.push({
               type: 'initial',
@@ -159,6 +161,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             cvs[cvIdx].purchases = [];
           }
           const isRenewalLocal = cvs[cvIdx].paymentStatus === 'Paid';
+          amountPaid = isRenewalLocal ? 699 : 999;
           if (!isRenewalLocal && cvs[cvIdx].purchases.length === 0) {
             cvs[cvIdx].purchases.push({
               type: 'initial',
@@ -211,7 +214,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             </div>
             <div style="padding: 25px; background-color: #ffffff;">
               <p>Dear ${firstName},</p>
-              <p>Thank you for purchasing the Premium Cricket CV Builder. Your payment of ₹699 has been successfully verified.</p>
+              <p>Thank you for purchasing the Premium Cricket CV Builder. Your payment of ₹${amountPaid} has been successfully verified.</p>
               
               <div style="border: 1px solid #e2e8f0; border-radius: 8px; overflow: hidden; margin: 20px 0;">
                 <div style="background-color: #f8fafc; padding: 12px 15px; border-bottom: 1px solid #e2e8f0;">
@@ -233,7 +236,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
                     </tr>
                     <tr style="border-top: 1px solid #f1f5f9;">
                       <td style="color: #0b1a30; font-weight: bold; padding: 10px 0 4px 0;">Amount Paid:</td>
-                      <td style="text-align: right; font-weight: bold; color: #D4AF37; font-size: 15px; padding: 10px 0 4px 0;">₹699.00</td>
+                      <td style="text-align: right; font-weight: bold; color: #D4AF37; font-size: 15px; padding: 10px 0 4px 0;">₹${amountPaid}.00</td>
                     </tr>
                   </table>
                 </div>
@@ -242,7 +245,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
               <h3 style="color: #0b1a30; font-size: 14px; margin-top: 25px; margin-bottom: 10px; text-transform: uppercase;">What's Included:</h3>
               <ul style="padding-left: 20px; margin-top: 0; margin-bottom: 25px; font-size: 13px; color: #555;">
                 <li>Unlimited clean A4 PDF downloads without watermarks</li>
-                <li>Access to all 5 professional templates (Executive, Professional, International, Classic, Performance)</li>
                 <li>Up to 5 modifications/edits allowed per year to update stats or achievements</li>
                 <li>Secure hosting on The Cricket Advisor player database</li>
               </ul>
@@ -252,7 +254,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
               </div>
 
               <p style="margin-top: 30px; font-size: 12px; color: #64748b; border-top: 1px solid #e2e8f0; padding-top: 15px;">
-                For any support regarding your profile, feel free to contact us at support@thecricketadvisor.com.
+                For any support regarding your profile, feel free to contact us at thecricketadvisor@gmail.com.
               </p>
               <p style="font-size: 12px; color: #64748b; margin-top: 5px;">Regards,<br><strong>Team The Cricket Advisor</strong></p>
             </div>

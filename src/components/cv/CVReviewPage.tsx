@@ -137,7 +137,6 @@ export default function CVReviewPage({ cv, onPay, onPrev }: CVReviewPageProps) {
             </div>
             <div className="text-[10px] text-slate-400 space-y-1">
               <div>• Unlimited PDF downloads</div>
-              <div>• Access to all templates</div>
               <div>• 5 profile edits allowed per year</div>
             </div>
           </div>

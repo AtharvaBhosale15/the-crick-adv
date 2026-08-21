@@ -3688,6 +3688,31 @@ END:VCALENDAR`;
 
         const pdf = new jsPDF('p', 'mm', 'a4');
 
+        /**
+         * Walk the offsetParent chain from `el` up to `stopAt`,
+         * accumulating offsetLeft / offsetTop to get the element's position
+         * relative to `stopAt` in layout pixels.
+         *
+         * IMPORTANT: we use this instead of getBoundingClientRect() because
+         * the capture container lives at left:-9999px / top:-9999px, and
+         * getBoundingClientRect() returns viewport-relative coords that are
+         * completely wrong for off-screen elements (many browsers return 0/0
+         * or clamp values to the viewport boundary).
+         *
+         * pageEl has Tailwind's `relative` class (position:relative), so it IS
+         * an offsetParent and the traversal stops correctly at it.
+         */
+        const getOffsetRelativeTo = (el: HTMLElement, stopAt: HTMLElement): { x: number; y: number } => {
+          let x = 0, y = 0;
+          let cur: HTMLElement | null = el;
+          while (cur && cur !== stopAt) {
+            x += cur.offsetLeft;
+            y += cur.offsetTop;
+            cur = cur.offsetParent as HTMLElement | null;
+          }
+          return { x, y };
+        };
+
         for (let i = 0; i < pages.length; i++) {
           const pageEl = pages[i] as HTMLElement;
           const canvas = await html2canvas(pageEl, {
@@ -3698,58 +3723,141 @@ END:VCALENDAR`;
             backgroundColor: '#ffffff'
           });
           
-          const imgWidth = 210; // A4 width in mm
+          const imgWidth  = 210; // A4 width in mm
           const imgHeight = 297; // A4 height in mm
-          const imgData = canvas.toDataURL('image/jpeg', 1.0);
+          const imgData   = canvas.toDataURL('image/jpeg', 1.0);
           
-          if (i > 0) {
-            pdf.addPage();
-          }
+          if (i > 0) pdf.addPage();
           pdf.addImage(imgData, 'JPEG', 0, 0, imgWidth, imgHeight);
 
-          // ── Stamp real, clickable PDF hyperlink annotations on top of the image ──
-          // html2canvas flattens the page to pixels, so we manually find every <a href>
-          // element on the page, compute its position relative to the page container,
-          // and add a pdf.link() annotation so the link is genuine in PDF readers
-          // (including mobile iOS/Android viewers like Adobe, Chrome, Safari PDF viewer).
-          const pageRect = pageEl.getBoundingClientRect();
+          // ── Stamp URI link annotations ─────────────────────────────────────────
+          // html2canvas flattens the page to pixels so <a> links are lost.
+          // We find every anchor, compute its layout position via offsetParent
+          // traversal, and call pdf.link() to add a PDF /Link annotation.
+          //
+          // WHY pdf.link() needs post-processing:
+          //   jsPDF emits: <</Type /Annot /Subtype /Link /Border [0 0 0] /A <</S /URI /URI(url)>>>>
+          //   Missing: /H /I  – Highlight mode=Invert, the visual tap-feedback signal
+          //            /F 4   – Print flag, marks annotation as interactive
+          //   Desktop Chrome auto-detects URLs in image pixels as a fallback.
+          //   Mobile PDF readers (iOS Safari, Android Chrome, Samsung PDF, Adobe)
+          //   strictly require these two fields to treat annotations as tappable.
+          //
+          // We collect the annotations here; after all pages are built we patch
+          // the raw PDF bytes to inject /H /I /F 4 before saving.
+
           const pagePixelWidth  = pageEl.offsetWidth;
           const pagePixelHeight = pageEl.offsetHeight;
-          const scaleX = imgWidth  / pagePixelWidth;   // mm per pixel X
-          const scaleY = imgHeight / pagePixelHeight;  // mm per pixel Y
+          const scaleX = imgWidth  / pagePixelWidth;
+          const scaleY = imgHeight / pagePixelHeight;
 
           const anchors = pageEl.querySelectorAll('a[href]');
           anchors.forEach((anchor) => {
             const anchorEl = anchor as HTMLAnchorElement;
-            const url = anchorEl.href;
+
+            // Use the raw href attribute – anchorEl.href auto-resolves relative
+            // links to localhost which would break the PDF on a user's device.
+            const rawHref = anchorEl.getAttribute('href') || '';
+            const url     = anchorEl.href; // absolute URL resolved by the browser
             if (!url || url.startsWith('javascript:')) return;
 
-            const anchorRect = anchorEl.getBoundingClientRect();
+            // Skip links that are local-only (relative hrefs resolved to localhost)
+            if (
+              url.startsWith(window.location.origin) &&
+              !rawHref.startsWith('http://') &&
+              !rawHref.startsWith('https://')
+            ) return;
 
-            // Position relative to the page container (in px)
-            const relLeft   = anchorRect.left   - pageRect.left;
-            const relTop    = anchorRect.top    - pageRect.top;
-            const relWidth  = anchorRect.width;
-            const relHeight = anchorRect.height;
-
-            // Skip degenerate (invisible) links
+            const relWidth  = anchorEl.offsetWidth;
+            const relHeight = anchorEl.offsetHeight;
             if (relWidth <= 0 || relHeight <= 0) return;
 
-            // Convert px to mm for the PDF coordinate space
-            const pdfX      = relLeft   * scaleX;
-            const pdfY      = relTop    * scaleY;
-            const pdfWidth  = Math.max(relWidth  * scaleX, 1);  // minimum 1mm hit area
-            const pdfHeight = Math.max(relHeight * scaleY, 1);
+            const { x: relLeft, y: relTop } = getOffsetRelativeTo(anchorEl, pageEl);
+
+            // 4 mm padding → generous, finger-friendly tap target on mobile
+            const PAD  = 4;
+            const pdfX = Math.max(relLeft  * scaleX - PAD, 0);
+            const pdfY = Math.max(relTop   * scaleY - PAD, 0);
+            const pdfW = Math.min(Math.max(relWidth  * scaleX + PAD * 2, 8), imgWidth  - pdfX);
+            const pdfH = Math.min(Math.max(relHeight * scaleY + PAD * 2, 8), imgHeight - pdfY);
 
             try {
-              pdf.link(pdfX, pdfY, pdfWidth, pdfHeight, { url });
+              pdf.link(pdfX, pdfY, pdfW, pdfH, { url });
             } catch (_) {
-              // Silently ignore if the annotation fails for any link
+              console.warn('[PDF] Failed to add link annotation for:', url);
             }
           });
         }
-        
-        pdf.save(`Cricket_CV_${cvForm.firstName || 'Player'}_${cvForm.lastName || 'Profile'}.pdf`);
+
+        // ── Post-process: inject /H /I /F 4 into every Link annotation ──────────
+        //
+        // jsPDF's pdf.link() writes:
+        //   <</Type /Annot /Subtype /Link /Border [0 0 0] /A <</S /URI /URI(url)>>>>
+        // Missing fields that all mobile PDF readers require:
+        //   /H /I  = Highlight mode Invert (visual tap-feedback on mobile)
+        //   /F 4   = Print flag (marks annotation as interactive)
+        //
+        // WHY we work at the raw byte level (NOT TextDecoder + TextEncoder):
+        //   PDF files contain binary JPEG data. TextEncoder (UTF-8) corrupts
+        //   any byte >= 128 into a 2-byte sequence, destroying image streams
+        //   and producing a blank PDF.
+        //
+        // SAFE: scan the Uint8Array for ASCII '/Subtype /Link', splice in the
+        // ASCII bytes of ' /H /I /F 4'. Annotation dicts are pure ASCII.
+
+        const pdfArrayBuffer = pdf.output('arraybuffer');
+        const origBytes      = new Uint8Array(pdfArrayBuffer);
+
+        // ASCII byte sequences
+        const searchSeq  = Array.from('/Subtype /Link').map(c => c.charCodeAt(0));
+        const insertSeq  = Array.from(' /H /I /F 4').map(c => c.charCodeAt(0));
+        const alreadySeq = Array.from(' /H').map(c => c.charCodeAt(0)); // idempotency guard
+
+        // Find every un-patched match position
+        const matchPositions: number[] = [];
+        outer: for (let i = 0; i <= origBytes.length - searchSeq.length; i++) {
+          for (let j = 0; j < searchSeq.length; j++) {
+            if (origBytes[i + j] !== searchSeq[j]) continue outer;
+          }
+          // Skip if already patched (idempotent)
+          let alreadyPatched = true;
+          for (let j = 0; j < alreadySeq.length; j++) {
+            if (origBytes[i + searchSeq.length + j] !== alreadySeq[j]) {
+              alreadyPatched = false;
+              break;
+            }
+          }
+          if (!alreadyPatched) matchPositions.push(i);
+        }
+
+        // Build the patched buffer by splicing insertSeq after each match
+        const patchedBytes = new Uint8Array(
+          origBytes.length + matchPositions.length * insertSeq.length
+        );
+        let readPos = 0, writePos = 0, mIdx = 0;
+        while (readPos < origBytes.length) {
+          if (mIdx < matchPositions.length && readPos === matchPositions[mIdx]) {
+            patchedBytes.set(origBytes.subarray(readPos, readPos + searchSeq.length), writePos);
+            writePos += searchSeq.length;
+            readPos  += searchSeq.length;
+            patchedBytes.set(insertSeq, writePos);
+            writePos += insertSeq.length;
+            mIdx++;
+          } else {
+            patchedBytes[writePos++] = origBytes[readPos++];
+          }
+        }
+
+        const blob    = new Blob([patchedBytes], { type: 'application/pdf' });
+        const blobUrl = URL.createObjectURL(blob);
+        const a       = document.createElement('a');
+        a.href     = blobUrl;
+        a.download = `Cricket_CV_${cvForm.firstName || 'Player'}_${cvForm.lastName || 'Profile'}.pdf`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        setTimeout(() => URL.revokeObjectURL(blobUrl), 10000);
+
         alert('Clean Premium PDF downloaded successfully!');
       } catch (error: any) {
         console.error('Error rendering high-fidelity PDF download:', error);
