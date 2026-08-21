@@ -70,6 +70,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         );
       `;
 
+      try {
+        await sql`ALTER TABLE cv_users ADD COLUMN IF NOT EXISTS nationality VARCHAR(255);`;
+        await sql`ALTER TABLE cv_users ADD COLUMN IF NOT EXISTS date_of_birth VARCHAR(255);`;
+      } catch (colErr) {
+        console.error("Error adding missing columns to cv_users table:", colErr);
+      }
+
       const checkUser = await sql`SELECT id FROM cv_users WHERE email = ${sanitizedEmail} LIMIT 1`;
       if (checkUser.rows.length > 0) {
         return res.status(409).json({ error: 'User with this email already exists' });

@@ -38,6 +38,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     let dbUser: any = null;
 
     if (hasPostgres()) {
+      try {
+        await sql`ALTER TABLE cv_users ADD COLUMN IF NOT EXISTS nationality VARCHAR(255);`;
+        await sql`ALTER TABLE cv_users ADD COLUMN IF NOT EXISTS date_of_birth VARCHAR(255);`;
+      } catch (colErr) {
+        console.error("Error adding missing columns to cv_users table:", colErr);
+      }
       const userRes = await sql`SELECT * FROM cv_users WHERE email = ${sanitizedEmail} LIMIT 1`;
       if (userRes.rows.length > 0) {
         dbUser = userRes.rows[0];
