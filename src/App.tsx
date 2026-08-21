@@ -683,6 +683,7 @@ export default function App() {
   const [cvForm, setCvForm] = useState<CricketCVFull>(() => initialCVFormFull('', '', '', ''));
   const [age, setAge] = useState<number | ''>('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [showConfirmView, setShowConfirmView] = useState(false);
   const [loginEmail, setLoginEmail] = useState('');
   const [loginPassword, setLoginPassword] = useState('');
@@ -3477,7 +3478,7 @@ END:VCALENDAR`;
                       value={cvForm.email}
                       onChange={(e) => setCvForm({ ...cvForm, email: e.target.value })}
                       placeholder="name@example.com"
-                      className="w-full text-xs p-3 border border-slate-300 rounded-xl focus:outline-none focus:border-[#D4AF37] bg-white text-slate-800 font-semibold font-sans"
+                      className="w-full text-xs p-3 border border-slate-300 rounded-xl focus:outline-none focus:border-[#D4AF37] bg-white text-slate-800 font-semibold font-sans no-capitalize"
                     />
                   </div>
                 </div>
@@ -3486,12 +3487,12 @@ END:VCALENDAR`;
                 <div className="space-y-1.5">
                   <label className="block text-xs font-bold text-slate-700 uppercase font-sans">Account Password *</label>
                   <input 
-                    type="password" 
+                    type={showPassword ? "text" : "password"} 
                     required
                     value={cvForm.password || ''}
                     onChange={(e) => setCvForm({ ...cvForm, password: e.target.value })}
                     placeholder="Min 8 characters for account login"
-                    className="w-full text-xs p-3 border border-slate-300 rounded-xl focus:outline-none focus:border-[#D4AF37] bg-white text-slate-800 font-semibold font-sans font-mono"
+                    className="w-full text-xs p-3 border border-slate-300 rounded-xl focus:outline-none focus:border-[#D4AF37] bg-white text-slate-800 font-semibold font-sans font-mono no-capitalize"
                   />
                   {cvForm.password && (
                     <div className="space-y-1.5 mt-2 bg-slate-50 p-2.5 rounded-xl border border-slate-200">
@@ -3516,13 +3517,27 @@ END:VCALENDAR`;
                 <div className="space-y-1.5 font-sans">
                   <label className="block text-xs font-bold text-slate-700 uppercase">Confirm Password *</label>
                   <input 
-                    type="password" 
+                    type={showPassword ? "text" : "password"} 
                     required
                     value={confirmPassword}
                     onChange={(e) => setConfirmPassword(e.target.value)}
                     placeholder="Re-enter account password"
-                    className="w-full text-xs p-3 border border-slate-300 rounded-xl focus:outline-none focus:border-[#D4AF37] bg-white text-slate-800 font-semibold font-mono"
+                    className="w-full text-xs p-3 border border-slate-300 rounded-xl focus:outline-none focus:border-[#D4AF37] bg-white text-slate-800 font-semibold font-mono no-capitalize"
                   />
+                </div>
+
+                {/* Show Password Toggle */}
+                <div className="flex items-center gap-2 mt-1.5 no-capitalize font-sans">
+                  <input 
+                    type="checkbox"
+                    id="show-signup-password"
+                    checked={showPassword}
+                    onChange={(e) => setShowPassword(e.target.checked)}
+                    className="w-3.5 h-3.5 cursor-pointer accent-[#0B1A30]"
+                  />
+                  <label htmlFor="show-signup-password" className="text-xs text-slate-500 font-semibold cursor-pointer select-none">
+                    Show Passwords
+                  </label>
                 </div>
 
                 {/* Navigation Buttons */}
