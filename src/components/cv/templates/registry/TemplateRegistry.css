@@ -54,3 +54,42 @@
 .cv-atomic-block {
   margin-bottom: var(--section-gap);
 }
+
+/* Capitalize the first letter of every word on the CV templates */
+.template-executive,
+.template-professional,
+.template-international,
+.template-classic,
+.template-performance,
+.template-prestige {
+  text-transform: capitalize;
+}
+
+/* Exclude links, emails, icons, and elements explicitly marked no-capitalize from capitalization */
+.no-capitalize,
+.no-capitalize *,
+a,
+a *,
+.ico,
+.ico *,
+svg,
+svg *,
+.email-text,
+.email-text * {
+  text-transform: none !important;
+}
+
+/* Capitalize all text in the CV Workspace */
+.cv-workspace-container,
+.cv-workspace-container * {
+  text-transform: capitalize;
+}
+
+/* Exclude inputs/elements that must preserve case */
+.cv-workspace-container input[type="email"],
+.cv-workspace-container input[type="password"],
+.cv-workspace-container .no-capitalize,
+.cv-workspace-container .no-capitalize * {
+  text-transform: none !important;
+}
+

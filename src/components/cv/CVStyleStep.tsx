@@ -14,6 +14,7 @@ interface CVStyleStepProps {
 }
 
 const templates = [
+  /*
   {
     id: 'executive',
     name: 'The Executive',
@@ -107,6 +108,7 @@ const templates = [
       </div>
     ),
   },
+  */
   {
     id: 'prestige',
     name: 'The Prestige',
@@ -132,7 +134,7 @@ const templates = [
 ];
 
 export default function CVStyleStep({ cv, onChange, onNext, onPrev }: CVStyleStepProps) {
-  const [selectedId, setSelectedId] = useState(cv.templateId || 'executive');
+  const [selectedId, setSelectedId] = useState(cv.templateId || 'prestige');
   const [testResults, setTestResults] = useState<any[] | null>(null);
   const [isRunningTests, setIsRunningTests] = useState<boolean>(false);
 

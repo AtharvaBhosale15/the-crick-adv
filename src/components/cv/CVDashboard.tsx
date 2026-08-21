@@ -48,6 +48,13 @@ export default function CVDashboard({
 }: CVDashboardProps) {
   const editsLeft = cv.editsAllowed - cv.editsUsed;
   const [showRenewModal, setShowRenewModal] = useState(false);
+
+  const calculateAge = (dobString?: string) => {
+    if (!dobString) return '-';
+    const year = parseInt(dobString.split('-')[0], 10);
+    if (isNaN(year)) return '-';
+    return new Date().getFullYear() - year;
+  };
   const [showTokenConfirmModal, setShowTokenConfirmModal] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   // Local state for instant preview — updates immediately without waiting for parent re-render
@@ -58,6 +65,7 @@ export default function CVDashboard({
   }, [cv]);
 
   const templates = [
+    /*
     {
       id: 'executive',
       name: 'The Executive',
@@ -151,6 +159,7 @@ export default function CVDashboard({
         </div>
       )
     },
+    */
     {
       id: 'prestige',
       name: 'The Prestige',
@@ -374,7 +383,7 @@ export default function CVDashboard({
       };
 
   return (
-    <div className="bg-[#FDFBF7] border-2 border-[#1E293B] rounded-2xl p-5 md:p-8 text-left max-w-5xl mx-auto shadow-[4px_4px_0px_0px_rgba(30,41,59,1)] space-y-8 font-sans relative text-[#1E293B]">
+    <div className="bg-[#FDFBF7] border-2 border-[#1E293B] rounded-2xl p-5 md:p-8 text-left max-w-5xl mx-auto shadow-[4px_4px_0px_0px_rgba(30,41,59,1)] space-y-8 font-sans relative text-[#1E293B] capitalize">
       
       {/* Top Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center border-b-2 border-[#1E293B] pb-6 gap-4 font-sans">
@@ -427,8 +436,8 @@ export default function CVDashboard({
                 <span className="font-bold text-[#1E293B] text-sm">{cv.nationality || '-'}</span>
               </div>
               <div>
-                <span className="text-[10px] text-slate-655 uppercase block mb-1 font-bold">Date of Birth</span>
-                <span className="font-bold text-[#1E293B] text-sm">{cv.dateOfBirth || '-'}</span>
+                <span className="text-[10px] text-slate-655 uppercase block mb-1 font-bold">Age</span>
+                <span className="font-bold text-[#1E293B] text-sm">{calculateAge(cv.dateOfBirth)}</span>
               </div>
               <div className="col-span-2">
                 <span className="text-[10px] text-slate-655 uppercase block mb-1 font-bold">Current Residence</span>
@@ -507,7 +516,8 @@ export default function CVDashboard({
                   
                   <button 
                     onClick={onRenewPlanCheckout || (() => setShowRenewModal(true))}
-                    className="w-full py-2.5 bg-red-650 hover:bg-red-700 text-white rounded-lg text-xs font-bold transition flex items-center justify-center gap-2 cursor-pointer font-sans shadow-md"
+                    className="w-full py-2.5 text-white rounded-lg text-xs font-bold transition flex items-center justify-center gap-2 cursor-pointer font-sans shadow-md"
+                    style={{ backgroundColor: '#dc2626' }}
                   >
                     <RefreshCw className="w-3.5 h-3.5" /> RENEW PLAN / ADD EDITS
                   </button>

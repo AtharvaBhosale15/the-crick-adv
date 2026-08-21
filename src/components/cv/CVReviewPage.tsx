@@ -33,12 +33,7 @@ export default function CVReviewPage({ cv, onPay, onPrev }: CVReviewPageProps) {
   const allAgreed = agreedDetails && agreedTerms && agreedLocking;
 
   const isFormValid = () => {
-    if (!allAgreed) return false;
-    if (payMethod === 'card') {
-      return cardNo.replace(/\s/g, '').length === 16 && cardExpiry.length === 5 && cardCvv.length === 3;
-    } else {
-      return upiId.includes('@') && upiId.length > 3;
-    }
+    return allAgreed;
   };
 
   const handleCardNoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -209,84 +204,9 @@ export default function CVReviewPage({ cv, onPay, onPrev }: CVReviewPageProps) {
             <Lock className="w-3.5 h-3.5 text-green-500" /> Secure Payment Gateway
           </h3>
 
-          {/* Payment Method Selector Tabs */}
-          <div className="grid grid-cols-2 gap-2">
-            <button
-              onClick={() => setPayMethod('card')}
-              className={`py-2 px-3 rounded-lg border text-center text-xs font-bold transition flex items-center justify-center gap-1.5 cursor-pointer ${
-                payMethod === 'card' 
-                  ? 'bg-blue-950/20 border-gold-500 text-white' 
-                  : 'bg-slate-900/60 border-slate-800 text-slate-400 hover:border-slate-700'
-              }`}
-            >
-              <CreditCard className="w-4 h-4" /> Credit/Debit Card
-            </button>
-            <button
-              onClick={() => setPayMethod('upi')}
-              className={`py-2 px-3 rounded-lg border text-center text-xs font-bold transition flex items-center justify-center gap-1.5 cursor-pointer ${
-                payMethod === 'upi' 
-                  ? 'bg-blue-950/20 border-gold-500 text-white' 
-                  : 'bg-slate-900/60 border-slate-800 text-slate-400 hover:border-slate-700'
-              }`}
-            >
-              <QrCode className="w-4 h-4" /> UPI / GPay
-            </button>
-          </div>
-
-          {/* Payment Forms */}
-          {payMethod === 'card' ? (
-            <div className="space-y-4 pt-2">
-              <div className="space-y-1">
-                <label className="text-[10px] text-slate-500 uppercase block font-semibold">Card Number</label>
-                <input 
-                  type="text" 
-                  value={cardNo}
-                  onChange={handleCardNoChange}
-                  placeholder="4111 2222 3333 4444"
-                  className="w-full bg-slate-900 border border-slate-850 rounded-xl px-4 py-3 text-xs text-white focus:outline-none focus:border-gold-500 font-mono transition"
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-1">
-                  <label className="text-[10px] text-slate-500 uppercase block font-semibold">Expiry Date</label>
-                  <input 
-                    type="text" 
-                    value={cardExpiry}
-                    onChange={handleExpiryChange}
-                    placeholder="MM/YY"
-                    className="w-full bg-slate-900 border border-slate-850 rounded-xl px-4 py-3 text-xs text-white focus:outline-none focus:border-gold-500 font-mono transition text-center"
-                  />
-                </div>
-                <div className="space-y-1">
-                  <label className="text-[10px] text-slate-500 uppercase block font-semibold">CVV</label>
-                  <input 
-                    type="password" 
-                    value={cardCvv}
-                    onChange={(e) => setCardCvv(e.target.value.replace(/\D/g, '').slice(0, 3))}
-                    placeholder="***"
-                    className="w-full bg-slate-900 border border-slate-850 rounded-xl px-4 py-3 text-xs text-white focus:outline-none focus:border-gold-500 font-mono transition text-center"
-                  />
-                </div>
-              </div>
-            </div>
-          ) : (
-            <div className="space-y-4 pt-2">
-              <div className="space-y-1">
-                <label className="text-[10px] text-slate-500 uppercase block font-semibold">UPI ID</label>
-                <input 
-                  type="text" 
-                  value={upiId}
-                  onChange={(e) => setUpiId(e.target.value)}
-                  placeholder="playername@upi"
-                  className="w-full bg-slate-900 border border-slate-850 rounded-xl px-4 py-3 text-xs text-white focus:outline-none focus:border-gold-500 transition"
-                />
-              </div>
-              <p className="text-[10px] text-slate-500 leading-relaxed">
-                Enter your VPA / UPI handle (e.g. name@okaxis, player@paytm). A simulated transaction prompt will be triggered on submission.
-              </p>
-            </div>
-          )}
+          <p className="text-xs text-slate-450 leading-relaxed font-sans">
+            Press the button below to initiate secure checkout simulation. You will be redirected back to the player dashboard once completed successfully.
+          </p>
 
           {/* Secure indicator */}
           <div className="flex items-center gap-1.5 text-[9px] text-slate-500 pt-2 border-t border-slate-900">
@@ -295,22 +215,13 @@ export default function CVReviewPage({ cv, onPay, onPrev }: CVReviewPageProps) {
 
           {/* Submit Actions */}
           <div className="flex flex-col gap-3 pt-2">
-            <div className="flex gap-3">
-              <button 
-                onClick={onPrev}
-                className="px-4 py-3 rounded-xl border border-slate-850 text-slate-400 hover:text-white hover:bg-slate-900 transition text-xs font-bold text-center flex items-center justify-center gap-1 cursor-pointer"
-              >
-                <ChevronLeft className="w-4 h-4" /> Styling
-              </button>
-              
-              <button 
-                disabled={!isFormValid()}
-                onClick={() => onPay(false)}
-                className="flex-1 py-3.5 rounded-xl font-black bg-gold-gradient text-navy-950 hover:opacity-90 disabled:opacity-30 disabled:cursor-not-allowed transition flex items-center justify-center gap-2 text-xs cursor-pointer shadow-md shadow-gold-500/10 uppercase"
-              >
-                <Wallet className="w-4 h-4" /> {cv.paymentStatus === 'Paid' ? 'RENEW PLAN ₹699' : 'PAY ₹699 SECURELY'}
-              </button>
-            </div>
+            <button 
+              disabled={!isFormValid()}
+              onClick={() => onPay(false)}
+              className="w-full py-3.5 rounded-xl font-black bg-gold-gradient text-navy-950 hover:opacity-90 disabled:opacity-30 disabled:cursor-not-allowed transition flex items-center justify-center gap-2 text-xs cursor-pointer shadow-md shadow-gold-500/10 uppercase"
+            >
+              <Wallet className="w-4 h-4" /> {cv.paymentStatus === 'Paid' ? 'RENEW PLAN ₹699' : 'PAY ₹699 SECURELY'}
+            </button>
             
             <button 
               type="button"

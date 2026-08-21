@@ -89,26 +89,12 @@ export default function CVFinalView({ cv, onDownloadCleanPDF, onGoToDashboard }:
         
         {/* Info panel */}
         <div className="lg:col-span-4 space-y-5">
-          <div className="bg-slate-950 p-5 rounded-2xl border border-slate-850 space-y-4">
-            <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider border-b border-slate-900 pb-2">
-              Identity Locked Info
-            </h3>
-            
-            <p className="text-[11px] text-slate-400 leading-relaxed">
-              As a security precaution to prevent profile sharing, your core identity fields (Name, Date of Birth, Nationality) are permanently locked on the CV. 
-            </p>
 
-            <div className="space-y-2 text-xs text-slate-300">
-              <div>Name: <strong className="text-white">{cv.firstName} {cv.lastName}</strong></div>
-              <div>DOB: <strong className="text-white">{cv.dateOfBirth}</strong></div>
-              <div>Nationality: <strong className="text-white">{cv.nationality}</strong></div>
-            </div>
-          </div>
 
-          <div className="bg-slate-950/40 p-5 rounded-2xl border border-slate-850 flex gap-3 text-xs text-slate-400 leading-relaxed">
+          <div className="bg-slate-950/40 p-5 rounded-2xl border border-slate-850 flex gap-3 text-xs leading-relaxed" style={{ color: '#000000' }}>
             <AlertCircle className="w-5 h-5 text-gold-400 shrink-0 mt-0.5" />
             <div>
-              <span className="font-bold text-white block mb-0.5">Need to edit details?</span>
+              <span className="font-bold block mb-0.5" style={{ color: '#000000' }}>Need to edit details?</span>
               {cv.editsAllowed - cv.editsUsed > 0 ? (
                 <>You have <strong className="text-gold-400">{cv.editsAllowed - cv.editsUsed} edits left</strong> for this year. You can update statistics, career history, or achievements from the dashboard at any time.</>
               ) : (

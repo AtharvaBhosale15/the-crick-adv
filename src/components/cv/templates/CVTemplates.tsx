@@ -55,7 +55,7 @@ const PlayerPhoto = ({ photo, name }: { photo?: string; name: string }) => {
 };
 
 const CVAdditionalContact = ({ cv, align = 'left', textClass = 'text-xs text-slate-600' }: { cv: CricketCVFull; align?: 'left' | 'right' | 'center'; textClass?: string }) => {
-  const alignClass = align === 'right' ? 'flex items-center md:justify-end gap-1.5' : align === 'center' ? 'flex items-center justify-center gap-1.5' : 'flex items-center gap-1.5';
+  const alignClass = align === 'right' ? 'flex items-center md:justify-end gap-1.5 no-capitalize' : align === 'center' ? 'flex items-center justify-center gap-1.5 no-capitalize' : 'flex items-center gap-1.5 no-capitalize';
   return (
     <>
       {cv.linkedin && <div className={alignClass}><Linkedin className="w-3.5 h-3.5" /> <span className={textClass}>LinkedIn: {cv.linkedin}</span></div>}
@@ -318,67 +318,135 @@ const CVCareerHighlightsBlock = ({ cv, accentColour }: { cv: CricketCVFull; acce
 };
 
 const CVFormatStatisticsBlock = ({ cv, accentColour }: { cv: CricketCVFull; accentColour: string }) => {
-  const formats = [
-    { key: 'oneDayStats', label: 'ONE DAY' },
-    { key: 'multiDayStats', label: 'MULTI-DAY' },
-    { key: 't20Stats', label: 'T20' }
-  ] as const;
+  const stats = cv.oneDayStats;
+  if (!stats || stats.hasStats !== true) return null;
 
-  const activeFormats = formats.filter(f => {
-    const stats = cv[f.key];
-    return stats && stats.hasStats === true;
-  });
+  const showBatting = cv.showBatting !== false;
+  const showBowling = cv.showBowling !== false;
 
-  if (activeFormats.length === 0) return null;
+  if (!showBatting && !showBowling) return null;
+
+  const batDismissals = Math.max(0, (stats.batInnings || 0) - (stats.batNotOuts || 0));
+  const batAverage = batDismissals > 0 ? ((stats.batRuns || 0) / batDismissals).toFixed(2) : stats.batRuns ? stats.batRuns.toFixed(2) : '-';
+  const batStrikeRate = stats.batBallsFaced > 0 ? (((stats.batRuns || 0) / stats.batBallsFaced) * 100).toFixed(2) : '-';
+
+  const bowlTotalBalls = ((stats.bowlOvers || 0) * 6) + (stats.bowlBalls || 0);
+  const bowlAverage = stats.bowlWickets > 0 ? ((stats.bowlRunsConceded || 0) / stats.bowlWickets).toFixed(2) : '-';
+  const bowlEconomy = bowlTotalBalls > 0 ? (((stats.bowlRunsConceded || 0) * 6) / bowlTotalBalls).toFixed(2) : '-';
+  const bowlBest = stats.bowlBestWickets || stats.bowlBestRuns ? `${stats.bowlBestWickets}/${stats.bowlBestRuns}` : '-';
 
   return (
     <div>
       <CVSectionHeading id="heading-stats">
-        <h2 className="text-xs font-bold uppercase tracking-widest border-b pb-1 mb-3 text-slate-900">Career Statistics Summary</h2>
+        <h2 className="text-xs font-bold uppercase tracking-widest border-b pb-1 mb-3 text-slate-900">Career Statistics</h2>
       </CVSectionHeading>
       <div className="space-y-4">
-        {activeFormats.map(f => {
-          const stats = cv[f.key]!;
-          const batDismissals = Math.max(0, stats.batInnings - stats.batNotOuts);
-          const batAverage = batDismissals > 0 ? (stats.batRuns / batDismissals).toFixed(2) : '-';
-          const batStrikeRate = stats.batBallsFaced > 0 ? ((stats.batRuns / stats.batBallsFaced) * 100).toFixed(2) : '-';
+        {showBatting && (
+          <CVAtomicBlock id="block-stats-batting">
+            <div className="bg-slate-50/50 border border-slate-100 rounded-xl p-3 text-left">
+              <div className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2 flex items-center gap-1.5">
+                <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: accentColour }} />
+                BATTING & FIELDING
+              </div>
+              <div className="overflow-x-auto">
+                <table className="w-full text-left text-[9px] text-slate-700 border-collapse">
+                  <thead>
+                    <tr className="text-white font-bold border-b border-slate-200" style={{ backgroundColor: accentColour }}>
+                      <th className="p-1.5 first:rounded-l-md">M</th>
+                      <th className="p-1.5">Innings</th>
+                      <th className="p-1.5">Runs</th>
+                      <th className="p-1.5">Avg</th>
+                      <th className="p-1.5">SR</th>
+                      <th className="p-1.5">HS</th>
+                      <th className="p-1.5">100/50</th>
+                      <th className="p-1.5">Catches</th>
+                      <th className="p-1.5 last:rounded-r-md">Stumpings</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr className="font-semibold text-slate-800">
+                      <td className="p-1.5">{stats.batMatches || 0}</td>
+                      <td className="p-1.5">{stats.batInnings || 0}</td>
+                      <td className="p-1.5 font-bold" style={{ color: accentColour }}>{stats.batRuns || 0}</td>
+                      <td className="p-1.5">{batAverage}</td>
+                      <td className="p-1.5">{batStrikeRate}</td>
+                      <td className="p-1.5">{stats.batHighestScore || 0}{stats.batHighestNotOut ? '*' : ''}</td>
+                      <td className="p-1.5">{(stats.batHundreds || 0)}/{(stats.batFifties || 0)}</td>
+                      <td className="p-1.5">{stats.fieldCatches || 0}</td>
+                      <td className="p-1.5">{stats.fieldStumpings || 0}</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </CVAtomicBlock>
+        )}
 
-          const bowlTotalBalls = (stats.bowlOvers * 6) + stats.bowlBalls;
-          const bowlEconomy = bowlTotalBalls > 0 ? ((stats.bowlRunsConceded * 6) / bowlTotalBalls).toFixed(2) : '-';
+        {showBowling && (
+          <CVAtomicBlock id="block-stats-bowling">
+            <div className="bg-slate-50/50 border border-slate-100 rounded-xl p-3 text-left">
+              <div className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2 flex items-center gap-1.5">
+                <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: accentColour }} />
+                BOWLING
+              </div>
+              <div className="overflow-x-auto">
+                <table className="w-full text-left text-[9px] text-slate-700 border-collapse">
+                  <thead>
+                    <tr className="text-white font-bold border-b border-slate-200" style={{ backgroundColor: accentColour }}>
+                      <th className="p-1.5 first:rounded-l-md">M</th>
+                      <th className="p-1.5">Innings</th>
+                      <th className="p-1.5">Overs</th>
+                      <th className="p-1.5">Runs</th>
+                      <th className="p-1.5">Wkts</th>
+                      <th className="p-1.5">Avg</th>
+                      <th className="p-1.5">Econ</th>
+                      <th className="p-1.5 last:rounded-r-md">BBI</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr className="font-semibold text-slate-800">
+                      <td className="p-1.5">{stats.bowlMatches || 0}</td>
+                      <td className="p-1.5">{stats.bowlInnings || 0}</td>
+                      <td className="p-1.5">{stats.bowlOvers || 0}.{stats.bowlBalls || 0}</td>
+                      <td className="p-1.5">{stats.bowlRunsConceded || 0}</td>
+                      <td className="p-1.5 font-bold" style={{ color: accentColour }}>{stats.bowlWickets || 0}</td>
+                      <td className="p-1.5">{bowlAverage}</td>
+                      <td className="p-1.5">{bowlEconomy}</td>
+                      <td className="p-1.5">{bowlBest}</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </CVAtomicBlock>
+        )}
+      </div>
+    </div>
+  );
+};
 
+const CVMediaLinksBlock = ({ cv, accentColour }: { cv: CricketCVFull; accentColour: string }) => {
+  if (!cv.mediaLinks || !cv.mediaLinks.some(link => link && link.trim() !== '')) {
+    return null;
+  }
+  return (
+    <div>
+      <CVSectionHeading id="heading-media-links">
+        <h2 className="text-xs font-bold uppercase tracking-widest border-b pb-1 mb-3 text-slate-900">Scorecard, Profile & Media Links</h2>
+      </CVSectionHeading>
+      <div className="space-y-1.5 text-left">
+        {cv.mediaLinks.map((link, idx) => {
+          if (!link || link.trim() === '') return null;
+          const href = link.startsWith('http://') || link.startsWith('https://') 
+            ? link 
+            : `https://${link}`;
           return (
-            <CVAtomicBlock key={f.key} id={`block-stats-${f.key}`}>
-              <div className="bg-slate-50/50 border border-slate-100 rounded-xl p-3 text-left">
-                <div className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2 flex items-center gap-1.5">
-                  <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: accentColour }} />
-                  {f.label} PERFORMANCE
-                </div>
-                <div className="overflow-x-auto">
-                  <table className="w-full text-left text-[10px] text-slate-700 border-collapse">
-                    <thead>
-                      <tr className="bg-slate-100 text-slate-900 font-bold border-b border-slate-200">
-                        <th className="p-1.5">Matches</th>
-                        <th className="p-1.5">Innings</th>
-                        <th className="p-1.5">Runs</th>
-                        <th className="p-1.5">Avg</th>
-                        <th className="p-1.5">SR</th>
-                        <th className="p-1.5">Wickets</th>
-                        <th className="p-1.5">Econ</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      <tr className="font-medium text-slate-800">
-                        <td className="p-1.5">{stats.batMatches}</td>
-                        <td className="p-1.5">{stats.batInnings}</td>
-                        <td className="p-1.5">{stats.batRuns}</td>
-                        <td className="p-1.5">{batAverage}</td>
-                        <td className="p-1.5">{batStrikeRate}</td>
-                        <td className="p-1.5">{stats.bowlWickets}</td>
-                        <td className="p-1.5">{bowlEconomy}</td>
-                      </tr>
-                    </tbody>
-                  </table>
-                </div>
+            <CVAtomicBlock key={idx} id={`block-media-link-${idx}`}>
+              <div className="text-xs text-slate-750 font-medium py-1 border-b border-dashed border-slate-100 last:border-0 flex items-start gap-2 text-left">
+                <span className="w-1.5 h-1.5 rounded-full shrink-0 mt-1.5" style={{ backgroundColor: accentColour }} />
+                <a href={href} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline break-all">
+                  {link}
+                </a>
               </div>
             </CVAtomicBlock>
           );
@@ -421,10 +489,10 @@ export function ExecutiveTemplate({ cv, accentColour, font, isPreview }: Templat
           </div>
           
           <div className="mt-4 md:mt-0 text-left md:text-right space-y-1 text-xs text-slate-600">
-            <div className="flex items-center md:justify-end gap-1.5"><Mail className="w-3.5 h-3.5" /> {cv.email}</div>
-            {cv.phone && <div className="flex items-center md:justify-end gap-1.5"><Phone className="w-3.5 h-3.5" /> {cv.phone}</div>}
+            <div className="flex items-center md:justify-end gap-1.5 no-capitalize"><Mail className="w-3.5 h-3.5" /> {cv.email}</div>
+            {cv.phone && <div className="flex items-center md:justify-end gap-1.5 no-capitalize"><Phone className="w-3.5 h-3.5" /> {cv.phone}</div>}
             <div className="flex items-center md:justify-end gap-1.5"><MapPin className="w-3.5 h-3.5" /> {cv.currentCity || ''}, {cv.countryOfResidence}</div>
-            {cv.personalWebsite && <div className="flex items-center md:justify-end gap-1.5"><Globe className="w-3.5 h-3.5" /> {cv.personalWebsite}</div>}
+            {cv.personalWebsite && <div className="flex items-center md:justify-end gap-1.5 no-capitalize"><Globe className="w-3.5 h-3.5" /> {cv.personalWebsite}</div>}
             <CVAdditionalContact cv={cv} align="right" />
           </div>
         </div>
@@ -440,6 +508,9 @@ export function ExecutiveTemplate({ cv, accentColour, font, isPreview }: Templat
 
             {/* Statistics Summary */}
             <CVFormatStatisticsBlock cv={cv} accentColour={accentColour} />
+            
+            {/* Scorecard, Profile & Media Links */}
+            <CVMediaLinksBlock cv={cv} accentColour={accentColour} />
             
             {/* References */}
             <CVReferencesBlock cv={cv} />
@@ -549,10 +620,10 @@ export function ProfessionalTemplate({ cv, accentColour, font, isPreview }: Temp
             </div>
           </div>
           <div className="text-xs space-y-1 text-slate-200 text-left md:text-right border-t md:border-t-0 pt-3 md:pt-0 w-full md:w-auto">
-            <div>Email: {cv.email}</div>
-            {cv.phone && <div>Phone: {cv.phone}</div>}
+            <div className="no-capitalize">Email: {cv.email}</div>
+            {cv.phone && <div className="no-capitalize">Phone: {cv.phone}</div>}
             <div>Location: {cv.currentCity ? `${cv.currentCity}, ` : ''}{cv.countryOfResidence}</div>
-            {cv.personalWebsite && <div>Web: {cv.personalWebsite}</div>}
+            {cv.personalWebsite && <div className="no-capitalize">Web: {cv.personalWebsite}</div>}
             <CVAdditionalContact cv={cv} align="right" textClass="text-xs text-slate-200" />
           </div>
         </div>
@@ -575,6 +646,9 @@ export function ProfessionalTemplate({ cv, accentColour, font, isPreview }: Temp
 
         {/* Statistics Grid */}
         <CVFormatStatisticsBlock cv={cv} accentColour={accentColour} />
+        
+        {/* Scorecard, Profile & Media Links */}
+        <CVMediaLinksBlock cv={cv} accentColour={accentColour} />
 
         {/* Career Timeline */}
         {cv.careerHistory.length > 0 && (
@@ -740,6 +814,9 @@ export function InternationalTemplate({ cv, accentColour, font, isPreview }: Tem
             <CVAchievementsBlock cv={cv} accentColour={accentColour} />
             <CVCareerHighlightsBlock cv={cv} accentColour={accentColour} />
             <CVFormatStatisticsBlock cv={cv} accentColour={accentColour} />
+            
+            {/* Scorecard, Profile & Media Links */}
+            <CVMediaLinksBlock cv={cv} accentColour={accentColour} />
 
             {/* Experience (Coaching) */}
             <CVExperienceBlock cv={cv} accentColour={accentColour} />
@@ -800,9 +877,9 @@ export function InternationalTemplate({ cv, accentColour, font, isPreview }: Tem
             <div className="bg-slate-50 p-4 rounded-xl border border-slate-100">
               <h3 className="text-xs font-black uppercase tracking-wider mb-2 text-slate-950">Contact Info</h3>
               <div className="space-y-1 text-xs text-slate-700">
-                <div>Email: <strong>{email}</strong></div>
-                {phone && <div>Phone: <strong>{phone}</strong></div>}
-                {personalWebsite && <div className="truncate">Web: <strong>{personalWebsite}</strong></div>}
+                <div className="no-capitalize">Email: <strong>{email}</strong></div>
+                {phone && <div className="no-capitalize">Phone: <strong>{phone}</strong></div>}
+                {personalWebsite && <div className="truncate no-capitalize">Web: <strong>{personalWebsite}</strong></div>}
                 <CVAdditionalContact cv={cv} align="left" />
               </div>
             </div>
@@ -840,10 +917,10 @@ export function ClassicTemplate({ cv, accentColour, font, isPreview }: TemplateP
             <h1 className="text-3xl font-serif text-slate-900 tracking-wide uppercase">{cv.firstName} {cv.lastName}</h1>
             <p className="text-xs font-bold tracking-widest text-slate-500 uppercase mt-1">{cv.playingRoleDetail || cv.playingRole || 'Cricket Professional'}</p>
             <div className="flex justify-center flex-wrap gap-x-4 gap-y-1 text-xs text-slate-600 mt-3">
-              <span>Email: {cv.email}</span>
-              {cv.phone && <span>Phone: {cv.phone}</span>}
+              <span className="no-capitalize">Email: {cv.email}</span>
+              {cv.phone && <span className="no-capitalize">Phone: {cv.phone}</span>}
               <span>Location: {cv.currentCity || ''}, {cv.countryOfResidence}</span>
-              {cv.personalWebsite && <span>Web: {cv.personalWebsite}</span>}
+              {cv.personalWebsite && <span className="no-capitalize">Web: {cv.personalWebsite}</span>}
             </div>
             <div className="mt-2 flex justify-center gap-3">
               <CVAdditionalContact cv={cv} align="center" />
@@ -868,6 +945,9 @@ export function ClassicTemplate({ cv, accentColour, font, isPreview }: TemplateP
 
           {/* Stats summary table */}
           <CVFormatStatisticsBlock cv={cv} accentColour={accentColour} />
+          
+          {/* Scorecard, Profile & Media Links */}
+          <CVMediaLinksBlock cv={cv} accentColour={accentColour} />
 
           {/* Career Table */}
           {cv.careerHistory.length > 0 && (
@@ -946,10 +1026,10 @@ export function PerformanceTemplate({ cv, accentColour, font, isPreview }: Templ
                 {cv.playingRoleDetail || cv.playingRole || 'Cricket Athlete'}
               </div>
               <div className="mt-3 text-xs text-slate-600 space-y-1 text-left">
-                <div>Email: {cv.email}</div>
-                {cv.phone && <div>Phone: {cv.phone}</div>}
+                <div className="no-capitalize">Email: {cv.email}</div>
+                {cv.phone && <div className="no-capitalize">Phone: {cv.phone}</div>}
                 <div>Location: {cv.currentCity || ''}, {cv.countryOfResidence}</div>
-                {cv.personalWebsite && <div>Web: {cv.personalWebsite}</div>}
+                {cv.personalWebsite && <div className="no-capitalize">Web: {cv.personalWebsite}</div>}
                 <CVAdditionalContact cv={cv} align="left" />
               </div>
             </div>
@@ -962,6 +1042,9 @@ export function PerformanceTemplate({ cv, accentColour, font, isPreview }: Templ
 
         {/* Stats High-Impact Block */}
         <CVFormatStatisticsBlock cv={cv} accentColour={accentColour} />
+        
+        {/* Scorecard, Profile & Media Links */}
+        <CVMediaLinksBlock cv={cv} accentColour={accentColour} />
 
         {/* Profile/About */}
         {cv.aboutPlayer && (
@@ -1043,16 +1126,76 @@ export function PerformanceTemplate({ cv, accentColour, font, isPreview }: Templ
 export function PrestigeTemplate({ cv, accentColour, font, isPreview }: TemplateProps) {
   const fontStyle = { fontFamily: getFontFamily(font) };
 
+  const calculateAge = (dobString?: string) => {
+    if (!dobString) return '';
+    const birthDate = new Date(dobString);
+    if (isNaN(birthDate.getTime())) return '';
+    const today = new Date();
+    let age = today.getFullYear() - birthDate.getFullYear();
+    const m = today.getMonth() - birthDate.getMonth();
+    if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
+      age--;
+    }
+    return age.toString();
+  };
+
+  const renderPlayerRoles = () => {
+    const detail = cv.playingRoleDetail || '';
+    const mainRole = cv.playingRole || 'Professional Cricket Player';
+    
+    if (detail.toLowerCase().includes('batting all rounder') && detail.toLowerCase().includes('middle order batter') && detail.toLowerCase().includes('fast bowler')) {
+      return (
+        <div style={{ marginTop: '6px' }}>
+          <div style={{ color: 'var(--gold)', fontSize: '15.5px', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '.08em', lineHeight: '1.2' }}>Batting All Rounder</div>
+          <div style={{ fontSize: '13px', fontWeight: 600, marginTop: '3px', color: '#4b5568', textTransform: 'capitalize' }}>Right Hand Middle Order Batter</div>
+          <div style={{ fontSize: '13px', fontWeight: 600, marginTop: '2px', color: '#4b5568', textTransform: 'capitalize' }}>Right Arm Fast Bowler</div>
+        </div>
+      );
+    }
+    
+    if (detail.includes('-') || detail.includes('&') || detail.includes('|')) {
+      const parts = detail.split(/[-&|]/).map(p => p.trim()).filter(Boolean);
+      return (
+        <div style={{ marginTop: '6px' }}>
+          {parts.map((part, index) => (
+            <div 
+              key={index} 
+              style={{ 
+                color: index === 0 ? 'var(--gold)' : '#4b5568', 
+                fontSize: index === 0 ? '15.5px' : '13px', 
+                fontWeight: index === 0 ? 800 : 600, 
+                textTransform: index === 0 ? 'uppercase' : 'capitalize', 
+                letterSpacing: index === 0 ? '.08em' : 'normal',
+                marginTop: index > 0 ? '3px' : '0px',
+                lineHeight: '1.2'
+              }}
+            >
+              {part}
+            </div>
+          ))}
+        </div>
+      );
+    }
+
+    return (
+      <div className="role">{detail || mainRole}</div>
+    );
+  };
+
   // Calculate Batting Average & Strike Rate safely
   const getBattingStats = (stats: any) => {
-    if (!stats || stats.hasStats !== true) return { matches: 0, runs: 0, average: '-', strikeRate: '-', hundreds: 0, fifties: 0 };
+    if (!stats || stats.hasStats !== true) return null;
     const matches = parseInt(stats.batMatches, 10) || 0;
     const innings = parseInt(stats.batInnings, 10) || 0;
     const runs = parseInt(stats.batRuns, 10) || 0;
     const notOuts = parseInt(stats.batNotOuts, 10) || 0;
     const ballsFaced = parseInt(stats.batBallsFaced, 10) || 0;
+    const highestScore = parseInt(stats.batHighestScore, 10) || 0;
+    const highestNotOut = !!stats.batHighestNotOut;
     const hundreds = parseInt(stats.batHundreds, 10) || 0;
     const fifties = parseInt(stats.batFifties, 10) || 0;
+    const catches = parseInt(stats.fieldCatches, 10) || 0;
+    const stumpings = parseInt(stats.fieldStumpings, 10) || 0;
 
     const outs = innings - notOuts;
     const average = outs > 0 ? (runs / outs).toFixed(2) : runs > 0 ? runs.toFixed(2) : '-';
@@ -1060,17 +1203,23 @@ export function PrestigeTemplate({ cv, accentColour, font, isPreview }: Template
 
     return {
       matches,
+      innings,
       runs,
       average,
       strikeRate,
+      highestScore,
+      highestNotOut,
       hundreds,
-      fifties
+      fifties,
+      catches,
+      stumpings
     };
   };
 
   const getBowlingStats = (stats: any) => {
-    if (!stats || stats.hasStats !== true) return { matches: 0, wickets: 0, bowlingAverage: '-', economy: '-', bestWickets: 0, bestRuns: 0 };
+    if (!stats || stats.hasStats !== true) return null;
     const matches = parseInt(stats.bowlMatches, 10) || 0;
+    const innings = parseInt(stats.bowlInnings, 10) || 0;
     const wickets = parseInt(stats.bowlWickets, 10) || 0;
     const runsConceded = parseInt(stats.bowlRunsConceded, 10) || 0;
     const overs = parseInt(stats.bowlOvers, 10) || 0;
@@ -1084,54 +1233,22 @@ export function PrestigeTemplate({ cv, accentColour, font, isPreview }: Template
 
     return {
       matches,
+      innings,
+      overs: `${overs}.${balls}`,
+      runsConceded,
       wickets,
       bowlingAverage,
       economy,
-      bestWickets,
-      bestRuns
+      best: bestWickets || bestRuns ? `${bestWickets}/${bestRuns}` : '-'
     };
   };
 
-  const getFieldingStats = (stats: any) => {
-    if (!stats || stats.hasStats !== true) return { matches: 0, catches: 0, stumpings: 0 };
-    const matches = parseInt(stats.batMatches || stats.bowlMatches, 10) || 0;
-    const catches = parseInt(stats.fieldCatches, 10) || 0;
-    const stumpings = parseInt(stats.fieldStumpings, 10) || 0;
-    return {
-      matches,
-      catches,
-      stumpings
-    };
-  };
+  const battingStats = getBattingStats(cv.oneDayStats);
+  const bowlingStats = getBowlingStats(cv.oneDayStats);
 
-  const odBat = getBattingStats(cv.oneDayStats);
-  const mdBat = getBattingStats(cv.multiDayStats);
-  const t20Bat = getBattingStats(cv.t20Stats);
-
-  const odBowl = getBowlingStats(cv.oneDayStats);
-  const mdBowl = getBowlingStats(cv.multiDayStats);
-  const t20Bowl = getBowlingStats(cv.t20Stats);
-
-  const odField = getFieldingStats(cv.oneDayStats);
-  const mdField = getFieldingStats(cv.multiDayStats);
-  const t20Field = getFieldingStats(cv.t20Stats);
-
-  const hasBattingStats = (cv.oneDayStats?.hasStats && cv.oneDayStats.batMatches > 0) ||
-                          (cv.multiDayStats?.hasStats && cv.multiDayStats.batMatches > 0) ||
-                          (cv.t20Stats?.hasStats && cv.t20Stats.batMatches > 0);
-
-  const hasBowlingStats = (cv.oneDayStats?.hasStats && cv.oneDayStats.bowlMatches > 0) ||
-                          (cv.multiDayStats?.hasStats && cv.multiDayStats.bowlMatches > 0) ||
-                          (cv.t20Stats?.hasStats && cv.t20Stats.bowlMatches > 0);
-
-  const hasFieldingStats = (cv.oneDayStats?.hasStats && cv.oneDayStats.fieldCatches > 0) ||
-                           (cv.multiDayStats?.hasStats && cv.multiDayStats.fieldCatches > 0) ||
-                           (cv.t20Stats?.hasStats && cv.t20Stats.fieldCatches > 0);
-
-  const battingVisible = hasBattingStats && cv.showBatting !== false;
-  const bowlingVisible = hasBowlingStats && cv.showBowling !== false;
-  const fieldingVisible = hasFieldingStats && cv.showFielding !== false;
-  const showStatsBlock = battingVisible || bowlingVisible || fieldingVisible;
+  const battingVisible = battingStats !== null && cv.showBatting !== false;
+  const bowlingVisible = bowlingStats !== null && cv.showBowling !== false;
+  const showStatsBlock = battingVisible || bowlingVisible;
 
   return (
     <div 
@@ -1220,7 +1337,7 @@ export function PrestigeTemplate({ cv, accentColour, font, isPreview }: Template
           word-break: break-all !important;
           white-space: normal !important;
         }
-        .template-prestige .contact-list .ico { flex: 0 0 16px; color: var(--gold); font-size: 13px; }
+        .template-prestige .contact-list .ico { flex: 0 0 16px; color: #ffffff !important; font-size: 13px; }
 
         .template-prestige .profile-text { font-size: 12.3px; line-height: 1.6; color: var(--text-light); }
 
@@ -1261,7 +1378,7 @@ export function PrestigeTemplate({ cv, accentColour, font, isPreview }: Template
         .template-prestige .edu-block-dark { font-size: 12.5px; color: var(--text-light); line-height: 1.6; }
         .template-prestige .edu-block-dark .degree-dark { font-weight: 700; color: #fff; font-size: 13px; }
         .template-prestige .edu-block-dark .school-row-dark { margin-top: 3px; }
-        .template-prestige .edu-block-dark .year-dark { color: var(--gold-light); margin-top: 2px; font-size: 11.5px; }
+        .template-prestige .edu-block-dark .year-dark { color: #fff; margin-top: 2px; font-size: 11.5px; }
 
         .template-prestige .main {
           width: 67%;
@@ -1324,7 +1441,7 @@ export function PrestigeTemplate({ cv, accentColour, font, isPreview }: Template
         .template-prestige .section-title h2 {
           font-size: 16px; letter-spacing: .03em; color: var(--navy);
           text-transform: uppercase; font-weight: 800;
-          border-bottom: 2px solid var(--line);
+          border-bottom: 2px solid #f1c40f !important;
           flex: 1; padding-bottom: 8px;
         }
 
@@ -1463,16 +1580,16 @@ export function PrestigeTemplate({ cv, accentColour, font, isPreview }: Template
           <CVAtomicBlock id="side-contact" className="side-section">
             <div className="side-heading">Contact</div>
             <ul className="contact-list">
-              {cv.phone && <li><span className="ico">&#9742;</span><span>{cv.phone}</span></li>}
-              {cv.email && <li><span className="ico">&#9993;</span><span>{cv.email}</span></li>}
+              {cv.phone && <li><span className="ico">&#9742;</span><span className="no-capitalize">{cv.phone}</span></li>}
+              {cv.email && <li><span className="ico">&#9993;</span><span className="no-capitalize">{cv.email}</span></li>}
               {(cv.currentCity || cv.countryOfResidence) && (
                 <li>
                   <span className="ico">&#128205;</span>
                   <span>{[cv.currentCity, cv.countryOfResidence].filter(Boolean).join(', ')}</span>
                 </li>
               )}
-              {cv.instagram && <li><span className="ico">&#128247;</span><span>{cv.instagram}</span></li>}
-              {cv.linkedin && <li><span className="ico">in</span><span>{cv.linkedin}</span></li>}
+              {cv.instagram && <li><span className="ico">&#128247;</span><span className="no-capitalize">{cv.instagram}</span></li>}
+              {cv.linkedin && <li><span className="ico">in</span><span className="no-capitalize">{cv.linkedin}</span></li>}
             </ul>
           </CVAtomicBlock>
         )}
@@ -1483,9 +1600,13 @@ export function PrestigeTemplate({ cv, accentColour, font, isPreview }: Template
             <div className="space-y-5">
               {cv.education.map((edu, idx) => (
                 <div key={idx} className="edu-block-dark">
-                  <div className="degree-dark">{edu.degree}</div>
-                  <div className="school-row-dark">{edu.school || 'Education'}</div>
-                  <div className="year-dark">{edu.year || ''}</div>
+                  <div className="flex justify-between items-baseline">
+                    <div className="degree-dark"><span style={{ marginRight: '6px', display: 'inline-block' }}>📚</span>{edu.degree}</div>
+                    {edu.year && <div className="year-dark shrink-0 ml-2" style={{ color: '#fff', fontSize: '11.5px' }}>{edu.year}</div>}
+                  </div>
+                  {edu.school && edu.school !== 'Education' && (
+                    <div className="school-row-dark">{edu.school}</div>
+                  )}
                 </div>
               ))}
             </div>
@@ -1498,7 +1619,10 @@ export function PrestigeTemplate({ cv, accentColour, font, isPreview }: Template
             <div className="space-y-5">
               {cv.references.map((ref, idx) => (
                 <div key={ref.id || idx} className="ref-card">
-                  <div className="rname">{ref.name}</div>
+                  <div className="rname flex items-center gap-1.5">
+                    <User className="w-3.5 h-3.5 shrink-0" style={{ color: '#ffffff' }} />
+                    <span>{ref.name}</span>
+                  </div>
                   <div className="rorg">{ref.position} &mdash; {ref.organisation}</div>
                   {(ref.phone || ref.email) && (
                     <div className="rcontact font-sans">
@@ -1518,11 +1642,15 @@ export function PrestigeTemplate({ cv, accentColour, font, isPreview }: Template
         <CVAtomicBlock id="main-header" className="header-block">
           <div className="name-block">
             <h1>{cv.firstName} <span style={{ color: 'var(--gold)' }}>{cv.lastName}</span></h1>
-            <div className="role">{cv.playingRoleDetail || cv.playingRole || 'Professional Cricket Player'}</div>
+            {renderPlayerRoles()}
             <div className="meta-row">
-              {cv.dateOfBirth && <span><span className="ico">&#128197;</span>{cv.dateOfBirth}</span>}
-              {cv.battingStyle && <span><span className="ico">&#127951;</span>{cv.battingStyle} Bat</span>}
-              {cv.bowlingStyle && <span><span className="ico">&#127951;</span>{cv.bowlingStyle}</span>}
+              {cv.dateOfBirth && <span><span className="ico">&#128197;</span>Age: {calculateAge(cv.dateOfBirth)}</span>}
+              {cv.battingStyle && !cv.playingRoleDetail?.toLowerCase().replace(/-/g, ' ').includes(cv.battingStyle.toLowerCase().replace(/-/g, ' ').replace('handed', '').replace('handed', '').trim()) && (
+                <span><span className="ico">&#127951;</span>{cv.battingStyle} Bat</span>
+              )}
+              {cv.bowlingStyle && !cv.playingRoleDetail?.toLowerCase().replace(/-/g, ' ').includes(cv.bowlingStyle.toLowerCase().replace(/-/g, ' ').trim()) && (
+                <span><span className="ico">&#127951;</span>{cv.bowlingStyle}</span>
+              )}
             </div>
           </div>
         </CVAtomicBlock>
@@ -1537,8 +1665,8 @@ export function PrestigeTemplate({ cv, accentColour, font, isPreview }: Template
               <dl className="personal-grid">
                 {cv.dateOfBirth && (
                   <>
-                    <dt>Date of Birth</dt>
-                    <dd>{cv.dateOfBirth}</dd>
+                    <dt>Age</dt>
+                    <dd>{calculateAge(cv.dateOfBirth)} Years</dd>
                   </>
                 )}
                 {cv.height && (
@@ -1595,7 +1723,14 @@ export function PrestigeTemplate({ cv, accentColour, font, isPreview }: Template
                     <div className="years">{item.startYear} &ndash; {item.endYear || 'Present'}</div>
                     <div>
                       <div className="team">{item.teamName}{item.country ? ` (${item.country})` : ''}</div>
-                      <div className="role">{[item.role, item.level].filter(Boolean).join(' • ')}</div>
+                      {((item.role && item.role !== 'Player') || (item.level && item.level !== 'Club')) && (
+                        <div className="role">
+                          {[
+                            item.role !== 'Player' ? item.role : null,
+                            item.level !== 'Club' ? item.level : null
+                          ].filter(Boolean).join(' • ')}
+                        </div>
+                      )}
                     </div>
                   </div>
                 ))}
@@ -1664,88 +1799,94 @@ export function PrestigeTemplate({ cv, accentColour, font, isPreview }: Template
                 <h2>Career Statistics</h2>
               </div>
               <div className="stats-grid">
-                {battingVisible && (
-                  <table className={`stat-table ${!bowlingVisible ? 'fielding-span' : ''}`}>
+                {battingVisible && battingStats && (
+                  <table className="stat-table">
                     <colgroup>
-                      <col style={{ width: '20%' }} />
-                      <col style={{ width: '10%' }} />
-                      <col style={{ width: '16%' }} />
-                      <col style={{ width: '16%' }} />
-                      <col style={{ width: '18%' }} />
-                      <col style={{ width: '20%' }} />
+                      <col style={{ width: '12%' }} />
+                      <col style={{ width: '12%' }} />
+                      <col style={{ width: '14%' }} />
+                      <col style={{ width: '12%' }} />
+                      <col style={{ width: '12%' }} />
+                      <col style={{ width: '12%' }} />
+                      <col style={{ width: '14%' }} />
+                      <col style={{ width: '12%' }} />
                     </colgroup>
-                    <caption>Batting</caption>
+                    <caption>Batting & Fielding</caption>
                     <thead>
-                      <tr><th>Format</th><th>M</th><th>Runs</th><th>Avg</th><th>SR</th><th>100/50</th></tr>
+                      <tr><th>M</th><th>Inn</th><th>Runs</th><th>Avg</th><th>SR</th><th>HS</th><th>100/50</th><th>Ct/St</th></tr>
                     </thead>
                     <tbody>
-                      {mdBat.matches > 0 && (
-                        <tr><td>Multi-Day</td><td>{mdBat.matches}</td><td>{mdBat.runs}</td><td>{mdBat.average}</td><td>{mdBat.strikeRate}</td><td>{mdBat.hundreds}/{mdBat.fifties}</td></tr>
-                      )}
-                      {odBat.matches > 0 && (
-                        <tr><td>One Day</td><td>{odBat.matches}</td><td>{odBat.runs}</td><td>{odBat.average}</td><td>{odBat.strikeRate}</td><td>{odBat.hundreds}/{odBat.fifties}</td></tr>
-                      )}
-                      {t20Bat.matches > 0 && (
-                        <tr><td>T20</td><td>{t20Bat.matches}</td><td>{t20Bat.runs}</td><td>{t20Bat.average}</td><td>{t20Bat.strikeRate}</td><td>{t20Bat.hundreds}/{t20Bat.fifties}</td></tr>
-                      )}
+                      <tr>
+                        <td>{battingStats.matches}</td>
+                        <td>{battingStats.innings}</td>
+                        <td style={{ fontWeight: 'bold' }}>{battingStats.runs}</td>
+                        <td>{battingStats.average}</td>
+                        <td>{battingStats.strikeRate}</td>
+                        <td>{battingStats.highestScore}{battingStats.highestNotOut ? '*' : ''}</td>
+                        <td>{battingStats.hundreds}/{battingStats.fifties}</td>
+                        <td>{battingStats.catches}/{battingStats.stumpings}</td>
+                      </tr>
                     </tbody>
                   </table>
                 )}
 
-                {bowlingVisible && (
-                  <table className={`stat-table ${!battingVisible ? 'fielding-span' : ''}`}>
+                {bowlingVisible && bowlingStats && (
+                  <table className="stat-table">
                     <colgroup>
-                      <col style={{ width: '20%' }} />
-                      <col style={{ width: '10%' }} />
-                      <col style={{ width: '16%' }} />
-                      <col style={{ width: '16%' }} />
-                      <col style={{ width: '18%' }} />
-                      <col style={{ width: '20%' }} />
+                      <col style={{ width: '12%' }} />
+                      <col style={{ width: '12%' }} />
+                      <col style={{ width: '14%' }} />
+                      <col style={{ width: '14%' }} />
+                      <col style={{ width: '12%' }} />
+                      <col style={{ width: '12%' }} />
+                      <col style={{ width: '12%' }} />
+                      <col style={{ width: '14%' }} />
                     </colgroup>
                     <caption>Bowling</caption>
                     <thead>
-                      <tr><th>Format</th><th>M</th><th>Wkts</th><th>Avg</th><th>Econ</th><th>BBI</th></tr>
+                      <tr><th>M</th><th>Inn</th><th>Overs</th><th>Runs</th><th>Wkts</th><th>Avg</th><th>Econ</th><th>BBI</th></tr>
                     </thead>
                     <tbody>
-                      {mdBowl.matches > 0 && (
-                        <tr><td>Multi-Day</td><td>{mdBowl.matches}</td><td>{mdBowl.wickets}</td><td>{mdBowl.bowlingAverage}</td><td>{mdBowl.economy}</td><td>{mdBowl.bestWickets}/{mdBowl.bestRuns}</td></tr>
-                      )}
-                      {odBowl.matches > 0 && (
-                        <tr><td>One Day</td><td>{odBowl.matches}</td><td>{odBowl.wickets}</td><td>{odBowl.bowlingAverage}</td><td>{odBowl.economy}</td><td>{odBowl.bestWickets}/{odBowl.bestRuns}</td></tr>
-                      )}
-                      {t20Bowl.matches > 0 && (
-                        <tr><td>T20</td><td>{t20Bowl.matches}</td><td>{t20Bowl.wickets}</td><td>{t20Bowl.bowlingAverage}</td><td>{t20Bowl.economy}</td><td>{t20Bowl.bestWickets}/{t20Bowl.bestRuns}</td></tr>
-                      )}
-                    </tbody>
-                  </table>
-                )}
-
-                {fieldingVisible && (
-                  <table className="stat-table fielding-span">
-                    <colgroup>
-                      <col style={{ width: '28%' }} />
-                      <col style={{ width: '16%' }} />
-                      <col style={{ width: '28%' }} />
-                      <col style={{ width: '28%' }} />
-                    </colgroup>
-                    <caption>Fielding</caption>
-                    <thead>
-                      <tr><th>Format</th><th>Matches</th><th>Catches</th><th>Stumpings</th></tr>
-                    </thead>
-                    <tbody>
-                      {mdField.matches > 0 && (
-                        <tr><td>Multi-Day</td><td>{mdField.matches}</td><td>{mdField.catches}</td><td>{mdField.stumpings}</td></tr>
-                      )}
-                      {odField.matches > 0 && (
-                        <tr><td>One Day</td><td>{odField.matches}</td><td>{odField.catches}</td><td>{odField.stumpings}</td></tr>
-                      )}
-                      {t20Field.matches > 0 && (
-                        <tr><td>T20</td><td>{t20Field.matches}</td><td>{t20Field.catches}</td><td>{t20Field.stumpings}</td></tr>
-                      )}
+                      <tr>
+                        <td>{bowlingStats.matches}</td>
+                        <td>{bowlingStats.innings}</td>
+                        <td>{bowlingStats.overs}</td>
+                        <td>{bowlingStats.runsConceded}</td>
+                        <td style={{ fontWeight: 'bold' }}>{bowlingStats.wickets}</td>
+                        <td>{bowlingStats.bowlingAverage}</td>
+                        <td>{bowlingStats.economy}</td>
+                        <td>{bowlingStats.best}</td>
+                      </tr>
                     </tbody>
                   </table>
                 )}
               </div>
+            </div>
+          </CVAtomicBlock>
+        )}
+
+        {cv.mediaLinks && cv.mediaLinks.some(link => link && link.trim() !== '') && (
+          <CVAtomicBlock id="main-section-media-links">
+            <div className="section">
+              <div className="section-title">
+                <div className="badge">&#128279;</div>
+                <h2>Scorecard, Profile & Media Links</h2>
+              </div>
+              <ul className="bullet-list">
+                {cv.mediaLinks.map((link, idx) => {
+                  if (!link || link.trim() === '') return null;
+                  const href = link.startsWith('http://') || link.startsWith('https://') 
+                    ? link 
+                    : `https://${link}`;
+                  return (
+                    <li key={idx} style={{ wordBreak: 'break-all' }}>
+                      <a href={href} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">
+                        {link}
+                      </a>
+                    </li>
+                  );
+                })}
+              </ul>
             </div>
           </CVAtomicBlock>
         )}
@@ -1770,6 +1911,7 @@ export default function CVTemplateRenderer({ cv, accentColour, font, isPreview, 
     references: Array.isArray(cv?.references) ? cv.references : [],
     languages: Array.isArray(cv?.languages) ? cv.languages : [],
     hobbies: Array.isArray(cv?.hobbies) ? cv.hobbies : [],
+    mediaLinks: Array.isArray(cv?.mediaLinks) ? cv.mediaLinks : ['', '', '', '', ''],
   };
 
   const getTemplateComponent = (templateId: string) => {

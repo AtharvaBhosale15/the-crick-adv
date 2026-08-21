@@ -16,7 +16,8 @@ import {
   Activity,
   Layers,
   Award,
-  BookOpen
+  BookOpen,
+  Link2
 } from 'lucide-react';
 import CVFontSelector from './CVFontSelector';
 import CVColourSelector from './CVColourSelector';
@@ -98,6 +99,13 @@ const HOBBIES_OPTIONS = [
   'Watch Movies'
 ];
 
+const calculateAge = (dobString?: string) => {
+  if (!dobString) return '-';
+  const year = parseInt(dobString.split('-')[0], 10);
+  if (isNaN(year)) return '-';
+  return new Date().getFullYear() - year;
+};
+
 export default function CVBuilderForm({
   cv,
   onChange,
@@ -115,16 +123,34 @@ export default function CVBuilderForm({
     { num: 2, name: 'Cricket Profile', desc: 'Playing Role & Style' },
     { num: 3, name: 'Experience & Teams', desc: 'Teams & Clubs' },
     { num: 4, name: 'Statistics', desc: 'Stats Log' },
-    { num: 5, name: 'Specialist Cricket Skills', desc: 'Core Skills' },
-    { num: 6, name: 'Achievements', desc: 'Major Highlights' },
-    { num: 7, name: 'Career Highlights', desc: 'Athletic Highlights' },
-    { num: 8, name: 'Education', desc: 'Academic & Qualifications' },
-    { num: 9, name: 'Contact', desc: 'Contact Info' },
-    { num: 10, name: 'Languages & Hobbies', desc: 'Interests & Languages' }
+    { num: 5, name: 'Scorecard, Profile & Media Links', desc: 'Online Profiles & Media' },
+    { num: 6, name: 'Specialist Cricket Skills', desc: 'Core Skills' },
+    { num: 7, name: 'Achievements', desc: 'Major Highlights' },
+    { num: 8, name: 'Career Highlights', desc: 'Athletic Highlights' },
+    { num: 9, name: 'Education', desc: 'Academic & Qualifications' },
+    { num: 10, name: 'Contact', desc: 'Contact Info' },
+    { num: 11, name: 'Languages & Hobbies', desc: 'Interests & Languages' }
   ];
 
   const [validationError, setValidationError] = useState<string>('');
+  const [localBestBowling, setLocalBestBowling] = useState<string>('');
+
+  React.useEffect(() => {
+    const stats = cv.oneDayStats || { bowlBestWickets: 0, bowlBestRuns: 0 };
+    if (stats.bowlBestWickets || stats.bowlBestRuns) {
+      setLocalBestBowling(`${stats.bowlBestWickets}/${stats.bowlBestRuns}`);
+    } else {
+      setLocalBestBowling('');
+    }
+  }, [cv.id, currentStep, cv.oneDayStats?.bowlBestWickets, cv.oneDayStats?.bowlBestRuns]);
+
   const [editingHighlightId, setEditingHighlightId] = useState<string | null>(null);
+  const [visibleLinksCount, setVisibleLinksCount] = useState<number>(1);
+
+  React.useEffect(() => {
+    const filledCount = cv.mediaLinks?.filter(l => l && l.trim() !== '').length || 0;
+    setVisibleLinksCount(Math.max(1, filledCount));
+  }, [cv.id]);
   const [highlightForm, setHighlightForm] = useState<{
     achievement: string;
     opponent: string;
@@ -136,8 +162,6 @@ export default function CVBuilderForm({
     tournament: '',
     year: '2026'
   });
-
-  const [statsTab, setStatsTab] = useState<'oneDay' | 'multiDay' | 't20'>('oneDay');
 
   const handleSaveHighlight = () => {
     if (!highlightForm.achievement) {
@@ -174,24 +198,15 @@ export default function CVBuilderForm({
   };
 
   const validateStep1 = (): string => {
+    if (!cv.firstName || !cv.firstName.trim()) return "First Name is required.";
+    if (!cv.lastName || !cv.lastName.trim()) return "Last Name is required.";
+    if (!cv.dateOfBirth) return "Date of Birth is required.";
+    if (!cv.nationality || !cv.nationality.trim()) return "Nationality is required.";
     if (!cv.typeOfPlayerLevel) {
       return "Please select your Type of Player Level.";
     }
     if (!cv.highestLevelPlayed) {
       return "Please select your Highest Level Played.";
-    }
-    if (!cv.playerLevelCountry) {
-      return "Please select the Country for your playing level.";
-    }
-    if (cv.typeOfPlayerLevel === 'International Cricketer' || cv.typeOfPlayerLevel === 'Professional Cricketer') {
-      if (!cv.espnLink || !cv.espnLink.trim()) {
-        return "ESPN Cricinfo Profile Link is mandatory for International/Professional levels.";
-      }
-    }
-    if (cv.typeOfPlayerLevel === 'Semi-Professional Cricketer' || cv.typeOfPlayerLevel === 'Club/Regional Cricketer') {
-      if (!cv.crickherosLink || !cv.crickherosLink.trim()) {
-        return "Please provide a link to your cricket profile or statistics (such as CricHeroes, CricHQ, or another platform).";
-      }
     }
     return '';
   };
@@ -203,10 +218,106 @@ export default function CVBuilderForm({
     if (!cv.playingRoleDetail) {
       return "Please select your Playing Role Subtype.";
     }
+    if (!cv.battingStyle) return "Please select your Batting Style.";
+    if (!cv.aboutPlayer || !cv.aboutPlayer.trim()) return "Please fill in the About Player bio section.";
     const wordCount = cv.aboutPlayer ? cv.aboutPlayer.trim().split(/\s+/).filter(Boolean).length : 0;
     if (wordCount > 2000) {
       return "About Player section cannot exceed 2000 words.";
     }
+    return '';
+  };
+
+  const validateStep3 = (): string => {
+    if (cv.careerHistory && cv.careerHistory.length > 0) {
+      for (let i = 0; i < cv.careerHistory.length; i++) {
+        const item = cv.careerHistory[i];
+        if (!item.teamName || !item.teamName.trim()) return `Team Name is required for experience entry #${i+1}.`;
+        if (!item.startYear) return `Start Year is required for experience entry #${i+1}.`;
+        if (!item.endYear) return `End Year is required for experience entry #${i+1}.`;
+      }
+    } else {
+      return "Please add at least one playing career experience entry.";
+    }
+    return '';
+  };
+
+  const validateStep4 = (): string => {
+    const stats = cv.oneDayStats || createDefaultFormatStats(false);
+    if (!stats.hasStats) {
+      return '';
+    }
+    const showBatting = cv.showBatting !== false;
+    const showBowling = cv.showBowling !== false;
+    if (showBatting && (stats.batMatches || 0) === 0) {
+      return "Please enter matches played for Batting Statistics, or disable Batting in settings.";
+    }
+    if (showBowling) {
+      const matches = stats.bowlMatches || 0;
+      if (matches === 0) {
+        return "Please enter matches played for Bowling Statistics, or disable Bowling in settings.";
+      }
+      const fourWkts = stats.bowlFourWickets || 0;
+      const fiveWkts = stats.bowlFiveWickets || 0;
+      if (fourWkts > matches) {
+        return "4-Wicket Hauls cannot exceed the number of matches played.";
+      }
+      if (fiveWkts > matches) {
+        return "5-Wicket Hauls cannot exceed the number of matches played.";
+      }
+      if (fourWkts + fiveWkts > matches) {
+        return "The combined 4-wicket and 5-wicket hauls cannot exceed the number of matches played.";
+      }
+    }
+    return '';
+  };
+
+  const validateStep6 = (): string => {
+    if (cv.achievements && cv.achievements.length > 0) {
+      for (let i = 0; i < cv.achievements.length; i++) {
+        const ach = cv.achievements[i];
+        if (!ach.title || !ach.title.trim()) return `Achievement Title is required for achievement #${i+1}.`;
+        if (!ach.year) return `Achievement Year is required for achievement #${i+1}.`;
+        if (!ach.teamEvent || !ach.teamEvent.trim()) return `Team/Event is required for achievement #${i+1}.`;
+      }
+    }
+    return '';
+  };
+
+  const validateStep7 = (): string => {
+    if (cv.careerHighlights && cv.careerHighlights.length > 0) {
+      for (let i = 0; i < cv.careerHighlights.length; i++) {
+        const hl = cv.careerHighlights[i];
+        if (!hl.achievement || !hl.achievement.trim()) return `Highlight Detail/Score is required for highlight #${i+1}.`;
+        if (!hl.opponent || !hl.opponent.trim()) return `Opponent is required for highlight #${i+1}.`;
+        if (!hl.tournament || !hl.tournament.trim()) return `Tournament is required for highlight #${i+1}.`;
+        if (!hl.year) return `Year is required for highlight #${i+1}.`;
+      }
+    }
+    return '';
+  };
+
+  const validateStep8 = (): string => {
+    if (cv.education && cv.education.length > 0) {
+      for (let i = 0; i < cv.education.length; i++) {
+        const edu = cv.education[i];
+        if (!edu.degree || !edu.degree.trim()) return `Degree is required for education entry #${i+1}.`;
+        if (!edu.year) return `Graduation Year is required for education entry #${i+1}.`;
+      }
+    } else {
+      return "Please add at least one education entry.";
+    }
+    return '';
+  };
+
+  const validateStep9 = (): string => {
+    if (!cv.email || !cv.email.trim()) return "Email address is required.";
+    if (!cv.phone || !cv.phone.trim()) return "Phone number is required.";
+    return '';
+  };
+
+  const validateStep10 = (): string => {
+    if (!cv.languages || cv.languages.length === 0) return "Please select at least one Language.";
+    if (!cv.hobbies || cv.hobbies.length === 0) return "Please select at least one Hobby.";
     return '';
   };
 
@@ -222,31 +333,34 @@ export default function CVBuilderForm({
       setValidationError("Please save or cancel your current career highlight entry first.");
       return;
     }
-    if (currentStep === 1) {
-      const err = validateStep1();
-      if (err) {
-        setValidationError(err);
-        return;
-      }
+    let err = '';
+    if (currentStep === 1) err = validateStep1();
+    else if (currentStep === 2) err = validateStep2();
+    else if (currentStep === 3) err = validateStep3();
+    else if (currentStep === 4) err = validateStep4();
+    else if (currentStep === 5) {
+      // Scorecard, Profile & Media Links (no validation / optional)
+      err = '';
     }
-    if (currentStep === 2) {
-      const err = validateStep2();
-      if (err) {
-        setValidationError(err);
-        return;
-      }
-    }
-    if (currentStep === 5) {
+    else if (currentStep === 6) {
       const selectedCount = cv.specialistSkills?.length || 0;
       if (selectedCount === 0) {
-        setValidationError("Please select at least 1 specialist skill.");
-        return;
-      }
-      if (selectedCount > 5) {
-        setValidationError("You can select a maximum of 5 specialist skills.");
-        return;
+        err = "Please select at least 1 specialist skill.";
+      } else if (selectedCount > 5) {
+        err = "You can select a maximum of 5 specialist skills.";
       }
     }
+    else if (currentStep === 7) err = validateStep6();
+    else if (currentStep === 8) err = validateStep7();
+    else if (currentStep === 9) err = validateStep8();
+    else if (currentStep === 10) err = validateStep9();
+    else if (currentStep === 11) err = validateStep10();
+
+    if (err) {
+      setValidationError(err);
+      return;
+    }
+
     setValidationError('');
     onSaveDraft();
     if (currentStep < steps.length) {
@@ -302,9 +416,9 @@ export default function CVBuilderForm({
       competition: '',
       startYear: '',
       endYear: '',
-      role: '',
+      role: 'Player',
       captaincy: false,
-      level: '',
+      level: 'Club',
       description: ''
     };
     updateCVField('careerHistory', sortCareerHistory([...cv.careerHistory, entry]));
@@ -591,11 +705,20 @@ export default function CVBuilderForm({
           color: #1E293B !important;
           font-weight: 850 !important;
         }
-        .cv-builder-card h2, 
-        .cv-builder-card h3, 
+        .cv-builder-card h2 {
+          color: #1E293B !important;
+          font-weight: 900 !important;
+        }
+        .cv-builder-card h3,
         .cv-builder-card h4 {
           color: #1E293B !important;
           font-weight: 900 !important;
+          border-bottom: 2px solid #1E293B !important;
+          padding-bottom: 6px !important;
+          margin-bottom: 16px !important;
+          display: flex;
+          align-items: center;
+          width: 100%;
         }
         .cv-builder-card p {
           color: #1E293B !important;
@@ -657,14 +780,12 @@ export default function CVBuilderForm({
         }
         /* Override borders for status banner & bottom nav to remain borderless/standard */
         .cv-builder-card .save-status-banner {
-          border-bottom: 1px solid #cbd5e1 !important;
-          border-width: 1px !important;
-          border-style: solid !important;
+          border: none !important;
+          border-width: 0px !important;
         }
         .cv-builder-card .navigation-buttons-container {
-          border-top: 1px solid #cbd5e1 !important;
-          border-width: 1px !important;
-          border-style: solid !important;
+          border: none !important;
+          border-width: 0px !important;
         }
         .cv-builder-card .back-nav-btn {
           border-color: #cbd5e1 !important;
@@ -677,9 +798,17 @@ export default function CVBuilderForm({
           border: none !important;
           outline: none !important;
         }
+        .cv-builder-card .note-text-white {
+          color: #ffffff !important;
+          font-weight: bold !important;
+        }
+        .cv-builder-card .stats-settings-title {
+          color: #D4AF37 !important;
+          font-weight: bold !important;
+        }
       `}} />
       {/* Save Status Banner */}
-      <div className="flex justify-between items-center mb-6 text-xs border-b border-slate-200 pb-4 save-status-banner">
+      <div className="flex justify-between items-center mb-6 text-xs pb-4 save-status-banner">
         <span className="font-semibold text-slate-400">
           Step {currentStep} of {steps.length}: {steps[currentStep-1].name}
         </span>
@@ -724,8 +853,7 @@ export default function CVBuilderForm({
                 <input 
                   type="text" 
                   value={cv.firstName}
-                  disabled={isIdentityLocked}
-                  onChange={(e) => updateCVField('firstName', e.target.value)}
+                  disabled={true}
                   className="w-full bg-slate-950 border border-slate-800 p-2.5 rounded text-white text-xs disabled:opacity-50"
                 />
               </div>
@@ -734,8 +862,7 @@ export default function CVBuilderForm({
                 <input 
                   type="text" 
                   value={cv.lastName}
-                  disabled={isIdentityLocked}
-                  onChange={(e) => updateCVField('lastName', e.target.value)}
+                  disabled={true}
                   className="w-full bg-slate-950 border border-slate-800 p-2.5 rounded text-white text-xs disabled:opacity-50"
                 />
               </div>
@@ -747,73 +874,46 @@ export default function CVBuilderForm({
                 <input 
                   type="text" 
                   value={cv.nationality}
-                  disabled={isIdentityLocked}
-                  onChange={(e) => updateCVField('nationality', e.target.value)}
-                  placeholder="e.g. Indian, British"
+                  disabled={true}
                   className="w-full bg-slate-950 border border-slate-800 p-2.5 rounded text-white text-xs disabled:opacity-50"
                 />
               </div>
               <div>
-                <label className="block text-xs text-slate-400 mb-1.5 font-bold">Date of Birth</label>
+                <label className="block text-xs text-slate-400 mb-1.5 font-bold">Age</label>
                 <input 
-                  type="date" 
-                  value={cv.dateOfBirth}
-                  disabled={isIdentityLocked}
-                  max={new Date().toISOString().split('T')[0]}
-                  onChange={(e) => updateCVField('dateOfBirth', e.target.value)}
+                  type="text" 
+                  value={calculateAge(cv.dateOfBirth)}
+                  disabled={true}
                   className="w-full bg-slate-950 border border-slate-800 p-2.5 rounded text-white text-xs disabled:opacity-50"
-                />
-              </div>
-            </div>
-
-            {isIdentityLocked && (
-              <div className="bg-slate-950/80 p-3 rounded-lg border border-slate-850 flex items-start gap-2 text-[10px] text-slate-400">
-                <AlertCircle className="w-4 h-4 text-gold-500 flex-shrink-0 mt-0.5" />
-                <span>Identity details (Name, DOB, Nationality) are verified and locked. To correct mistakes, request a change from the admin console.</span>
-              </div>
-            )}
-
-            <div className="grid grid-cols-2 gap-4 pt-4 border-t border-slate-800">
-              <div>
-                <label className="block text-xs text-slate-400 mb-1.5 font-bold">Country of Residence</label>
-                <input 
-                  type="text" 
-                  value={cv.countryOfResidence}
-                  onChange={(e) => updateCVField('countryOfResidence', e.target.value)}
-                  className="w-full bg-slate-950 border border-slate-800 p-2.5 rounded text-white text-xs"
-                />
-              </div>
-              <div>
-                <label className="block text-xs text-slate-400 mb-1.5 font-bold">City / Location</label>
-                <input 
-                  type="text" 
-                  value={cv.currentCity}
-                  onChange={(e) => updateCVField('currentCity', e.target.value)}
-                  className="w-full bg-slate-950 border border-slate-800 p-2.5 rounded text-white text-xs"
                 />
               </div>
             </div>
 
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="block text-xs text-slate-400 mb-1.5 font-bold">Height (cm)</label>
+                <label className="block text-xs text-slate-400 mb-1.5 font-bold">State / County / Province</label>
                 <input 
-                  type="number" 
-                  value={cv.height}
-                  onChange={(e) => updateCVField('height', e.target.value)}
-                  className="w-full bg-slate-950 border border-slate-800 p-2.5 rounded text-white text-xs"
+                  type="text" 
+                  value={cv.currentCity}
+                  disabled={true}
+                  className="w-full bg-slate-950 border border-slate-800 p-2.5 rounded text-white text-xs disabled:opacity-50"
                 />
               </div>
               <div>
-                <label className="block text-xs text-slate-400 mb-1.5 font-bold">Preferred Name (Optional)</label>
+                <label className="block text-xs text-slate-400 mb-1.5 font-bold">Height (cm)</label>
                 <input 
-                  type="text" 
-                  value={cv.preferredName}
-                  onChange={(e) => updateCVField('preferredName', e.target.value)}
-                  placeholder="e.g. Jimmy"
-                  className="w-full bg-slate-950 border border-slate-800 p-2.5 rounded text-white text-xs"
+                  type="number" 
+                  value={cv.height || ''}
+                  onChange={(e) => updateCVField('height', e.target.value)}
+                  placeholder="Height in cm"
+                  className="w-full bg-slate-950 border border-slate-800 p-2.5 rounded text-white text-xs focus:border-gold-500 outline-none"
                 />
               </div>
+            </div>
+
+            <div className="bg-slate-950/80 p-3 rounded-lg border border-slate-850 flex items-start gap-2 text-[10px]" style={{ color: '#000000' }}>
+              <AlertCircle className="w-4 h-4 text-black flex-shrink-0 mt-0.5" style={{ color: '#000000' }} />
+              <span style={{ color: '#000000', fontWeight: 'bold' }}>Identity details (Name, Age, Nationality, State/Province) are verified and locked. To correct mistakes, request a change from the admin console.</span>
             </div>
 
             <div>
@@ -871,7 +971,7 @@ export default function CVBuilderForm({
             </div>
 
             {/* Player Level Information Section */}
-            <div className="pt-6 border-t border-slate-800 space-y-4 text-left">
+            <div className="pt-6 space-y-4 text-left">
               <h4 className="text-xs font-bold text-gold-400 uppercase tracking-wider">Type Of Playing Level</h4>
               
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -898,30 +998,7 @@ export default function CVBuilderForm({
                   </select>
                 </div>
 
-                {/* Country selector - shown if any level is selected */}
-                {cv.typeOfPlayerLevel && (
-                  <div>
-                    <label className="block text-xs text-slate-400 font-bold min-h-[32px] flex items-end pb-1">Country Played</label>
-                    <select
-                      value={cv.playerLevelCountry || ''}
-                      onChange={(e) => updateCVField('playerLevelCountry', e.target.value)}
-                      className="w-full bg-slate-950 border border-slate-800 p-2.5 rounded text-white text-xs select-custom"
-                    >
-                      <option value="">Select Country</option>
-                      <option value="India">India</option>
-                      <option value="England">England</option>
-                      <option value="Australia">Australia</option>
-                      <option value="New Zealand">New Zealand</option>
-                      <option value="South Africa">South Africa</option>
-                      <option value="Ireland">Ireland</option>
-                      <option value="Scotland">Scotland</option>
-                      <option value="Afghanistan">Afghanistan</option>
-                      <option value="Oman">Oman</option>
-                      <option value="United States of America">United States of America</option>
-                      <option value="United Arab Emirates">United Arab Emirates</option>
-                    </select>
-                  </div>
-                )}
+
               </div>
 
               {cv.typeOfPlayerLevel && (
@@ -972,36 +1049,6 @@ export default function CVBuilderForm({
                     </select>
                   </div>
 
-                  {/* Profile link verification field */}
-                  <div>
-                    {(cv.typeOfPlayerLevel === 'International Cricketer' || cv.typeOfPlayerLevel === 'Professional Cricketer') ? (
-                      <div>
-                        <label className="block text-xs text-slate-400 font-bold min-h-[32px] flex items-end pb-1">
-                          ESPN Cricinfo Link <span className="text-red-500 font-bold">*</span>
-                        </label>
-                        <input
-                          type="url"
-                          value={cv.espnLink || ''}
-                          onChange={(e) => updateCVField('espnLink', e.target.value)}
-                          placeholder="e.g. https://www.espncricinfo.com/player/..."
-                          className="w-full bg-slate-950 border border-slate-800 p-2.5 rounded text-white text-xs"
-                        />
-                      </div>
-                    ) : (
-                      <div>
-                        <label className="block text-xs text-slate-400 font-bold min-h-[32px] flex items-end pb-1">
-                          Please provide a link to your cricket profile or statistics, such as CricHeroes, CricHQ, or another cricket platform <span className="text-red-500 font-bold">*</span>
-                        </label>
-                        <input
-                          type="url"
-                          value={cv.crickherosLink || ''}
-                          onChange={(e) => updateCVField('crickherosLink', e.target.value)}
-                          placeholder="e.g. https://cricheroes.in/... or https://crichq.com/..."
-                          className="w-full bg-slate-950 border border-slate-800 p-2.5 rounded text-white text-xs"
-                        />
-                      </div>
-                    )}
-                  </div>
                 </div>
               )}
             </div>
@@ -1166,35 +1213,6 @@ export default function CVBuilderForm({
                 )}
               </div>
 
-              {/* Sub-row for Throwing Arm & Current Club */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-xs text-slate-400 font-bold min-h-[32px] flex items-end pb-1">
-                    Throwing Arm
-                  </label>
-                  <select
-                    value={cv.throwingArm || ''}
-                    onChange={(e) => updateCVField('throwingArm', e.target.value)}
-                    className="w-full bg-slate-950 border border-slate-800 p-2.5 rounded text-white text-xs select-custom"
-                  >
-                    <option value="">Select Throwing Arm</option>
-                    <option value="Right">Right Arm</option>
-                    <option value="Left">Left Arm</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-xs text-slate-400 font-bold min-h-[32px] flex items-end pb-1">
-                    Current Club
-                  </label>
-                  <input
-                    type="text"
-                    value={cv.currentClub || ''}
-                    onChange={(e) => updateCVField('currentClub', e.target.value)}
-                    placeholder="e.g. Melbourne CC"
-                    className="w-full bg-slate-950 border border-slate-800 p-2.5 rounded text-white text-xs"
-                  />
-                </div>
-              </div>
 
               {/* About the Player */}
               <div>
@@ -1225,9 +1243,10 @@ export default function CVBuilderForm({
               </h3>
               <button 
                 onClick={addCareerEntry}
-                className="flex items-center gap-1 text-xs text-gold-400 hover:text-white px-2 py-1 rounded bg-slate-850"
+                className="flex items-center gap-1 text-xs hover:opacity-80 transition-all font-black cursor-pointer"
+                style={{ color: '#0A192F', background: 'transparent', border: 'none' }}
               >
-                <Plus className="w-3 h-3" /> Add Team
+                <Plus className="w-3.5 h-3.5" style={{ color: '#0A192F' }} /> Add Team
               </button>
             </div>
 
@@ -1297,8 +1316,7 @@ export default function CVBuilderForm({
 
         {/* STEP 4: STATISTICS */}
         {currentStep === 4 && (() => {
-          const currentStatsField = statsTab === 'oneDay' ? 'oneDayStats' : statsTab === 'multiDay' ? 'multiDayStats' : 't20Stats';
-          const stats = cv[currentStatsField] || createDefaultFormatStats(statsTab === 'multiDay');
+          const stats = cv.oneDayStats || createDefaultFormatStats(false);
 
           const batDismissals = Math.max(0, stats.batInnings - stats.batNotOuts);
           const batAverage = batDismissals > 0 ? (stats.batRuns / batDismissals).toFixed(2) : '-';
@@ -1311,26 +1329,26 @@ export default function CVBuilderForm({
           return (
             <div className="space-y-4 text-left animate-fade-in animate-duration-300">
               <div className="space-y-1 mb-2">
-                <h3 className="text-base font-bold text-white flex items-center gap-1.5">
-                  <Activity className="w-4 h-4 text-gold-400" /> Player Career Statistics
+                <h3 className="text-base font-extrabold flex items-center gap-1.5 pb-2" style={{ borderBottom: '3.5px solid #000000', color: '#000000', width: '100%' }}>
+                  <Activity className="w-4 h-4 text-black" /> Player Career Statistics
                 </h3>
-                <p className="text-[11px] text-slate-400 font-semibold leading-relaxed">
-                  Enter your stats separately for One Day, Multi-Day, and T20 matches.
+                <p className="text-[11px] text-slate-500 font-bold leading-relaxed pt-1">
+                  Enter your overall career statistics.
                 </p>
               </div>
 
               {/* Statistics Display Settings Card */}
-              <div className="bg-slate-900/60 p-4 rounded-xl border border-slate-800/80 space-y-3 mb-4">
-                <span className="text-[11px] font-extrabold text-gold-400 uppercase tracking-wider block">
+              <div className="p-4 space-y-3 mb-4" style={{ backgroundColor: '#2D3139', border: '1.5px solid #ffffff', borderRadius: '0.75rem', fontFamily: 'SFMono-Regular, Consolas, "Liberation Mono", Menlo, monospace', fontWeight: 'bold' }}>
+                <span className="stats-settings-title text-[11px] uppercase tracking-wider block">
                   Statistics Display Settings
                 </span>
-                <p className="text-[10px] text-slate-400 leading-relaxed font-semibold">
-                  Note: Use the toggle switches below to select which career statistics categories (Batting, Bowling, Fielding) you want to display on your printed and online CV. By default, all categories are enabled.
+                <p className="note-text-white text-[10px] leading-relaxed font-bold">
+                  Note: Use the toggle switches below to select which career statistics categories (Batting, Bowling) you want to display on your printed and online CV. By default, both categories are enabled.
                 </p>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-3 pt-1">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pt-1">
                   {/* Batting Toggle */}
-                  <div className="flex items-center justify-between bg-slate-950 p-3 rounded-xl border border-slate-850">
-                    <span className="text-[11px] text-white font-bold tracking-wide uppercase">Batting</span>
+                  <div className="flex items-center justify-between bg-black/40 p-3 rounded-xl border border-slate-800">
+                    <span className="note-text-white text-[11px] font-bold tracking-wide uppercase">Batting</span>
                     <label className="relative inline-flex items-center cursor-pointer shrink-0">
                       <input 
                         type="checkbox" 
@@ -1338,12 +1356,12 @@ export default function CVBuilderForm({
                         onChange={(e) => updateCVField('showBatting', e.target.checked)}
                         className="sr-only peer"
                       />
-                      <div className="w-8 h-4 bg-slate-800 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-slate-305 after:border-slate-305 after:border after:rounded-full after:h-3 after:w-3 after:transition-all peer-checked:bg-gold-500"></div>
+                      <div className="w-8 h-4 bg-red-600 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-slate-100 after:border-slate-200 after:border after:rounded-full after:h-3 after:w-3 after:transition-all peer-checked:bg-green-600"></div>
                     </label>
                   </div>
                   {/* Bowling Toggle */}
-                  <div className="flex items-center justify-between bg-slate-950 p-3 rounded-xl border border-slate-850">
-                    <span className="text-[11px] text-white font-bold tracking-wide uppercase">Bowling</span>
+                  <div className="flex items-center justify-between bg-black/40 p-3 rounded-xl border border-slate-800">
+                    <span className="note-text-white text-[11px] font-bold tracking-wide uppercase">Bowling</span>
                     <label className="relative inline-flex items-center cursor-pointer shrink-0">
                       <input 
                         type="checkbox" 
@@ -1351,59 +1369,31 @@ export default function CVBuilderForm({
                         onChange={(e) => updateCVField('showBowling', e.target.checked)}
                         className="sr-only peer"
                       />
-                      <div className="w-8 h-4 bg-slate-800 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-slate-305 after:border-slate-305 after:border after:rounded-full after:h-3 after:w-3 after:transition-all peer-checked:bg-gold-500"></div>
-                    </label>
-                  </div>
-                  {/* Fielding Toggle */}
-                  <div className="flex items-center justify-between bg-slate-950 p-3 rounded-xl border border-slate-850">
-                    <span className="text-[11px] text-white font-bold tracking-wide uppercase">Fielding</span>
-                    <label className="relative inline-flex items-center cursor-pointer shrink-0">
-                      <input 
-                        type="checkbox" 
-                        checked={cv.showFielding !== false}
-                        onChange={(e) => updateCVField('showFielding', e.target.checked)}
-                        className="sr-only peer"
-                      />
-                      <div className="w-8 h-4 bg-slate-800 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-slate-305 after:border-slate-305 after:border after:rounded-full after:h-3 after:w-3 after:transition-all peer-checked:bg-gold-500"></div>
+                      <div className="w-8 h-4 bg-red-600 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-slate-100 after:border-slate-200 after:border after:rounded-full after:h-3 after:w-3 after:transition-all peer-checked:bg-green-600"></div>
                     </label>
                   </div>
                 </div>
-              </div>
-
-              {/* Tabs */}
-              <div className="flex border-b border-slate-800 mb-4">
-                {(['oneDay', 'multiDay', 't20'] as const).map(tab => (
-                  <button
-                    key={tab}
-                    type="button"
-                    onClick={() => setStatsTab(tab)}
-                    className={`px-4 py-2 text-xs font-bold transition uppercase cursor-pointer ${
-                      statsTab === tab 
-                        ? 'border-b-2 border-gold-500 text-gold-400 font-extrabold' 
-                        : 'text-slate-400 hover:text-white'
-                    }`}
-                  >
-                    {tab === 'oneDay' ? 'One Day' : tab === 'multiDay' ? 'Multi-Day' : 'T20'}
-                  </button>
-                ))}
               </div>
 
               {/* Toggle switch for hasStats */}
               <div className="flex items-center gap-3 bg-slate-950 p-4 rounded-xl border border-slate-850 justify-between">
                 <div className="pr-4">
-                  <span className="text-xs text-white font-bold tracking-wide uppercase">
-                    Include {statsTab === 'oneDay' ? 'One Day' : statsTab === 'multiDay' ? 'Multi-Day' : 'T20'} Statistics
+                  <span className="text-xs text-white font-extrabold tracking-wide uppercase" style={{ fontWeight: 'bold' }}>
+                    Include Career Statistics on CV
                   </span>
-                  <p className="text-[10px] text-slate-500 mt-0.5">Toggle to display this format summary on your generated Cricket CV.</p>
+                  <p className="text-[10px] text-slate-500 mt-0.5 font-bold" style={{ fontWeight: 'bold' }}>Toggle to display career statistics summary on your generated Cricket CV.</p>
+                  <p className="text-[10px] text-slate-500 mt-1.5 leading-relaxed font-bold" style={{ fontWeight: 'bold' }}>
+                    You may refer to your online profile on platforms such as CricHeroes, CricHQ, CricClubs, or other reliable cricket-statistics websites.
+                  </p>
                 </div>
                 <label className="relative inline-flex items-center cursor-pointer shrink-0">
                   <input 
                     type="checkbox" 
                     checked={!!stats.hasStats}
-                    onChange={(e) => updateFormatStats(statsTab, 'hasStats', e.target.checked)}
+                    onChange={(e) => updateFormatStats('oneDay', 'hasStats', e.target.checked)}
                     className="sr-only peer"
                   />
-                  <div className="w-10 h-5 bg-slate-800 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-slate-300 after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-gold-500"></div>
+                  <div className="w-10 h-5 bg-red-600 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-slate-100 after:border-slate-200 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-green-600"></div>
                 </label>
               </div>
 
@@ -1412,94 +1402,206 @@ export default function CVBuilderForm({
                   
                   {/* BATTING SECTION */}
                   <div className="space-y-4">
-                    <h4 className="text-xs font-bold text-slate-300 uppercase tracking-widest border-b border-slate-800 pb-1">1. Batting Statistics</h4>
+                    <h4 className="text-xs font-extrabold uppercase tracking-widest pb-1.5" style={{ borderBottom: '3.5px solid #000000', color: '#000000' }}>1. Batting Statistics</h4>
                     
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-                      <CricketNumberSelector
-                        label="Matches"
-                        value={stats.batMatches}
-                        onChange={(val) => updateFormatStats(statsTab, 'batMatches', val)}
-                        max={1000}
-                        helperText="Total matches played in this format."
-                      />
-                      <CricketNumberSelector
-                        label="Innings"
-                        value={stats.batInnings}
-                        onChange={(val) => updateFormatStats(statsTab, 'batInnings', val)}
-                        max={1000}
-                        helperText="Number of innings batted."
-                      />
-                      <CricketNumberSelector
-                        label="Not Outs"
-                        value={stats.batNotOuts}
-                        onChange={(val) => updateFormatStats(statsTab, 'batNotOuts', val)}
-                        max={1000}
-                        helperText="Innings where you were not dismissed."
-                      />
-                      <CricketNumberSelector
-                        label="Runs Scored"
-                        value={stats.batRuns}
-                        onChange={(val) => updateFormatStats(statsTab, 'batRuns', val)}
-                        max={100000}
-                        largeNumbers={true}
-                        helperText="Total career runs scored."
-                      />
+                      <div className="bg-slate-950 p-4 rounded-xl border border-slate-850 space-y-3 text-left">
+                        <div>
+                          <label className="block text-xs text-white font-bold tracking-wide uppercase">Matches</label>
+                          <span className="text-[10px] text-slate-500 block mt-0.5">Total matches played in career.</span>
+                        </div>
+                        <div className="relative mt-1">
+                          <input 
+                            type="number"
+                            min={0}
+                            value={stats.batMatches || ''}
+                            onChange={(e) => {
+                              const val = parseInt(e.target.value, 10);
+                              updateFormatStats('oneDay', 'batMatches', isNaN(val) ? 0 : val);
+                            }}
+                            className="w-full bg-slate-900 border border-slate-800 focus:border-gold-500 p-2.5 rounded-lg text-white font-bold text-sm focus:outline-none"
+                          />
+                        </div>
+                      </div>
+                      <div className="bg-slate-950 p-4 rounded-xl border border-slate-850 space-y-3 text-left">
+                        <div>
+                          <label className="block text-xs text-white font-bold tracking-wide uppercase">Innings</label>
+                          <span className="text-[10px] text-slate-500 block mt-0.5">Number of innings batted.</span>
+                        </div>
+                        <div className="relative mt-1">
+                          <input 
+                            type="number"
+                            min={0}
+                            value={stats.batInnings || ''}
+                            onChange={(e) => {
+                              const val = parseInt(e.target.value, 10);
+                              updateFormatStats('oneDay', 'batInnings', isNaN(val) ? 0 : val);
+                            }}
+                            className="w-full bg-slate-900 border border-slate-800 focus:border-gold-500 p-2.5 rounded-lg text-white font-bold text-sm focus:outline-none"
+                          />
+                        </div>
+                      </div>
+                      <div className="bg-slate-950 p-4 rounded-xl border border-slate-850 space-y-3 text-left">
+                        <div>
+                          <label className="block text-xs text-white font-bold tracking-wide uppercase">Not Outs</label>
+                          <span className="text-[10px] text-slate-500 block mt-0.5">Innings where you were not dismissed.</span>
+                        </div>
+                        <div className="relative mt-1">
+                          <input 
+                            type="number"
+                            min={0}
+                            value={stats.batNotOuts || ''}
+                            onChange={(e) => {
+                              const val = parseInt(e.target.value, 10);
+                              updateFormatStats('oneDay', 'batNotOuts', isNaN(val) ? 0 : val);
+                            }}
+                            className="w-full bg-slate-900 border border-slate-800 focus:border-gold-500 p-2.5 rounded-lg text-white font-bold text-sm focus:outline-none"
+                          />
+                        </div>
+                      </div>
+                      <div className="bg-slate-950 p-4 rounded-xl border border-slate-850 space-y-3 text-left">
+                        <div>
+                          <label className="block text-xs text-white font-bold tracking-wide uppercase">Runs Scored</label>
+                          <span className="text-[10px] text-slate-500 block mt-0.5">Total career runs scored.</span>
+                        </div>
+                        <div className="relative mt-1">
+                          <input 
+                            type="number"
+                            min={0}
+                            value={stats.batRuns || ''}
+                            onChange={(e) => {
+                              const val = parseInt(e.target.value, 10);
+                              updateFormatStats('oneDay', 'batRuns', isNaN(val) ? 0 : val);
+                            }}
+                            className="w-full bg-slate-900 border border-slate-800 focus:border-gold-500 p-2.5 rounded-lg text-white font-bold text-sm focus:outline-none"
+                          />
+                        </div>
+                      </div>
                       
                       {/* Highest Score + Not Out Toggle */}
                       <div className="bg-slate-950 p-4 rounded-xl border border-slate-850 flex flex-col justify-between">
-                        <CricketNumberSelector
-                          label="Highest Score"
-                          value={stats.batHighestScore}
-                          onChange={(val) => updateFormatStats(statsTab, 'batHighestScore', val)}
-                          max={500}
-                          helperText="Your highest individual score."
-                        />
+                        <div className="space-y-3">
+                          <div>
+                            <label className="block text-xs text-white font-bold tracking-wide uppercase">Highest Score</label>
+                            <span className="text-[10px] text-slate-500 block mt-0.5">Your highest individual score.</span>
+                          </div>
+                          <div className="relative mt-1">
+                            <input 
+                              type="number"
+                              min={0}
+                              value={stats.batHighestScore || ''}
+                              onChange={(e) => {
+                                const val = parseInt(e.target.value, 10);
+                                updateFormatStats('oneDay', 'batHighestScore', isNaN(val) ? 0 : val);
+                              }}
+                              className="w-full bg-slate-900 border border-slate-800 focus:border-gold-500 p-2.5 rounded-lg text-white font-bold text-sm focus:outline-none"
+                            />
+                          </div>
+                        </div>
                         <div className="flex items-center gap-2 mt-3 pt-2 border-t border-slate-900/60 justify-between">
                           <span className="text-[10px] text-slate-500 font-bold uppercase">Not Out (*)</span>
                           <label className="relative inline-flex items-center cursor-pointer">
                             <input 
                               type="checkbox" 
                               checked={!!stats.batHighestNotOut}
-                              onChange={(e) => updateFormatStats(statsTab, 'batHighestNotOut', e.target.checked)}
+                              onChange={(e) => updateFormatStats('oneDay', 'batHighestNotOut', e.target.checked)}
                               className="sr-only peer"
                             />
-                            <div className="w-8 h-4 bg-slate-800 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-slate-300 after:border-slate-300 after:border after:rounded-full after:h-3 after:w-3 after:transition-all peer-checked:bg-gold-500"></div>
+                            <div className="w-8 h-4 bg-red-600 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-slate-100 after:border-slate-200 after:border after:rounded-full after:h-3 after:w-3 after:transition-all peer-checked:bg-green-600"></div>
                           </label>
                         </div>
                       </div>
 
-                      <CricketNumberSelector
-                        label="Balls Faced"
-                        value={stats.batBallsFaced}
-                        onChange={(val) => updateFormatStats(statsTab, 'batBallsFaced', val)}
-                        max={100000}
-                        largeNumbers={true}
-                        helperText="Total balls faced in career."
-                      />
-                      <CricketNumberSelector
-                        label="50s"
-                        value={stats.batFifties}
-                        onChange={(val) => updateFormatStats(statsTab, 'batFifties', val)}
-                        max={500}
-                        helperText="Innings where you scored between 50 and 99 runs."
-                      />
-                      <CricketNumberSelector
-                        label="100s"
-                        value={stats.batHundreds}
-                        onChange={(val) => updateFormatStats(statsTab, 'batHundreds', val)}
-                        max={200}
-                        helperText="Innings where you scored 100 runs or more."
-                      />
-
-                      {statsTab === 'multiDay' && (
-                        <CricketNumberSelector
-                          label="200s"
-                          value={stats.batTwoHundreds || 0}
-                          onChange={(val) => updateFormatStats(statsTab, 'batTwoHundreds', val)}
-                          max={100}
-                          helperText="Innings where you scored 200 runs or more."
-                        />
-                      )}
+                      <div className="bg-slate-950 p-4 rounded-xl border border-slate-850 space-y-3 text-left">
+                        <div>
+                          <label className="block text-xs text-white font-bold tracking-wide uppercase">Balls Faced</label>
+                          <span className="text-[10px] text-slate-500 block mt-0.5">Total balls faced in career.</span>
+                        </div>
+                        <div className="relative mt-1">
+                          <input 
+                            type="number"
+                            min={0}
+                            value={stats.batBallsFaced || ''}
+                            onChange={(e) => {
+                              const val = parseInt(e.target.value, 10);
+                              updateFormatStats('oneDay', 'batBallsFaced', isNaN(val) ? 0 : val);
+                            }}
+                            className="w-full bg-slate-900 border border-slate-800 focus:border-gold-500 p-2.5 rounded-lg text-white font-bold text-sm focus:outline-none"
+                          />
+                        </div>
+                      </div>
+                      <div className="bg-slate-950 p-4 rounded-xl border border-slate-850 space-y-3 text-left">
+                        <div>
+                          <label className="block text-xs text-white font-bold tracking-wide uppercase">50s</label>
+                          <span className="text-[10px] text-slate-500 block mt-0.5">Innings where you scored between 50 and 99 runs.</span>
+                        </div>
+                        <div className="relative mt-1">
+                          <input 
+                            type="number"
+                            min={0}
+                            value={stats.batFifties || ''}
+                            onChange={(e) => {
+                              const val = parseInt(e.target.value, 10);
+                              updateFormatStats('oneDay', 'batFifties', isNaN(val) ? 0 : val);
+                            }}
+                            className="w-full bg-slate-900 border border-slate-800 focus:border-gold-500 p-2.5 rounded-lg text-white font-bold text-sm focus:outline-none"
+                          />
+                        </div>
+                      </div>
+                      <div className="bg-slate-950 p-4 rounded-xl border border-slate-850 space-y-3 text-left">
+                        <div>
+                          <label className="block text-xs text-white font-bold tracking-wide uppercase">100s</label>
+                          <span className="text-[10px] text-slate-500 block mt-0.5">Innings where you scored 100 runs or more.</span>
+                        </div>
+                        <div className="relative mt-1">
+                          <input 
+                            type="number"
+                            min={0}
+                            value={stats.batHundreds || ''}
+                            onChange={(e) => {
+                              const val = parseInt(e.target.value, 10);
+                              updateFormatStats('oneDay', 'batHundreds', isNaN(val) ? 0 : val);
+                            }}
+                            className="w-full bg-slate-900 border border-slate-800 focus:border-gold-500 p-2.5 rounded-lg text-white font-bold text-sm focus:outline-none"
+                          />
+                        </div>
+                      </div>
+                      <div className="bg-slate-950 p-4 rounded-xl border border-slate-850 space-y-3 text-left">
+                        <div>
+                          <label className="block text-xs text-white font-bold tracking-wide uppercase">Catches</label>
+                          <span className="text-[10px] text-slate-500 block mt-0.5">Catches taken in career.</span>
+                        </div>
+                        <div className="relative mt-1">
+                          <input 
+                            type="number"
+                            min={0}
+                            value={stats.fieldCatches || ''}
+                            onChange={(e) => {
+                              const val = parseInt(e.target.value, 10);
+                              updateFormatStats('oneDay', 'fieldCatches', isNaN(val) ? 0 : val);
+                            }}
+                            className="w-full bg-slate-900 border border-slate-800 focus:border-gold-500 p-2.5 rounded-lg text-white font-bold text-sm focus:outline-none"
+                          />
+                        </div>
+                      </div>
+                      <div className="bg-slate-950 p-4 rounded-xl border border-slate-850 space-y-3 text-left">
+                        <div>
+                          <label className="block text-xs text-white font-bold tracking-wide uppercase">Stumpings</label>
+                          <span className="text-[10px] text-slate-500 block mt-0.5">Stumpings affected in career.</span>
+                        </div>
+                        <div className="relative mt-1">
+                          <input 
+                            type="number"
+                            min={0}
+                            value={stats.fieldStumpings || ''}
+                            onChange={(e) => {
+                              const val = parseInt(e.target.value, 10);
+                              updateFormatStats('oneDay', 'fieldStumpings', isNaN(val) ? 0 : val);
+                            }}
+                            className="w-full bg-slate-900 border border-slate-800 focus:border-gold-500 p-2.5 rounded-lg text-white font-bold text-sm focus:outline-none"
+                          />
+                        </div>
+                      </div>
                     </div>
 
                     {/* Auto-Calculated Batting Stats */}
@@ -1524,104 +1626,175 @@ export default function CVBuilderForm({
 
                   {/* BOWLING SECTION */}
                   <div className="space-y-4">
-                    <h4 className="text-xs font-bold text-slate-300 uppercase tracking-widest border-b border-slate-800 pb-1">2. Bowling Statistics</h4>
+                    <h4 className="text-xs font-extrabold uppercase tracking-widest pb-1.5" style={{ borderBottom: '3.5px solid #000000', color: '#000000' }}>2. Bowling Statistics</h4>
                     
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-                      <CricketNumberSelector
-                        label="Bowling Matches"
-                        value={stats.bowlMatches}
-                        onChange={(val) => updateFormatStats(statsTab, 'bowlMatches', val)}
-                        max={1000}
-                        helperText="Matches played as a bowler."
-                      />
-                      <CricketNumberSelector
-                        label="Bowling Innings"
-                        value={stats.bowlInnings}
-                        onChange={(val) => updateFormatStats(statsTab, 'bowlInnings', val)}
-                        max={1000}
-                        helperText="Innings bowled."
-                      />
-
-                      {/* Overs Selector (Overs + Balls) */}
-                      <div className="bg-slate-950 p-4 rounded-xl border border-slate-850 flex flex-col justify-between">
-                        <CricketNumberSelector
-                          label="Overs Bowled"
-                          value={stats.bowlOvers}
-                          onChange={(val) => updateFormatStats(statsTab, 'bowlOvers', val)}
-                          max={10000}
-                          helperText="Completed overs bowled."
-                        />
-                        <div className="mt-3 pt-2 border-t border-slate-900/60">
-                          <CricketNumberSelector
-                            label="Extra Balls"
-                            value={stats.bowlBalls}
-                            onChange={(val) => updateFormatStats(statsTab, 'bowlBalls', val)}
-                            max={5}
-                            helperText="Overs fractional balls (0 to 5)."
+                      <div className="bg-slate-950 p-4 rounded-xl border border-slate-850 space-y-3 text-left">
+                        <div>
+                          <label className="block text-xs text-white font-bold tracking-wide uppercase">Matches</label>
+                          <span className="text-[10px] text-slate-500 block mt-0.5">Matches played as a bowler.</span>
+                        </div>
+                        <div className="relative mt-1">
+                          <input 
+                            type="number"
+                            min={0}
+                            value={stats.bowlMatches || ''}
+                            onChange={(e) => {
+                              const val = parseInt(e.target.value, 10);
+                              updateFormatStats('oneDay', 'bowlMatches', isNaN(val) ? 0 : val);
+                            }}
+                            className="w-full bg-slate-900 border border-slate-800 focus:border-gold-500 p-2.5 rounded-lg text-white font-bold text-sm focus:outline-none"
+                          />
+                        </div>
+                      </div>
+                      <div className="bg-slate-950 p-4 rounded-xl border border-slate-850 space-y-3 text-left">
+                        <div>
+                          <label className="block text-xs text-white font-bold tracking-wide uppercase">Innings</label>
+                          <span className="text-[10px] text-slate-500 block mt-0.5">Innings bowled.</span>
+                        </div>
+                        <div className="relative mt-1">
+                          <input 
+                            type="number"
+                            min={0}
+                            value={stats.bowlInnings || ''}
+                            onChange={(e) => {
+                              const val = parseInt(e.target.value, 10);
+                              updateFormatStats('oneDay', 'bowlInnings', isNaN(val) ? 0 : val);
+                            }}
+                            className="w-full bg-slate-900 border border-slate-800 focus:border-gold-500 p-2.5 rounded-lg text-white font-bold text-sm focus:outline-none"
                           />
                         </div>
                       </div>
 
-                      <CricketNumberSelector
-                        label="Runs Conceded"
-                        value={stats.bowlRunsConceded}
-                        onChange={(val) => updateFormatStats(statsTab, 'bowlRunsConceded', val)}
-                        max={100000}
-                        largeNumbers={true}
-                        helperText="Total career runs conceded."
-                      />
-                      <CricketNumberSelector
-                        label="Wickets Taken"
-                        value={stats.bowlWickets}
-                        onChange={(val) => updateFormatStats(statsTab, 'bowlWickets', val)}
-                        max={5000}
-                        helperText="Total career wickets taken."
-                      />
-
-                      {/* Best Bowling (Wickets / Runs) */}
-                      <div className="bg-slate-950 p-4 rounded-xl border border-slate-850 flex flex-col justify-between">
-                        <CricketNumberSelector
-                          label="Best Wickets"
-                          value={stats.bowlBestWickets}
-                          onChange={(val) => updateFormatStats(statsTab, 'bowlBestWickets', val)}
-                          max={10}
-                          helperText="Best bowling: wickets."
-                        />
-                        <div className="mt-3 pt-2 border-t border-slate-900/60">
-                          <CricketNumberSelector
-                            label="Best Runs Conceded"
-                            value={stats.bowlBestRuns}
-                            onChange={(val) => updateFormatStats(statsTab, 'bowlBestRuns', val)}
-                            max={999}
-                            helperText="Best bowling: runs."
+                      {/* Overs Input Box */}
+                      <div className="bg-slate-950 p-4 rounded-xl border border-slate-850 space-y-3 text-left">
+                        <div>
+                          <label className="block text-xs text-white font-bold tracking-wide uppercase">Overs Bowled</label>
+                          <span className="text-[10px] text-slate-500 block mt-0.5">Completed overs bowled.</span>
+                        </div>
+                        <div className="relative mt-1">
+                          <input 
+                            type="number"
+                            min={0}
+                            value={stats.bowlOvers || ''}
+                            onChange={(e) => {
+                              const val = parseInt(e.target.value, 10);
+                              updateFormatStats('oneDay', 'bowlOvers', isNaN(val) ? 0 : val);
+                            }}
+                            className="w-full bg-slate-900 border border-slate-800 focus:border-gold-500 p-2.5 rounded-lg text-white font-bold text-sm focus:outline-none"
                           />
                         </div>
                       </div>
 
-                      <CricketNumberSelector
-                        label="4-Wicket Hauls"
-                        value={stats.bowlFourWickets}
-                        onChange={(val) => updateFormatStats(statsTab, 'bowlFourWickets', val)}
-                        max={500}
-                        helperText="Innings with exactly 4 wickets."
-                      />
-                      <CricketNumberSelector
-                        label="5-Wicket Hauls"
-                        value={stats.bowlFiveWickets}
-                        onChange={(val) => updateFormatStats(statsTab, 'bowlFiveWickets', val)}
-                        max={300}
-                        helperText="Innings with 5 wickets or more."
-                      />
+                      {/* Runs Conceded */}
+                      <div className="bg-slate-950 p-4 rounded-xl border border-slate-850 space-y-3 text-left">
+                        <div>
+                          <label className="block text-xs text-white font-bold tracking-wide uppercase">Runs Conceded</label>
+                          <span className="text-[10px] text-slate-500 block mt-0.5">Total career runs conceded.</span>
+                        </div>
+                        <div className="relative mt-1">
+                          <input 
+                            type="number"
+                            min={0}
+                            value={stats.bowlRunsConceded || ''}
+                            onChange={(e) => {
+                              const val = parseInt(e.target.value, 10);
+                              updateFormatStats('oneDay', 'bowlRunsConceded', isNaN(val) ? 0 : val);
+                            }}
+                            className="w-full bg-slate-900 border border-slate-800 focus:border-gold-500 p-2.5 rounded-lg text-white font-bold text-sm focus:outline-none"
+                          />
+                        </div>
+                      </div>
 
-                      {statsTab === 'multiDay' && (
-                        <CricketNumberSelector
-                          label="10-Wicket Match Hauls"
-                          value={stats.bowlTenWickets || 0}
-                          onChange={(val) => updateFormatStats(statsTab, 'bowlTenWickets', val)}
-                          max={100}
-                          helperText="Matches with 10 wickets in total."
-                        />
-                      )}
+                      {/* Wickets Taken */}
+                      <div className="bg-slate-950 p-4 rounded-xl border border-slate-850 space-y-3 text-left">
+                        <div>
+                          <label className="block text-xs text-white font-bold tracking-wide uppercase">Wickets Taken</label>
+                          <span className="text-[10px] text-slate-500 block mt-0.5">Total career wickets taken.</span>
+                        </div>
+                        <div className="relative mt-1">
+                          <input 
+                            type="number"
+                            min={0}
+                            value={stats.bowlWickets || ''}
+                            onChange={(e) => {
+                              const val = parseInt(e.target.value, 10);
+                              updateFormatStats('oneDay', 'bowlWickets', isNaN(val) ? 0 : val);
+                            }}
+                            className="w-full bg-slate-900 border border-slate-800 focus:border-gold-500 p-2.5 rounded-lg text-white font-bold text-sm focus:outline-none"
+                          />
+                        </div>
+                      </div>
+
+                      {/* Best Bowling Figure */}
+                      <div className="bg-slate-950 p-4 rounded-xl border border-slate-850 space-y-3 text-left">
+                        <div>
+                          <label className="block text-xs text-white font-bold tracking-wide uppercase">Best Bowling Figure</label>
+                          <span className="text-[10px] text-slate-500 block mt-0.5">Best individual bowling analysis.</span>
+                        </div>
+                        <div className="relative mt-1">
+                          <input 
+                            type="text"
+                            placeholder="First wickets then runs (e.g. 4/24)"
+                            value={localBestBowling}
+                            onChange={(e) => {
+                              const raw = e.target.value;
+                              setLocalBestBowling(raw);
+                              const parts = raw.split('/');
+                              if (parts.length === 2) {
+                                const wickets = parseInt(parts[0], 10);
+                                const runs = parseInt(parts[1], 10);
+                                if (!isNaN(wickets) && !isNaN(runs)) {
+                                  updateFormatStats('oneDay', 'bowlBestWickets', wickets);
+                                  updateFormatStats('oneDay', 'bowlBestRuns', runs);
+                                }
+                              } else if (raw === '') {
+                                updateFormatStats('oneDay', 'bowlBestWickets', 0);
+                                updateFormatStats('oneDay', 'bowlBestRuns', 0);
+                              }
+                            }}
+                            className="w-full bg-slate-900 border border-slate-800 focus:border-gold-500 p-2.5 rounded-lg text-white font-bold text-sm focus:outline-none"
+                          />
+                          <span className="text-[9px] text-slate-500 block mt-1">Format: [Wickets]/[Runs] (e.g., 4/24)</span>
+                        </div>
+                      </div>
+
+                      <div className="bg-slate-950 p-4 rounded-xl border border-slate-850 space-y-3 text-left">
+                        <div>
+                          <label className="block text-xs text-white font-bold tracking-wide uppercase">4-Wicket Hauls</label>
+                          <span className="text-[10px] text-slate-500 block mt-0.5">Innings with exactly 4 wickets.</span>
+                        </div>
+                        <div className="relative mt-1">
+                          <input 
+                            type="number"
+                            min={0}
+                            value={stats.bowlFourWickets || ''}
+                            onChange={(e) => {
+                              const val = parseInt(e.target.value, 10);
+                              updateFormatStats('oneDay', 'bowlFourWickets', isNaN(val) ? 0 : val);
+                            }}
+                            className="w-full bg-slate-900 border border-slate-800 focus:border-gold-500 p-2.5 rounded-lg text-white font-bold text-sm focus:outline-none"
+                          />
+                        </div>
+                      </div>
+                      <div className="bg-slate-950 p-4 rounded-xl border border-slate-850 space-y-3 text-left">
+                        <div>
+                          <label className="block text-xs text-white font-bold tracking-wide uppercase">5-Wicket Hauls</label>
+                          <span className="text-[10px] text-slate-500 block mt-0.5">Innings with 5 wickets or more.</span>
+                        </div>
+                        <div className="relative mt-1">
+                          <input 
+                            type="number"
+                            min={0}
+                            value={stats.bowlFiveWickets || ''}
+                            onChange={(e) => {
+                              const val = parseInt(e.target.value, 10);
+                              updateFormatStats('oneDay', 'bowlFiveWickets', isNaN(val) ? 0 : val);
+                            }}
+                            className="w-full bg-slate-900 border border-slate-800 focus:border-gold-500 p-2.5 rounded-lg text-white font-bold text-sm focus:outline-none"
+                          />
+                        </div>
+                      </div>
                     </div>
 
                     {/* Auto-Calculated Bowling Stats */}
@@ -1644,35 +1817,6 @@ export default function CVBuilderForm({
                     </div>
                   </div>
 
-                  {/* FIELDING SECTION */}
-                  <div className="space-y-4">
-                    <h4 className="text-xs font-bold text-slate-300 uppercase tracking-widest border-b border-slate-800 pb-1">3. Fielding Statistics</h4>
-                    
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-                      <CricketNumberSelector
-                        label="Catches"
-                        value={stats.fieldCatches}
-                        onChange={(val) => updateFormatStats(statsTab, 'fieldCatches', val)}
-                        max={2000}
-                        helperText="Catches taken as a fielder/wicketkeeper."
-                      />
-                      <CricketNumberSelector
-                        label="Run Outs"
-                        value={stats.fieldRunOuts}
-                        onChange={(val) => updateFormatStats(statsTab, 'fieldRunOuts', val)}
-                        max={500}
-                        helperText="Run outs affected in career."
-                      />
-                      <CricketNumberSelector
-                        label="Stumpings"
-                        value={stats.fieldStumpings}
-                        onChange={(val) => updateFormatStats(statsTab, 'fieldStumpings', val)}
-                        max={1000}
-                        helperText="Stumpings affected as Wicket Keeper."
-                      />
-                    </div>
-                  </div>
-
                 </div>
               )}
             </div>
@@ -1680,8 +1824,74 @@ export default function CVBuilderForm({
         })()}
 
         
-        {/* STEP 5: SPECIALIST CRICKET SKILLS */}
+        {/* STEP 5: SCORECARD, PROFILE & MEDIA LINKS */}
         {currentStep === 5 && (
+          <div className="space-y-6 text-left animate-fade-in">
+            <div className="space-y-1 mb-2">
+              <h3 className="text-base font-bold text-white flex items-center gap-1.5 pb-2" style={{ borderBottom: '3.5px solid #000000', color: '#000000' }}>
+                <Link2 className="w-4 h-4 text-gold-400" /> Scorecard, Profile & Media Links
+              </h3>
+              <p className="text-[11px] text-slate-400 font-semibold leading-relaxed">
+                Provide up to 5 URLs/links to your online matches scorecards, cricket profiles (e.g. CricHeroes, ESPNcricinfo), videos, or other media files.
+              </p>
+            </div>
+
+            <div className="space-y-4">
+              {[0, 1, 2, 3, 4].slice(0, visibleLinksCount).map((index) => {
+                const linkVal = cv.mediaLinks?.[index] || '';
+                return (
+                  <div key={index} className="space-y-1">
+                    <div className="flex justify-between items-center">
+                      <label className="text-[10px] text-slate-500 uppercase block font-semibold">
+                        Link {index + 1}
+                      </label>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const newLinks = [...(cv.mediaLinks || ['', '', '', '', ''])];
+                          newLinks.splice(index, 1);
+                          newLinks.push('');
+                          onChange({ ...cv, mediaLinks: newLinks });
+                          setVisibleLinksCount(prev => Math.max(1, prev - 1));
+                        }}
+                        className="text-red-500 hover:text-red-400 p-1 hover:bg-slate-900 rounded flex items-center gap-1 text-[10px] font-bold"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" /> Delete
+                      </button>
+                    </div>
+                    <input
+                      type="url"
+                      value={linkVal}
+                      onChange={(e) => {
+                        const newLinks = [...(cv.mediaLinks || ['', '', '', '', ''])];
+                        newLinks[index] = e.target.value;
+                        onChange({ ...cv, mediaLinks: newLinks });
+                      }}
+                      placeholder={`https://example.com/link-${index + 1}`}
+                      className="w-full bg-slate-900 border border-slate-850 rounded-xl px-4 py-3 text-xs text-white focus:outline-none focus:border-gold-500 transition font-sans"
+                    />
+                  </div>
+                );
+              })}
+            </div>
+
+            {visibleLinksCount < 5 && (
+              <div className="pt-2 text-left">
+                <button
+                  type="button"
+                  onClick={() => setVisibleLinksCount(prev => Math.min(5, prev + 1))}
+                  className="flex items-center gap-1 text-xs hover:opacity-80 transition-all font-black cursor-pointer"
+                  style={{ color: '#0A192F', background: 'transparent', border: 'none', padding: 0 }}
+                >
+                  <Plus className="w-3.5 h-3.5" style={{ color: '#0A192F' }} /> Add Link
+                </button>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* STEP 6: SPECIALIST CRICKET SKILLS */}
+        {currentStep === 6 && (
           <div className="space-y-6 text-left animate-fade-in">
             <div className="space-y-1 mb-2">
               <h3 className="text-base font-bold text-white flex items-center gap-1.5">
@@ -1698,10 +1908,10 @@ export default function CVBuilderForm({
               return (
                 <div className="bg-slate-900/60 p-4 rounded-xl border border-slate-800/80 flex justify-between items-center">
                   <div>
-                    <span className="text-xs font-bold text-slate-300 uppercase tracking-wide">
+                    <span className="text-xs font-bold uppercase tracking-wide" style={{ color: '#ffffff', display: 'inline-block', lineHeight: 'normal' }}>
                       Select up to 5 skills
                     </span>
-                    <p className="text-[10px] text-slate-500 mt-0.5">
+                    <p className="text-[10px] mt-0.5 font-bold text-custom-darkblack-step5" style={{ fontWeight: 'bold', lineHeight: 'normal' }}>
                       Choose 1 to 5 options that highlight your specific match play strengths.
                     </p>
                   </div>
@@ -1797,7 +2007,15 @@ export default function CVBuilderForm({
                               </svg>
                             )}
                           </div>
-                          <span className="text-xs uppercase tracking-wide">{option}</span>
+                          <span 
+                            className="text-xs uppercase tracking-wide"
+                            style={{ 
+                              color: isSelected ? '#000000' : isDisabled ? '#94a3b8' : '#000000', 
+                              fontWeight: isDisabled ? 'normal' : 'bold' 
+                            }}
+                          >
+                            {option}
+                          </span>
                         </div>
                       </button>
                     );
@@ -1814,8 +2032,8 @@ export default function CVBuilderForm({
           </div>
         )}
 
-{/* STEP 5: ACHIEVEMENTS */}
-        {currentStep === 6 && (
+{/* STEP 7: ACHIEVEMENTS */}
+        {currentStep === 7 && (
           <div className="space-y-4 text-left animate-fade-in">
             <div className="flex justify-between items-center mb-2">
               <h3 className="text-base font-bold text-white flex items-center gap-1.5">
@@ -1823,9 +2041,10 @@ export default function CVBuilderForm({
               </h3>
               <button 
                 onClick={addAchievement}
-                className="flex items-center gap-1 text-xs text-gold-400 hover:text-white px-2 py-1 rounded bg-slate-850"
+                className="flex items-center gap-1 text-xs hover:opacity-80 transition-all font-black cursor-pointer"
+                style={{ color: '#0A192F', background: 'transparent', border: 'none' }}
               >
-                <Plus className="w-3 h-3" /> Add Award
+                <Plus className="w-3.5 h-3.5" style={{ color: '#0A192F' }} /> Add Award
               </button>
             </div>
 
@@ -1926,8 +2145,8 @@ export default function CVBuilderForm({
           </div>
         )}
 
-        {/* STEP 6: CAREER HIGHLIGHTS */}
-        {currentStep === 7 && (
+        {/* STEP 8: CAREER HIGHLIGHTS */}
+        {currentStep === 8 && (
           <div className="space-y-4 text-left animate-fade-in">
             <div className="flex justify-between items-center mb-2">
               <div className="space-y-1">
@@ -1950,9 +2169,10 @@ export default function CVBuilderForm({
                     setEditingHighlightId('new');
                     setValidationError('');
                   }}
-                  className="flex items-center gap-1 text-xs text-gold-400 hover:text-white px-2.5 py-1.5 rounded bg-slate-850 shrink-0 cursor-pointer"
+                  className="flex items-center gap-1 text-xs hover:opacity-80 transition-all font-black shrink-0 cursor-pointer"
+                  style={{ color: '#0A192F', background: 'transparent', border: 'none' }}
                 >
-                  <Plus className="w-3.5 h-3.5" /> Add Highlight
+                  <Plus className="w-3.5 h-3.5" style={{ color: '#0A192F' }} /> Add Highlight
                 </button>
               )}
             </div>
@@ -2094,8 +2314,8 @@ export default function CVBuilderForm({
           </div>
         )}
 
-        {/* STEP 7: EDUCATION */}
-        {currentStep === 8 && (
+        {/* STEP 9: EDUCATION */}
+        {currentStep === 9 && (
           <div className="space-y-4 text-left animate-fade-in">
             <div className="flex justify-between items-center mb-2">
               <h3 className="text-base font-bold text-white flex items-center gap-1.5">
@@ -2103,15 +2323,16 @@ export default function CVBuilderForm({
               </h3>
               <button 
                 onClick={addEducation}
-                className="flex items-center gap-1 text-xs text-gold-400 hover:text-white px-2 py-1 rounded bg-slate-850"
+                className="flex items-center gap-1 text-xs hover:opacity-80 transition-all font-black cursor-pointer"
+                style={{ color: '#0A192F', background: 'transparent', border: 'none' }}
               >
-                <Plus className="w-3 h-3" /> Add School
+                <Plus className="w-3.5 h-3.5" style={{ color: '#0A192F' }} /> Add Education
               </button>
             </div>
 
             {cv.education.length === 0 ? (
               <div className="text-center py-10 bg-slate-950/20 rounded-xl border border-dashed border-slate-800 text-slate-500 text-xs">
-                No academic entries listed yet. Click "Add School" to list your education.
+                No academic entries listed yet. Click "Add Education" to list your education.
               </div>
             ) : (
               <div className="space-y-4 max-h-[450px] overflow-y-auto pr-1">
@@ -2192,8 +2413,8 @@ export default function CVBuilderForm({
           </div>
         )}
 
-        {/* STEP 9: CONTACT */}
-        {currentStep === 9 && (
+        {/* STEP 10: CONTACT */}
+        {currentStep === 10 && (
           <div className="space-y-6">
             <div className="space-y-4">
               <h3 className="text-base font-bold text-white flex items-center gap-1.5">
@@ -2221,41 +2442,20 @@ export default function CVBuilderForm({
                   />
                 </div>
               </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-xs text-slate-400 mb-1.5 font-bold">Personal Website (Optional)</label>
-                  <input 
-                    type="text" 
-                    value={cv.personalWebsite}
-                    onChange={(e) => updateCVField('personalWebsite', e.target.value)}
-                    placeholder="e.g. www.playerprofile.com"
-                    className="w-full bg-slate-950 border border-slate-800 p-2.5 rounded text-white text-xs"
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs text-slate-400 mb-1.5 font-bold">LinkedIn Username (Optional)</label>
-                  <input 
-                    type="text" 
-                    value={cv.linkedin}
-                    onChange={(e) => updateCVField('linkedin', e.target.value)}
-                    className="w-full bg-slate-950 border border-slate-800 p-2.5 rounded text-white text-xs"
-                  />
-                </div>
-              </div>
             </div>
 
             {/* References Option */}
-            <div className="space-y-4 border-t border-slate-800 pt-4">
-              <div className="flex justify-between items-center">
-                <h3 className="text-sm font-bold text-white flex items-center gap-1.5">
-                  <User className="w-4 h-4 text-gold-400" /> References
+            <div className="space-y-4 pt-4">
+              <div className="flex justify-between items-center pb-1.5" style={{ borderBottom: '3.5px solid #000000' }}>
+                <h3 className="text-sm font-bold flex items-center gap-1.5" style={{ color: '#000000' }}>
+                  <User className="w-4 h-4 text-black" /> References
                 </h3>
                 <button 
                   onClick={addReference}
-                  className="flex items-center gap-1 text-xs text-gold-400 hover:text-white px-2 py-1 rounded bg-slate-850"
+                  className="flex items-center gap-1 text-xs hover:opacity-80 transition-all font-black cursor-pointer"
+                  style={{ color: '#0A192F', background: 'transparent', border: 'none' }}
                 >
-                  <Plus className="w-3 h-3" /> Add Reference
+                  <Plus className="w-3.5 h-3.5" style={{ color: '#0A192F' }} /> Add Reference
                 </button>
               </div>
 
@@ -2321,6 +2521,58 @@ export default function CVBuilderForm({
                             />
                           </div>
                         </div>
+
+                        {/* Mobile Number Row */}
+                        <div className="mt-1.5 pr-6">
+                          <label className="block text-[9px] text-slate-500 mb-1">Mobile Number</label>
+                          {(() => {
+                            const phoneCodes = ['+91', '+44', '+61', '+971', '+1', '+27', '+64', '+94', '+968', '+263'];
+                            let selectedCode = '+91';
+                            let restNumber = ref.phone || '';
+                            
+                            for (const code of phoneCodes) {
+                              if (restNumber.startsWith(code)) {
+                                selectedCode = code;
+                                restNumber = restNumber.substring(code.length).trim();
+                                break;
+                              }
+                            }
+
+                            return (
+                              <div className="flex gap-1">
+                                <select
+                                  value={selectedCode}
+                                  onChange={(e) => {
+                                    const code = e.target.value;
+                                    updateReference(ref.id, 'phone', `${code} ${restNumber}`);
+                                  }}
+                                  className="bg-slate-900 border border-slate-800 p-1.5 rounded text-white text-xs cursor-pointer w-20 flex-shrink-0 select-custom"
+                                >
+                                  <option value="+91">+91 (IN)</option>
+                                  <option value="+44">+44 (UK)</option>
+                                  <option value="+61">+61 (AU)</option>
+                                  <option value="+971">+971 (AE)</option>
+                                  <option value="+1">+1 (US/CA)</option>
+                                  <option value="+27">+27 (ZA)</option>
+                                  <option value="+64">+64 (NZ)</option>
+                                  <option value="+94">+94 (LK)</option>
+                                  <option value="+968">+968 (OM)</option>
+                                  <option value="+263">+263 (ZW)</option>
+                                </select>
+                                <input 
+                                  type="text" 
+                                  value={restNumber}
+                                  placeholder="Phone number"
+                                  onChange={(e) => {
+                                    const num = e.target.value.replace(/[^0-9\s-]/g, '');
+                                    updateReference(ref.id, 'phone', `${selectedCode} ${num}`);
+                                  }}
+                                  className="w-full bg-slate-900 border border-slate-800 p-1.5 rounded text-white text-xs"
+                                />
+                              </div>
+                            );
+                          })()}
+                        </div>
                       </div>
                     ))}
                   </div>
@@ -2330,8 +2582,8 @@ export default function CVBuilderForm({
         </div>
       )}
 
-        {/* STEP 10: LANGUAGES & HOBBIES */}
-        {currentStep === 10 && (
+        {/* STEP 11: LANGUAGES & HOBBIES */}
+        {currentStep === 11 && (
           <div className="space-y-6 text-left animate-fade-in">
             {/* Languages */}
             <div className="space-y-3">
@@ -2362,7 +2614,7 @@ export default function CVBuilderForm({
                       return (
                         <label
                           key={lang}
-                          className="flex items-center gap-2 px-2 py-1.5 hover:bg-slate-900 rounded cursor-pointer text-xs text-slate-300"
+                          className="flex items-center gap-2 px-2 py-1.5 rounded cursor-pointer text-xs text-slate-300 no-blue-hover"
                         >
                           <input
                             type="checkbox"
@@ -2389,7 +2641,8 @@ export default function CVBuilderForm({
                 {(cv.languages || []).map((lang) => (
                   <span
                     key={lang}
-                    className="inline-flex items-center gap-1 bg-slate-900 text-slate-200 border border-slate-800 px-2.5 py-1 rounded-full text-xs font-semibold"
+                    className="inline-flex items-center gap-1 bg-slate-900 border border-slate-800 px-2.5 py-1 rounded-full text-xs font-semibold"
+                    style={{ color: '#0A192F' }}
                   >
                     {lang}
                     <button
@@ -2406,8 +2659,7 @@ export default function CVBuilderForm({
               </div>
             </div>
 
-            {/* Hobbies */}
-            <div className="space-y-3 border-t border-slate-800 pt-4">
+            <div className="space-y-3 pt-4" style={{ borderTop: '3.5px solid #000000' }}>
               <h3 className="text-base font-bold text-white flex items-center gap-1.5">
                 <Activity className="w-4 h-4 text-gold-400" /> Hobbies & Interests
               </h3>
@@ -2435,7 +2687,7 @@ export default function CVBuilderForm({
                       return (
                         <label
                           key={hobby}
-                          className="flex items-center gap-2 px-2 py-1.5 hover:bg-slate-900 rounded cursor-pointer text-xs text-slate-300"
+                          className="flex items-center gap-2 px-2 py-1.5 rounded cursor-pointer text-xs text-slate-300 no-blue-hover"
                         >
                           <input
                             type="checkbox"
@@ -2462,7 +2714,8 @@ export default function CVBuilderForm({
                 {(cv.hobbies || []).map((hobby) => (
                   <span
                     key={hobby}
-                    className="inline-flex items-center gap-1 bg-slate-900 text-slate-200 border border-slate-800 px-2.5 py-1 rounded-full text-xs font-semibold"
+                    className="inline-flex items-center gap-1 bg-slate-900 border border-slate-800 px-2.5 py-1 rounded-full text-xs font-semibold"
+                    style={{ color: '#0A192F' }}
                   >
                     {hobby}
                     <button
@@ -2489,7 +2742,7 @@ export default function CVBuilderForm({
       )}
 
       {/* Navigation Buttons */}
-      <div className="pt-6 border-t border-slate-200 mt-6 flex justify-between navigation-buttons-container">
+      <div className="pt-6 mt-6 flex justify-between navigation-buttons-container">
         <button
           onClick={handlePrevStep}
           className="px-4 py-2.5 rounded-lg border border-slate-200 text-slate-700 hover:bg-slate-100 transition-all flex items-center gap-1 text-xs cursor-pointer back-nav-btn"

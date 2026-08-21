@@ -1,4 +1,5 @@
-import React from 'react';
+import React, { useState } from 'react';
+import { Edit2, List } from 'lucide-react';
 
 interface CricketNumberSelectorProps {
   label: string;
@@ -8,7 +9,7 @@ interface CricketNumberSelectorProps {
   max: number;
   step?: number;
   helperText?: string;
-  largeNumbers?: boolean; // if true, show +10, +100, +1000 fast-scrub buttons
+  largeNumbers?: boolean; // kept for interface compatibility
 }
 
 export default function CricketNumberSelector({
@@ -21,24 +22,85 @@ export default function CricketNumberSelector({
   helperText,
   largeNumbers = false
 }: CricketNumberSelectorProps) {
-  
-  const handleDecrement = () => {
-    onChange(Math.max(min, value - step));
-  };
+  const [isManualInput, setIsManualInput] = useState(false);
+  const [localValue, setLocalValue] = useState<string>(String(value));
 
-  const handleIncrement = () => {
-    onChange(Math.min(max, value + step));
-  };
+  // Sync localValue when parent value changes
+  React.useEffect(() => {
+    if (parseInt(localValue, 10) !== value) {
+      setLocalValue(String(value));
+    }
+  }, [value]);
 
-  const handleSliderChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  // Generate options dynamically - Memoized to prevent lagginess on keypresses
+  const baseOptions = React.useMemo(() => {
+    const opts: number[] = [];
+    if (max <= 500) {
+      for (let i = min; i <= max; i += step) {
+        opts.push(i);
+      }
+    } else if (max <= 2000) {
+      for (let i = min; i <= max; i += Math.max(1, step)) {
+        opts.push(i);
+      }
+    } else {
+      // Stepped options for larger ranges (Runs, Balls faced, Overs, etc.)
+      // 0 to 100 with step 1
+      for (let i = min; i <= 100; i += 1) {
+        opts.push(i);
+      }
+      // 105 to 500 with step 5
+      for (let i = 105; i <= 500; i += 5) {
+        opts.push(i);
+      }
+      // 510 to 2000 with step 10
+      for (let i = 510; i <= 2000; i += 10) {
+        opts.push(i);
+      }
+      // 2050 to 10000 with step 50
+      for (let i = 2050; i <= 10000; i += 50) {
+        opts.push(i);
+      }
+      // 10100 to 50000 with step 100
+      for (let i = 10100; i <= 50000; i += 100) {
+        opts.push(i);
+      }
+      // 50500 to max with step 500
+      for (let i = 50500; i <= max; i += 500) {
+        opts.push(i);
+      }
+    }
+    return opts;
+  }, [min, max, step]);
+
+  const options = React.useMemo(() => {
+    if (!baseOptions.includes(value)) {
+      const newOpts = [...baseOptions, value];
+      newOpts.sort((a, b) => a - b);
+      return newOpts;
+    }
+    return baseOptions;
+  }, [baseOptions, value]);
+
+  const handleSelectChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const val = parseInt(e.target.value, 10);
     if (!isNaN(val)) {
       onChange(Math.max(min, Math.min(max, val)));
     }
   };
 
-  const handleFastAdd = (amount: number) => {
-    onChange(Math.max(min, Math.min(max, value + amount)));
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const rawVal = e.target.value;
+    setLocalValue(rawVal);
+
+    if (rawVal === '') {
+      onChange(0);
+    } else {
+      const val = parseInt(rawVal, 10);
+      if (!isNaN(val)) {
+        onChange(Math.max(min, Math.min(max, val)));
+      }
+    }
   };
 
   return (
@@ -49,75 +111,46 @@ export default function CricketNumberSelector({
           {helperText && <span className="text-[10px] text-slate-500 block mt-0.5">{helperText}</span>}
         </div>
         
-        {/* Prominent current value display */}
-        <span className="text-base font-black text-gold-400 bg-slate-900 border border-slate-800 px-3 py-1 rounded-lg min-w-[50px] text-center shadow-inner">
-          {value}
-        </span>
+        {/* Toggle Mode Button */}
+        <button
+          type="button"
+          onClick={() => setIsManualInput(!isManualInput)}
+          className="p-1.5 bg-slate-900 border border-slate-880 hover:border-slate-700 text-slate-400 hover:text-white rounded-lg transition cursor-pointer flex items-center justify-center"
+          title={isManualInput ? "Switch to Dropdown Menu" : "Switch to Keyboard Input"}
+        >
+          {isManualInput ? <List className="w-3.5 h-3.5 text-gold-400" /> : <Edit2 className="w-3.5 h-3.5" />}
+        </button>
       </div>
 
-      {/* Button Row & Fast scrubbing */}
-      <div className="flex flex-col gap-2">
-        <div className="flex items-center gap-2">
-          <button
-            type="button"
-            onClick={handleDecrement}
-            disabled={value <= min}
-            className="flex-1 py-2 bg-slate-900 border border-slate-800 text-white rounded-lg font-black hover:bg-slate-800 hover:border-slate-700 transition disabled:opacity-40 disabled:cursor-not-allowed select-none text-sm cursor-pointer"
-          >
-            －
-          </button>
-          
-          <button
-            type="button"
-            onClick={handleIncrement}
-            disabled={value >= max}
-            className="flex-1 py-2 bg-slate-900 border border-slate-800 text-white rounded-lg font-black hover:bg-slate-800 hover:border-slate-700 transition disabled:opacity-40 disabled:cursor-not-allowed select-none text-sm cursor-pointer"
-          >
-            ＋
-          </button>
-        </div>
-
-        {/* Scroll wheel range input */}
-        <div className="flex items-center gap-2 pt-1.5">
-          <span className="text-[9px] text-slate-500 select-none font-bold uppercase">{min}</span>
+      <div className="relative mt-1">
+        {isManualInput ? (
           <input
-            type="range"
+            type="number"
             min={min}
             max={max}
-            step={step}
-            value={value}
-            onChange={handleSliderChange}
-            className="flex-1 accent-gold-400 bg-slate-900 h-1.5 rounded-lg appearance-none cursor-pointer border border-slate-850"
+            value={localValue}
+            onChange={handleInputChange}
+            className="w-full bg-slate-900 border border-slate-800 focus:border-gold-500 p-2.5 rounded-lg text-white font-bold text-sm focus:outline-none"
           />
-          <span className="text-[9px] text-slate-500 select-none font-bold uppercase">{max}</span>
-        </div>
-
-        {/* Large Numbers Fast Jump Badges */}
-        {largeNumbers && (
-          <div className="flex justify-end gap-1 pt-1.5 border-t border-slate-900/60">
-            <span className="text-[8px] text-slate-500 font-bold uppercase self-center mr-1">Fast Jump:</span>
-            <button
-              type="button"
-              onClick={() => handleFastAdd(10)}
-              className="text-[9px] bg-slate-900 border border-slate-800 hover:bg-slate-800 text-slate-300 font-bold px-1.5 py-0.5 rounded cursor-pointer transition"
+        ) : (
+          <>
+            <select
+              value={value}
+              onChange={handleSelectChange}
+              className="w-full bg-slate-900 border border-slate-800 focus:border-gold-500 p-2.5 rounded-lg text-white font-semibold text-xs focus:outline-none appearance-none cursor-pointer pr-10 font-sans"
             >
-              +10
-            </button>
-            <button
-              type="button"
-              onClick={() => handleFastAdd(100)}
-              className="text-[9px] bg-slate-900 border border-slate-800 hover:bg-slate-800 text-slate-300 font-bold px-1.5 py-0.5 rounded cursor-pointer transition"
-            >
-              +100
-            </button>
-            <button
-              type="button"
-              onClick={() => handleFastAdd(1000)}
-              className="text-[9px] bg-slate-900 border border-slate-800 hover:bg-slate-800 text-slate-300 font-bold px-1.5 py-0.5 rounded cursor-pointer transition"
-            >
-              +1000
-            </button>
-          </div>
+              {options.map((val) => (
+                <option key={val} value={val} className="bg-slate-900 text-white">
+                  {val}
+                </option>
+              ))}
+            </select>
+            <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-slate-400">
+              <svg className="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
+                <path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"/>
+              </svg>
+            </div>
+          </>
         )}
       </div>
     </div>

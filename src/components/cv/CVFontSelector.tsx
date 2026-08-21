@@ -28,26 +28,26 @@ export default function CVFontSelector({
         <p className="text-slate-400 text-[11px]">Choose a professional font that matches your design style.</p>
       </div>
 
-      <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
         {fonts.map((f) => {
           const isSelected = selectedFont === f.id;
           return (
             <button
               key={f.id}
               onClick={() => onSelectFont(f.id)}
-              className={`p-3 rounded-lg border text-left transition-all cursor-pointer ${
+              className={`p-3 rounded-xl border text-left transition-all cursor-pointer flex flex-col justify-start min-h-[85px] ${
                 isSelected 
-                  ? 'bg-blue-950/20 border-gold-500 text-white' 
+                  ? 'bg-blue-950/20 border-gold-500 text-white shadow-sm' 
                   : 'bg-slate-900/60 border-slate-800 text-slate-300 hover:border-slate-700'
               }`}
             >
               <div 
-                className="text-base font-bold mb-1"
+                className="text-sm font-extrabold mb-1"
                 style={{ fontFamily: f.id === 'Source Sans' ? "'Source Sans Pro', sans-serif" : f.id }}
               >
                 {f.name}
               </div>
-              <div className="text-[9px] text-slate-500 line-clamp-1">{f.desc}</div>
+              <div className="text-[10px] text-slate-400 leading-snug font-sans font-medium">{f.desc}</div>
             </button>
           );
         })}

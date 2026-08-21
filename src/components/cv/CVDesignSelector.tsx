@@ -13,36 +13,44 @@ export default function CVDesignSelector({
   onNext
 }: CVDesignSelectorProps) {
   const templates = [
+    /*
     {
-      id: 'executive',
-      name: 'The Executive',
-      desc: 'Clean corporate layout with a prominent left sidebar. Ideal for professional club and administrative opportunities.',
-      character: 'Corporate, Structured, Clear'
-    },
-    {
-      id: 'professional',
-      name: 'The Professional',
-      desc: 'Modern layout with an accent color banner. Displays key statistics blocks directly at the top for immediate impact.',
-      character: 'Modern, Stats-Focused, Balanced'
-    },
-    {
-      id: 'international',
-      name: 'The International',
-      desc: 'Tailored for overseas opportunities. Detailed sections for nationality, residence, visa availability and overseas playing experience.',
-      character: 'Global Placement, Detail-Rich'
-    },
-    {
-      id: 'classic',
-      name: 'The Classic',
-      desc: 'Traditional clean format with elegant typography. Focuses on playing history and simple text-based data representation.',
-      character: 'Traditional, Elegant, Text-First'
-    },
-    {
-      id: 'performance',
-      name: 'The Performance',
-      desc: 'Athletic profile displaying statistics highlights first. Emphasizes tournament statistics and major team logs.',
-      character: 'Athlete, High-Impact, Visual'
-    }
+       id: 'executive',
+       name: 'The Executive',
+       desc: 'Clean corporate layout with a prominent left sidebar. Ideal for professional club and administrative opportunities.',
+       character: 'Corporate, Structured, Clear'
+     },
+     {
+       id: 'professional',
+       name: 'The Professional',
+       desc: 'Modern layout with an accent color banner. Displays key statistics blocks directly at the top for immediate impact.',
+       character: 'Modern, Stats-Focused, Balanced'
+     },
+     {
+       id: 'international',
+       name: 'The International',
+       desc: 'Tailored for overseas opportunities. Detailed sections for nationality, residence, visa availability and overseas playing experience.',
+       character: 'Global Placement, Detail-Rich'
+     },
+     {
+       id: 'classic',
+       name: 'The Classic',
+       desc: 'Traditional clean format with elegant typography. Focuses on playing history and simple text-based data representation.',
+       character: 'Traditional, Elegant, Text-First'
+     },
+     {
+       id: 'performance',
+       name: 'The Performance',
+       desc: 'Athletic profile displaying statistics highlights first. Emphasizes tournament statistics and major team logs.',
+       character: 'Athlete, High-Impact, Visual'
+     }
+     */
+     {
+       id: 'prestige',
+       name: 'The Prestige',
+       desc: 'Elite double-border layout featuring stumps decoration, a deep navy sidebar and warm cream aesthetics.',
+       character: 'Prestigious, Detailed'
+     }
   ];
 
   return (

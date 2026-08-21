@@ -273,6 +273,9 @@ export interface CricketCVFull {
   references: Reference[];
   showReferences: 'show' | 'request';
   
+  // Media Links section (5 fields)
+  mediaLinks?: string[];
+  
   // Consent
   declarationAccepted: boolean;
   
@@ -362,6 +365,7 @@ export const initialCVForm = (userId: string = '', email: string = '', firstName
   references: [],
   showReferences: 'show',
   declarationAccepted: false,
+  mediaLinks: ['', '', '', '', ''],
   
   editsAllowed: 5,
   editsUsed: 0,
@@ -652,6 +656,7 @@ export const DEMO_CV_DATA: CricketCVFull = {
   
   showReferences: 'show',
   declarationAccepted: true,
+  mediaLinks: ['https://cricheroes.in/player-profile/999999/Suresh-Kothari', 'https://www.espncricinfo.com/player/suresh-kothari-999999', '', '', ''],
   
   editsAllowed: 5,
   editsUsed: 0,

@@ -678,9 +678,15 @@ export default function App() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   // Cricket CV states
-  const [cvView, setCvView] = useState<'landing' | 'onboarding' | 'form' | 'styling' | 'preview' | 'success' | 'final-cv' | 'dashboard'>('landing');
+  const [cvView, setCvView] = useState<'landing' | 'onboarding' | 'login' | 'form' | 'styling' | 'preview' | 'success' | 'final-cv' | 'dashboard'>('landing');
   const [cvStep, setCvStep] = useState<number>(1);
   const [cvForm, setCvForm] = useState<CricketCVFull>(() => initialCVFormFull('', '', '', ''));
+  const [age, setAge] = useState<number | ''>('');
+  const [showConfirmView, setShowConfirmView] = useState(false);
+  const [loginEmail, setLoginEmail] = useState('');
+  const [loginPassword, setLoginPassword] = useState('');
+  const [loginError, setLoginError] = useState('');
+  const [loginLoading, setLoginLoading] = useState(false);
   const [isProcessingCvPayment, setIsProcessingCvPayment] = useState(false);
   const [cvPaymentError, setCvPaymentError] = useState('');
   const [cvList, setCvList] = useState<any[]>([]);
@@ -3136,31 +3142,77 @@ END:VCALENDAR`;
 
   const renderCricketCvWorkspace = () => {
     const renderOnboardingWizard = () => {
+      const capitalizeWords = (str: string) => {
+        if (!str) return '';
+        return str.split(' ').map(word => {
+          if (!word) return '';
+          return word.charAt(0).toUpperCase() + word.slice(1);
+        }).join(' ');
+      };
+
+      const STATES_BY_COUNTRY: Record<string, string[]> = {
+        "India": [
+          "Andhra Pradesh", "Arunachal Pradesh", "Assam", "Bihar", "Chhattisgarh", "Goa", "Gujarat", "Haryana", 
+          "Himachal Pradesh", "Jharkhand", "Karnataka", "Kerala", "Madhya Pradesh", "Maharashtra", "Manipur", 
+          "Meghalaya", "Mizoram", "Nagaland", "Odisha", "Punjab", "Rajasthan", "Sikkim", "Tamil Nadu", "Telangana", 
+          "Tripura", "Uttar Pradesh", "Uttarakhand", "West Bengal", "Andaman and Nicobar Islands", "Chandigarh", 
+          "Dadra and Nagar Haveli and Daman and Diu", "Delhi", "Jammu & Kashmir", "Ladakh", "Lakshadweep", "Puducherry"
+        ],
+        "Sri Lanka": ["Western", "Central", "Southern", "Northern", "Eastern", "North Western", "North Central", "Uva", "Sabaragamuwa"],
+        "New Zealand": ["Auckland", "Wellington", "Canterbury", "Otago", "Waikato", "Bay of Plenty", "Manawatu-Wanganui", "Hawkes Bay", "Taranaki", "Southland", "Gisborne", "West Coast", "Marlborough", "Tasman", "Nelson", "Northland", "Chatham Islands"],
+        "Australia": ["New South Wales", "Victoria", "Queensland", "Western Australia", "South Australia", "Tasmania", "Australian Capital Territory", "Northern Territory", "Jervis Bay Territory", "Christmas Island", "Cocos (Keeling) Islands", "Norfolk Island"],
+        "South Africa": ["Gauteng", "KwaZulu-Natal", "Western Cape", "Eastern Cape", "Limpopo", "Mpumalanga", "North West", "Free State", "Northern Cape"],
+        "Canada": ["Ontario", "Quebec", "British Columbia", "Alberta", "Manitoba", "Saskatchewan", "Nova Scotia", "New Brunswick", "Newfoundland and Labrador", "Prince Edward Island", "Northwest Territories", "Yukon", "Nunavut"],
+        "United States of America": ["California", "Texas", "Florida", "New York", "Pennsylvania", "Illinois", "Ohio", "Georgia", "North Carolina", "Washington", "Massachusetts", "Virginia", "New Jersey", "Michigan", "Colorado", "Arizona", "Maryland", "Indiana", "Tennessee", "Missouri", "Wisconsin", "Minnesota", "Kentucky", "Oregon", "Alabama", "Louisiana", "South Carolina", "Oklahoma", "Connecticut", "Iowa", "Utah", "Nevada", "Arkansas", "Mississippi", "Kansas", "New Mexico", "Nebraska", "Idaho", "West Virginia", "Hawaii", "New Hampshire", "Maine", "Montana", "Rhode Island", "Delaware", "South Dakota", "North Dakota", "Alaska", "Vermont", "Wyoming", "Washington D.C.", "Puerto Rico", "Guam", "U.S. Virgin Islands", "American Samoa", "Northern Mariana Islands"],
+        "Oman": ["Muscat", "Dhofar", "Ad Dakhiliyah", "Al Batinah North", "Al Batinah South", "Ash Sharqiyah North", "Ash Sharqiyah South", "Ad Dhahirah", "Al Buraimi", "Musandam", "Al Wusta"],
+        "Zimbabwe": ["Harare", "Bulawayo", "Mashonaland Central", "Mashonaland East", "Mashonaland West", "Matabeleland North", "Matabeleland South", "Midlands", "Manicaland", "Masvingo"]
+      };
+
+      const COUNTRY_CODES: Record<string, string> = {
+        "India": "+91",
+        "Sri Lanka": "+94",
+        "New Zealand": "+64",
+        "Australia": "+61",
+        "South Africa": "+27",
+        "Canada": "+1",
+        "United States of America": "+1",
+        "Oman": "+968",
+        "Zimbabwe": "+263"
+      };
+
+      const getPasswordStrength = (pass: string) => {
+        if (!pass) return { score: 0, label: '', color: 'bg-slate-200', text: 'text-slate-400' };
+        let score = 0;
+        if (pass.length >= 8) score++;
+        if (/[A-Z]/.test(pass)) score++;
+        if (/[0-9]/.test(pass)) score++;
+        if (/[^A-Za-z0-9]/.test(pass)) score++;
+        
+        switch (score) {
+          case 0:
+          case 1:
+            return { score: 1, label: 'Weak', color: 'bg-red-500', text: 'text-red-500' };
+          case 2:
+            return { score: 2, label: 'Fair', color: 'bg-orange-500', text: 'text-orange-500' };
+          case 3:
+            return { score: 3, label: 'Good', color: 'bg-yellow-500', text: 'text-yellow-500' };
+          case 4:
+            return { score: 4, label: 'Strong', color: 'bg-green-500', text: 'text-green-500' };
+          default:
+            return { score: 0, label: '', color: 'bg-slate-200', text: 'text-slate-400' };
+        }
+      };
+
       const handleOnboardSubmit = () => {
         if (!cvForm.firstName || !cvForm.lastName || !cvForm.nationality || !cvForm.dateOfBirth || !cvForm.countryOfResidence || !cvForm.currentCity || !cvForm.phone || !cvForm.email || !cvForm.password) {
           alert("Please fill in all the required fields.");
           return;
         }
 
-        // Trigger Recheck Confirmation Popup
-        const confirmDetails = window.confirm(
-          `RE-CHECK YOUR DETAILS:\n\n` +
-          `First Name: ${cvForm.firstName}\n` +
-          `Last Name: ${cvForm.lastName}\n` +
-          `Nationality: ${cvForm.nationality}\n` +
-          `Date of Birth: ${cvForm.dateOfBirth}\n` +
-          `Country: ${cvForm.countryOfResidence}\n` +
-          `State/Province: ${cvForm.currentCity}\n` +
-          `Mobile: ${cvForm.phone}\n` +
-          `Email: ${cvForm.email}\n\n` +
-          `Please confirm these details are correct. They will be auto-locked upon purchase.`
-        );
-        if (confirmDetails) {
-          handleRegisterSubmit();
-        }
+        setShowConfirmView(true);
       };
 
-      const handleRegisterSubmit = async () => {
+      const handleRegisterSubmit = async (finalPhone: string) => {
         try {
           const res = await fetch('/api/cv-register', {
             method: 'POST',
@@ -3172,7 +3224,7 @@ END:VCALENDAR`;
               lastName: cvForm.lastName,
               country: cvForm.countryOfResidence,
               stateProvince: cvForm.currentCity,
-              mobileNumber: cvForm.phone,
+              mobileNumber: finalPhone,
               nationality: cvForm.nationality,
               dateOfBirth: cvForm.dateOfBirth
             })
@@ -3180,10 +3232,9 @@ END:VCALENDAR`;
           const data = await res.json();
           if (!res.ok) throw new Error(data.error || 'Registration failed');
 
-          if (data.token) {
-            handleCvLoginSuccess(data.token, data.user);
-            setCvView('dashboard');
-            alert('Registration Successful! Welcome to your dashboard.');
+          if (data.token || res.ok) {
+            alert('Registration Successful! Please log in to access your account.');
+            setCvView('login');
           } else {
             alert(data.message || 'Registration completed successfully! Please verify your email.');
             setCvView('landing');
@@ -3192,6 +3243,89 @@ END:VCALENDAR`;
           alert(`Error: ${err.message}`);
         }
       };
+
+      const strength = getPasswordStrength(cvForm.password || '');
+
+      if (showConfirmView) {
+        const prefix = COUNTRY_CODES[cvForm.nationality] || '';
+        const finalPhone = prefix ? `${prefix} ${cvForm.phone}` : cvForm.phone;
+
+        return (
+          <div className="py-12 bg-slate-50 min-h-[85vh] text-slate-800 flex items-center justify-center font-sans px-4 animate-fade-in">
+            <div className="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden w-full max-w-lg flex flex-col">
+              {/* Header */}
+              <div className="bg-[#0B1A30] text-[#D4AF37] px-6 py-4 border-b border-gold-500/20 flex items-center justify-between">
+                <span className="font-bold font-display uppercase text-xs tracking-wider">Confirm Profile Details</span>
+                <span className="text-[10px] text-gold-300/80 normal-case font-semibold font-sans">Cricket CV Registration</span>
+              </div>
+
+              {/* Body */}
+              <div className="p-6 space-y-6 text-left">
+                <div>
+                  <h3 className="text-lg font-bold text-[#0B1A30] font-display uppercase tracking-tight">Verify Your Information</h3>
+                  <p className="text-slate-500 text-xs mt-1 font-sans">Please review and confirm your details. These will be auto-locked upon CV purchase.</p>
+                </div>
+
+                <div className="bg-slate-50 p-4.5 rounded-xl border border-slate-200/60 space-y-3.5 text-xs text-slate-700 font-sans">
+                  <div className="grid grid-cols-2 py-1.5 border-b border-slate-200/60">
+                    <span className="font-semibold text-slate-400">First Name</span>
+                    <span className="font-bold text-slate-900">{cvForm.firstName}</span>
+                  </div>
+                  <div className="grid grid-cols-2 py-1.5 border-b border-slate-200/60">
+                    <span className="font-semibold text-slate-400">Last Name</span>
+                    <span className="font-bold text-slate-900">{cvForm.lastName}</span>
+                  </div>
+                  <div className="grid grid-cols-2 py-1.5 border-b border-slate-200/60">
+                    <span className="font-semibold text-slate-400">Nationality</span>
+                    <span className="font-bold text-slate-900">{cvForm.nationality}</span>
+                  </div>
+                  <div className="grid grid-cols-2 py-1.5 border-b border-slate-200/60">
+                    <span className="font-semibold text-slate-400">Age</span>
+                    <span className="font-bold text-slate-900">{age} Years</span>
+                  </div>
+                  <div className="grid grid-cols-2 py-1.5 border-b border-slate-200/60">
+                    <span className="font-semibold text-slate-400">State / Province</span>
+                    <span className="font-bold text-slate-900">{cvForm.currentCity}</span>
+                  </div>
+                  <div className="grid grid-cols-2 py-1.5 border-b border-slate-200/60">
+                    <span className="font-semibold text-slate-400">Mobile Number</span>
+                    <span className="font-bold text-slate-900 font-mono">{finalPhone}</span>
+                  </div>
+                  <div className="grid grid-cols-2 py-1.5">
+                    <span className="font-semibold text-slate-400">Email Address</span>
+                    <span className="font-bold text-slate-900">{cvForm.email}</span>
+                  </div>
+                </div>
+
+                <div className="bg-amber-50 border border-amber-200/60 p-3.5 rounded-xl flex items-start gap-2.5">
+                  <span className="text-base text-amber-500 font-bold">⚠️</span>
+                  <p className="text-[11px] text-amber-800 leading-relaxed font-semibold">
+                    <strong>Please Note:</strong> Make sure your details match your official documents. The name, age, and country are auto-locked upon subscription to prevent modifications.
+                  </p>
+                </div>
+
+                {/* Buttons */}
+                <div className="flex justify-between items-center pt-6 border-t border-slate-100 font-sans">
+                  <button 
+                    type="button"
+                    onClick={() => setShowConfirmView(false)}
+                    className="px-5 py-2.5 border border-slate-300 rounded-lg text-xs font-bold hover:bg-slate-50 transition cursor-pointer text-slate-700 bg-white"
+                  >
+                    Edit Details
+                  </button>
+                  <button 
+                    type="button"
+                    onClick={() => handleRegisterSubmit(finalPhone)}
+                    className="px-6 py-2.5 bg-[#0B1A30] text-white rounded-lg text-xs font-bold hover:bg-navy-950 transition cursor-pointer"
+                  >
+                    Confirm & Register
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        );
+      }
 
       return (
         <div className="py-12 bg-slate-50 min-h-[85vh] text-slate-800 flex items-center justify-center font-sans">
@@ -3217,9 +3351,9 @@ END:VCALENDAR`;
                       type="text" 
                       required
                       value={cvForm.firstName}
-                      onChange={(e) => setCvForm({ ...cvForm, firstName: e.target.value })}
+                      onChange={(e) => setCvForm({ ...cvForm, firstName: capitalizeWords(e.target.value) })}
                       placeholder="Enter first name"
-                      className="w-full text-xs p-3 border border-slate-300 rounded-xl focus:outline-none focus:border-[#D4AF37] bg-white text-slate-800 font-semibold font-sans"
+                      className="w-full text-xs p-3 border border-slate-300 rounded-xl focus:outline-none focus:border-[#D4AF37] bg-white text-slate-800 font-semibold font-sans capitalize"
                     />
                   </div>
                   <div className="space-y-1.5">
@@ -3228,84 +3362,106 @@ END:VCALENDAR`;
                       type="text" 
                       required
                       value={cvForm.lastName}
-                      onChange={(e) => setCvForm({ ...cvForm, lastName: e.target.value })}
+                      onChange={(e) => setCvForm({ ...cvForm, lastName: capitalizeWords(e.target.value) })}
                       placeholder="Enter last name"
-                      className="w-full text-xs p-3 border border-slate-300 rounded-xl focus:outline-none focus:border-[#D4AF37] bg-white text-slate-800 font-semibold font-sans"
+                      className="w-full text-xs p-3 border border-slate-300 rounded-xl focus:outline-none focus:border-[#D4AF37] bg-white text-slate-800 font-semibold font-sans capitalize"
                     />
                   </div>
                 </div>
 
-                {/* Nationality & Date of Birth */}
+                {/* Nationality & Age */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="space-y-1.5">
                     <label className="block text-xs font-bold text-slate-700 uppercase font-sans">Nationality *</label>
-                    <input 
-                      type="text" 
-                      required
-                      value={cvForm.nationality}
-                      onChange={(e) => setCvForm({ ...cvForm, nationality: e.target.value })}
-                      placeholder="e.g. Indian, British"
-                      className="w-full text-xs p-3 border border-slate-300 rounded-xl focus:outline-none focus:border-[#D4AF37] bg-white text-slate-800 font-semibold font-sans"
-                    />
-                  </div>
-                  <div className="space-y-1.5">
-                    <label className="block text-xs font-bold text-slate-700 uppercase font-sans">Date of Birth *</label>
-                    <input 
-                      type="date" 
-                      required
-                      value={cvForm.dateOfBirth}
-                      onChange={(e) => setCvForm({ ...cvForm, dateOfBirth: e.target.value })}
-                      className="w-full text-xs p-3 border border-slate-300 rounded-xl focus:outline-none focus:border-[#D4AF37] bg-white text-slate-800 font-semibold font-sans"
-                    />
-                  </div>
-                </div>
-
-                {/* Country & State */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div className="space-y-1.5">
-                    <label className="block text-xs font-bold text-slate-700 uppercase font-sans">Country of Residence *</label>
                     <select 
                       required
-                      value={cvForm.countryOfResidence}
-                      onChange={(e) => setCvForm({ ...cvForm, countryOfResidence: e.target.value })}
+                      value={cvForm.nationality}
+                      onChange={(e) => {
+                        const nationalityVal = e.target.value;
+                        setCvForm({ 
+                          ...cvForm, 
+                          nationality: nationalityVal,
+                          countryOfResidence: nationalityVal,
+                          currentCity: ''
+                        });
+                      }}
                       className="w-full text-xs p-3 border border-slate-300 rounded-xl focus:outline-none focus:border-[#D4AF37] bg-white text-slate-800 font-semibold font-sans"
                     >
-                      <option value="">Select Country</option>
+                      <option value="">Select Nationality</option>
                       <option value="India">India</option>
-                      <option value="United Kingdom">United Kingdom</option>
+                      <option value="Sri Lanka">Sri Lanka</option>
+                      <option value="New Zealand">New Zealand</option>
                       <option value="Australia">Australia</option>
                       <option value="South Africa">South Africa</option>
-                      <option value="New Zealand">New Zealand</option>
-                      <option value="Sri Lanka">Sri Lanka</option>
+                      <option value="Canada">Canada</option>
+                      <option value="United States of America">United States of America</option>
+                      <option value="Oman">Oman</option>
                       <option value="Zimbabwe">Zimbabwe</option>
-                      <option value="United Arab Emirates">United Arab Emirates</option>
                     </select>
                   </div>
                   <div className="space-y-1.5">
-                    <label className="block text-xs font-bold text-slate-700 uppercase font-sans">State / County / Province *</label>
-                    <input 
-                      type="text" 
+                    <label className="block text-xs font-bold text-slate-700 uppercase font-sans">Age *</label>
+                    <select 
                       required
-                      value={cvForm.currentCity}
-                      onChange={(e) => setCvForm({ ...cvForm, currentCity: e.target.value })}
-                      placeholder="e.g. Maharashtra, Lancashire"
+                      value={age}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        if (val) {
+                          const ageVal = parseInt(val, 10);
+                          setAge(ageVal);
+                          const birthYear = new Date().getFullYear() - ageVal;
+                          setCvForm({ ...cvForm, dateOfBirth: `${birthYear}-01-01` });
+                        } else {
+                          setAge('');
+                          setCvForm({ ...cvForm, dateOfBirth: '' });
+                        }
+                      }}
                       className="w-full text-xs p-3 border border-slate-300 rounded-xl focus:outline-none focus:border-[#D4AF37] bg-white text-slate-800 font-semibold font-sans"
-                    />
+                    >
+                      <option value="">Select Age</option>
+                      {Array.from({ length: 28 }, (_, i) => 18 + i).map(ageVal => (
+                        <option key={ageVal} value={ageVal}>{ageVal}</option>
+                      ))}
+                    </select>
                   </div>
+                </div>
+
+                {/* State / County / Province */}
+                <div className="space-y-1.5">
+                  <label className="block text-xs font-bold text-slate-700 uppercase font-sans">State / County / Province & Union Territories *</label>
+                  <select 
+                    required
+                    disabled={!cvForm.nationality}
+                    value={cvForm.currentCity}
+                    onChange={(e) => setCvForm({ ...cvForm, currentCity: e.target.value })}
+                    className="w-full text-xs p-3 border border-slate-300 rounded-xl focus:outline-none focus:border-[#D4AF37] bg-white text-slate-800 font-semibold font-sans disabled:bg-slate-100 disabled:cursor-not-allowed"
+                  >
+                    <option value="">
+                      {!cvForm.nationality ? "Select Nationality First" : "Select State/Province/Territory"}
+                    </option>
+                    {cvForm.nationality && STATES_BY_COUNTRY[cvForm.nationality]?.map(state => (
+                      <option key={state} value={state}>{state}</option>
+                    ))}
+                  </select>
                 </div>
 
                 {/* Mobile Number & Email */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="space-y-1.5">
                     <label className="block text-xs font-bold text-slate-700 uppercase font-sans">Mobile Number *</label>
-                    <input 
-                      type="tel" 
-                      required
-                      value={cvForm.phone}
-                      onChange={(e) => setCvForm({ ...cvForm, phone: e.target.value })}
-                      placeholder="e.g. +91 9876543210"
-                      className="w-full text-xs p-3 border border-slate-300 rounded-xl focus:outline-none focus:border-[#D4AF37] bg-white text-slate-800 font-semibold font-sans font-mono"
-                    />
+                    <div className="flex gap-2">
+                      <span className="bg-slate-100 border border-slate-300 px-3 py-2.5 rounded-xl text-xs font-bold text-slate-700 flex items-center justify-center min-w-[55px] font-mono">
+                        {COUNTRY_CODES[cvForm.nationality] || '+'}
+                      </span>
+                      <input 
+                        type="tel" 
+                        required
+                        value={cvForm.phone}
+                        onChange={(e) => setCvForm({ ...cvForm, phone: e.target.value })}
+                        placeholder="Mobile number"
+                        className="w-full text-xs p-3 border border-slate-300 rounded-xl focus:outline-none focus:border-[#D4AF37] bg-white text-slate-800 font-semibold font-sans font-mono"
+                      />
+                    </div>
                   </div>
                   <div className="space-y-1.5">
                     <label className="block text-xs font-bold text-slate-700 uppercase font-sans">Email Address *</label>
@@ -3320,7 +3476,7 @@ END:VCALENDAR`;
                   </div>
                 </div>
 
-                {/* Password */}
+                {/* Password & Strength Meter */}
                 <div className="space-y-1.5">
                   <label className="block text-xs font-bold text-slate-700 uppercase font-sans">Account Password *</label>
                   <input 
@@ -3331,6 +3487,23 @@ END:VCALENDAR`;
                     placeholder="Min 8 characters for account login"
                     className="w-full text-xs p-3 border border-slate-300 rounded-xl focus:outline-none focus:border-[#D4AF37] bg-white text-slate-800 font-semibold font-sans font-mono"
                   />
+                  {cvForm.password && (
+                    <div className="space-y-1.5 mt-2 bg-slate-50 p-2.5 rounded-xl border border-slate-200">
+                      <div className="flex gap-1 h-1.5">
+                        {[1, 2, 3, 4].map((index) => (
+                          <div 
+                            key={index} 
+                            className={`h-full flex-1 rounded-full transition-colors duration-300 ${
+                              index <= strength.score ? strength.color : 'bg-slate-200'
+                            }`} 
+                          />
+                        ))}
+                      </div>
+                      <div className={`text-[10px] font-bold uppercase tracking-wider ${strength.text}`}>
+                        Password Strength: {strength.label}
+                      </div>
+                    </div>
+                  )}
                 </div>
 
                 {/* Navigation Buttons */}
@@ -3350,6 +3523,121 @@ END:VCALENDAR`;
                   </button>
                 </div>
               </form>
+            </div>
+          </div>
+        </div>
+      );
+    };
+
+    const renderLoginPage = () => {
+      const handleLoginSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setLoginError('');
+        setLoginLoading(true);
+
+        try {
+          const res = await fetch('/api/cv-login', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email: loginEmail, password: loginPassword })
+          });
+
+          const data = await res.json();
+          if (!res.ok) {
+            throw new Error(data.error || 'Login failed. Please check credentials.');
+          }
+
+          handleCvLoginSuccess(data.token, data.user);
+          setCvView('dashboard');
+        } catch (err: any) {
+          setLoginError(err.message);
+        } finally {
+          setLoginLoading(false);
+        }
+      };
+
+      return (
+        <div className="py-12 bg-slate-50 min-h-[85vh] text-slate-800 flex items-center justify-center font-sans px-4">
+          <div className="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden w-full max-w-md animate-fade-in flex flex-col">
+            {/* Header */}
+            <div className="bg-[#0B1A30] text-[#D4AF37] px-6 py-4 border-b border-gold-500/20 flex items-center justify-between">
+              <span className="font-bold font-display uppercase text-xs tracking-wider">Log In to Your Account</span>
+              <span className="text-[10px] text-gold-300/80 normal-case font-semibold font-sans">Cricket CV Portal</span>
+            </div>
+
+            {/* Body */}
+            <div className="p-6 md:p-8 space-y-6 text-left">
+              <div className="text-center">
+                <h3 className="text-lg font-bold text-[#0B1A30] font-display uppercase tracking-tight">Access Your Dashboard</h3>
+                <p className="text-slate-500 text-xs mt-1">Enter your details below to continue building or exporting your CV.</p>
+              </div>
+
+              {loginError && (
+                <div className="bg-red-50 border border-red-200 p-3 rounded-lg flex items-start gap-2 text-xs text-red-600 font-sans">
+                  <span>{loginError}</span>
+                </div>
+              )}
+
+              <form onSubmit={handleLoginSubmit} className="space-y-4">
+                <div className="space-y-1.5">
+                  <label className="block text-xs font-bold text-slate-700 uppercase font-sans">Email Address *</label>
+                  <input 
+                    type="email" 
+                    required
+                    value={loginEmail}
+                    onChange={(e) => setLoginEmail(e.target.value)}
+                    placeholder="name@example.com"
+                    className="w-full text-xs p-3 border border-slate-300 rounded-xl focus:outline-none focus:border-[#D4AF37] bg-white text-slate-800 font-semibold font-sans"
+                  />
+                </div>
+
+                <div className="space-y-1.5">
+                  <div className="flex justify-between items-center">
+                    <label className="block text-xs font-bold text-slate-700 uppercase font-sans">Password *</label>
+                    <button 
+                      type="button"
+                      onClick={() => {
+                        setShowForgotPasswordModal(true);
+                      }}
+                      className="text-[10px] text-[#D4AF37] font-semibold hover:underline"
+                    >
+                      Forgot Password?
+                    </button>
+                  </div>
+                  <input 
+                    type="password" 
+                    required
+                    value={loginPassword}
+                    onChange={(e) => setLoginPassword(e.target.value)}
+                    placeholder="••••••••"
+                    className="w-full text-xs p-3 border border-slate-300 rounded-xl focus:outline-none focus:border-[#D4AF37] bg-white text-slate-800 font-semibold font-sans font-mono"
+                  />
+                </div>
+
+                <button 
+                  type="submit"
+                  disabled={loginLoading}
+                  className="w-full py-3 rounded-xl font-bold bg-[#0B1A30] text-white hover:bg-navy-950 disabled:opacity-50 transition text-xs mt-2 cursor-pointer uppercase tracking-wider"
+                >
+                  {loginLoading ? 'Logging in...' : 'Log In'}
+                </button>
+              </form>
+
+              <div className="border-t border-slate-100 pt-4 text-center text-xs text-slate-500 font-sans">
+                Don't have an account? {' '}
+                <button 
+                  onClick={() => {
+                    setCvStep(1);
+                    setAge('');
+                    setShowConfirmView(false);
+                    setCvForm(initialCVFormFull('', '', '', ''));
+                    setCvView('onboarding');
+                  }}
+                  className="text-[#D4AF37] font-bold hover:underline"
+                >
+                  Start Building Now
+                </button>
+              </div>
             </div>
           </div>
         </div>
@@ -3653,7 +3941,7 @@ END:VCALENDAR`;
     };
 
     return (
-      <div className="min-h-[85vh] bg-slate-50 text-slate-800 font-sans relative">
+      <div className="min-h-[85vh] bg-slate-50 text-slate-800 font-sans relative cv-workspace-container">
         {/* Render Auth Dialog if open */}
         {showCVAuthModal && (
           <CVAuthModal
@@ -3667,6 +3955,8 @@ END:VCALENDAR`;
             onSignUpClick={() => {
               setShowCVAuthModal(false);
               setCvStep(1);
+              setAge('');
+              setShowConfirmView(false);
               setCvForm(initialCVFormFull('', '', '', ''));
               setCvView('onboarding');
             }}
@@ -3685,7 +3975,7 @@ END:VCALENDAR`;
               setShowForgotPasswordModal(false);
               setForgotPasswordToken(null);
               alert("Password updated successfully! Please log in.");
-              setShowCVAuthModal(true);
+              setCvView('login');
             }}
           />
         )}
@@ -3698,7 +3988,7 @@ END:VCALENDAR`;
               onVerified={() => {
                 setVerificationToken(null);
                 alert("Email verified! Please log in.");
-                setShowCVAuthModal(true);
+                setCvView('login');
               }}
               onClose={() => setVerificationToken(null)}
             />
@@ -3715,14 +4005,24 @@ END:VCALENDAR`;
                 setCvView('dashboard');
               } else {
                 setCvStep(1);
+                setAge('');
+                setShowConfirmView(false);
                 setCvForm(initialCVFormFull('', '', '', ''));
                 setCvView('onboarding');
               }
             }}
             onGoToDashboard={() => setCvView('dashboard')}
-            onTriggerLogin={() => setShowCVAuthModal(true)}
+            onTriggerLogin={() => {
+              setLoginEmail('');
+              setLoginPassword('');
+              setLoginError('');
+              setLoginLoading(false);
+              setCvView('login');
+            }}
             onTriggerSignup={() => {
               setCvStep(1);
+              setAge('');
+              setShowConfirmView(false);
               setCvForm(initialCVFormFull('', '', '', ''));
               setCvView('onboarding');
             }}
@@ -3730,6 +4030,8 @@ END:VCALENDAR`;
         )}
 
         {cvView === 'onboarding' && renderOnboardingWizard()}
+
+        {cvView === 'login' && renderLoginPage()}
 
         {cvView === 'dashboard' && renderDashboardView()}
 
