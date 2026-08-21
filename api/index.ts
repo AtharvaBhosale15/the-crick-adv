@@ -1,30 +1,30 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 
 // Import all endpoint handlers
-import addBooking from './endpoints/add-booking.js';
-import createOrder from './endpoints/create-order.js';
-import cvAuthCheck from './endpoints/cv-auth-check.js';
-import cvDownload from './endpoints/cv-download.js';
-import cvForgotPassword from './endpoints/cv-forgot-password.js';
-import cvGet from './endpoints/cv-get.js';
-import cvLogin from './endpoints/cv-login.js';
-import cvRegister from './endpoints/cv-register.js';
-import cvRenewPlan from './endpoints/cv-renew-plan.js';
-import cvResetPassword from './endpoints/cv-reset-password.js';
-import cvSave from './endpoints/cv-save.js';
-import cvVerifyEmail from './endpoints/cv-verify-email.js';
-import cvVerifyPayment from './endpoints/cv-verify-payment.js';
-import debugDb from './endpoints/debug-db.js';
-import emailCv from './endpoints/email-cv.js';
-import getAssessments from './endpoints/get-assessments.js';
-import getBookings from './endpoints/get-bookings.js';
-import getCvs from './endpoints/get-cvs.js';
-import getSettings from './endpoints/get-settings.js';
-import saveAssessments from './endpoints/save-assessments.js';
-import saveBookings from './endpoints/save-bookings.js';
-import saveCv from './endpoints/save-cv.js';
-import saveSettings from './endpoints/save-settings.js';
-import verifyPayment from './endpoints/verify-payment.js';
+import addBooking from '../api-src/add-booking.js';
+import createOrder from '../api-src/create-order.js';
+import cvAuthCheck from '../api-src/cv-auth-check.js';
+import cvDownload from '../api-src/cv-download.js';
+import cvForgotPassword from '../api-src/cv-forgot-password.js';
+import cvGet from '../api-src/cv-get.js';
+import cvLogin from '../api-src/cv-login.js';
+import cvRegister from '../api-src/cv-register.js';
+import cvRenewPlan from '../api-src/cv-renew-plan.js';
+import cvResetPassword from '../api-src/cv-reset-password.js';
+import cvSave from '../api-src/cv-save.js';
+import cvVerifyEmail from '../api-src/cv-verify-email.js';
+import cvVerifyPayment from '../api-src/cv-verify-payment.js';
+import debugDb from '../api-src/debug-db.js';
+import emailCv from '../api-src/email-cv.js';
+import getAssessments from '../api-src/get-assessments.js';
+import getBookings from '../api-src/get-bookings.js';
+import getCvs from '../api-src/get-cvs.js';
+import getSettings from '../api-src/get-settings.js';
+import saveAssessments from '../api-src/save-assessments.js';
+import saveBookings from '../api-src/save-bookings.js';
+import saveCv from '../api-src/save-cv.js';
+import saveSettings from '../api-src/save-settings.js';
+import verifyPayment from '../api-src/verify-payment.js';
 
 const routes: Record<string, (req: VercelRequest, res: VercelResponse) => Promise<any> | any> = {
   'add-booking': addBooking,
