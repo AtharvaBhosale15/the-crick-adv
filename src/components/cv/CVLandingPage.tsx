@@ -119,7 +119,7 @@ export default function CVLandingPage({
   const faqs = [
     {
       q: "How much does it cost?",
-      a: "The premium Cricket CV Builder costs a one-time payment of ₹699. There are no hidden subscription charges."
+      a: "The premium Cricket CV Builder costs a one-time payment of ₹249. There are no hidden subscription charges."
     },
     {
       q: "How many edits do I get?",

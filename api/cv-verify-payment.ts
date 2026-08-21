@@ -107,18 +107,18 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             cvData.purchases = [];
           }
           const isRenewal = cvData.paymentStatus === 'Paid';
-          amountPaid = isRenewal ? 699 : 999;
+          amountPaid = 249;
           if (!isRenewal && cvData.purchases.length === 0) {
             cvData.purchases.push({
               type: 'initial',
-              amount: 999,
+              amount: 249,
               date: new Date().toISOString(),
               invoiceNumber: invoiceNum
             });
           } else if (isRenewal) {
             cvData.purchases.push({
               type: 'renewal',
-              amount: 699,
+              amount: 249,
               date: new Date().toISOString(),
               invoiceNumber: invoiceNum
             });
@@ -161,18 +161,18 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             cvs[cvIdx].purchases = [];
           }
           const isRenewalLocal = cvs[cvIdx].paymentStatus === 'Paid';
-          amountPaid = isRenewalLocal ? 699 : 999;
+          amountPaid = 249;
           if (!isRenewalLocal && cvs[cvIdx].purchases.length === 0) {
             cvs[cvIdx].purchases.push({
               type: 'initial',
-              amount: 999,
+              amount: 249,
               date: new Date().toISOString(),
               invoiceNumber: invoiceNum
             });
           } else if (isRenewalLocal) {
             cvs[cvIdx].purchases.push({
               type: 'renewal',
-              amount: 699,
+              amount: 249,
               date: new Date().toISOString(),
               invoiceNumber: invoiceNum
             });

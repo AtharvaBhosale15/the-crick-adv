@@ -257,7 +257,7 @@ export default function CVDashboard({
       });
       const data = await res.json();
       if (res.ok) {
-        alert('Payment Verified! Simulated transaction of ₹699 completed successfully. 5 edits restored.');
+        alert('Payment Verified! Simulated transaction of ₹249 completed successfully. 5 edits restored.');
         onRenewSuccess(data.cv);
         setShowRenewModal(false);
       } else {
@@ -280,7 +280,7 @@ export default function CVDashboard({
         return;
       }
 
-      const amountInPaise = 699 * 100;
+      const amountInPaise = 249 * 100;
       const orderRes = await fetch('/api/create-order', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -687,12 +687,12 @@ export default function CVDashboard({
                 </div>
                 <div className="flex justify-between items-center mt-2 text-slate-500 border-t border-slate-200 pt-2">
                   <span>Total Amount:</span>
-                  <span className="text-gold-600 font-bold text-sm">₹699</span>
+                  <span className="text-gold-600 font-bold text-sm">₹249</span>
                 </div>
               </div>
 
               <p className="text-[11px] text-slate-500 leading-relaxed">
-                You can choose to pay securely using Razorpay, or bypass checkout directly by clicking the simulation button below for testing.
+                Please complete your checkout process securely using Razorpay to proceed.
               </p>
             </div>
 
@@ -716,20 +716,11 @@ export default function CVDashboard({
                     </>
                   ) : (
                     <>
-                      <CreditCard className="w-3.5 h-3.5" /> Pay ₹699 Securely
+                      <CreditCard className="w-3.5 h-3.5" /> Pay ₹249 Securely
                     </>
                   )}
                 </button>
               </div>
-
-              <button 
-                type="button"
-                onClick={handleSimulatePayment}
-                disabled={isProcessing}
-                className="w-full py-2 rounded-xl border border-dashed border-blue-500/50 hover:border-blue-400 text-blue-400 hover:text-blue-300 bg-blue-950/20 hover:bg-blue-950/40 transition text-center text-[10px] font-bold uppercase tracking-wider cursor-pointer"
-              >
-                Simulate Renewal Success (Bypass)
-              </button>
             </div>
           </div>
         </div>

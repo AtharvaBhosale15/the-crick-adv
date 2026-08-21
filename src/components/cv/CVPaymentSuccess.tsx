@@ -131,7 +131,7 @@ export default function CVPaymentSuccess({ cv, onNext }: CVPaymentSuccessProps) 
           </div>
           <div className="flex justify-between items-center text-slate-400 border-t border-slate-900 pt-2.5">
             <span>Amount Paid:</span>
-            <span className="text-gold-400 font-bold text-sm">₹699</span>
+            <span className="text-gold-400 font-bold text-sm">₹249</span>
           </div>
         </div>
       </div>

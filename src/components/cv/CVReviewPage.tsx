@@ -132,7 +132,7 @@ export default function CVReviewPage({ cv, onPay, onPrev }: CVReviewPageProps) {
               </div>
               <div className="text-right">
                 <span className="text-xs text-slate-500 line-through">₹1,499</span>
-                <span className="font-black text-gold-400 text-base block">₹699</span>
+                <span className="font-black text-gold-400 text-base block">₹249</span>
               </div>
             </div>
             <div className="text-[10px] text-slate-400 space-y-1">
@@ -219,15 +219,7 @@ export default function CVReviewPage({ cv, onPay, onPrev }: CVReviewPageProps) {
               onClick={() => onPay(false)}
               className="w-full py-3.5 rounded-xl font-black bg-gold-gradient text-navy-950 hover:opacity-90 disabled:opacity-30 disabled:cursor-not-allowed transition flex items-center justify-center gap-2 text-xs cursor-pointer shadow-md shadow-gold-500/10 uppercase"
             >
-              <Wallet className="w-4 h-4" /> {cv.paymentStatus === 'Paid' ? 'RENEW PLAN ₹699' : 'PAY ₹699 SECURELY'}
-            </button>
-            
-            <button 
-              type="button"
-              onClick={() => onPay(true)}
-              className="w-full py-2.5 rounded-xl border border-dashed border-blue-500/50 hover:border-blue-400 text-blue-400 hover:text-blue-300 bg-blue-950/20 hover:bg-blue-950/40 transition text-center text-[10px] font-bold uppercase tracking-wider cursor-pointer"
-            >
-              Simulate Successful Payment (Bypass)
+              <Wallet className="w-4 h-4" /> {cv.paymentStatus === 'Paid' ? 'RENEW PLAN ₹249' : 'PAY ₹249 SECURELY'}
             </button>
           </div>
 

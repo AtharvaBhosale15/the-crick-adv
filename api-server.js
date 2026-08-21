@@ -1042,19 +1042,19 @@ app.post('/api/cv-verify-payment', async (req, res) => {
       cvs[idx].purchases = [];
     }
     const isRenewal = cvs[idx].paymentStatus === 'Paid';
-    const amountPaid = isRenewal ? 699 : 999;
+    const amountPaid = 249;
 
     if (!isRenewal && cvs[idx].purchases.length === 0) {
       cvs[idx].purchases.push({
         type: 'initial',
-        amount: 999,
+        amount: 249,
         date: new Date().toISOString(),
         invoiceNumber: invoiceNum
       });
     } else if (isRenewal) {
       cvs[idx].purchases.push({
         type: 'renewal',
-        amount: 699,
+        amount: 249,
         date: new Date().toISOString(),
         invoiceNumber: invoiceNum
       });
