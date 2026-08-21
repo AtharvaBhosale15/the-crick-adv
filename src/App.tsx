@@ -4447,11 +4447,38 @@ END:VCALENDAR`;
                     Whether you're an aspiring cricketer looking for overseas opportunities, a cricket club seeking professional consultation, or an organisation planning international cricket tours, I provide honest, independent guidance backed by years of experience and a global cricket network.
                   </p>
 
+                  {/* CTA Buttons */}
+                  <div className="pt-2 flex flex-col sm:flex-row flex-wrap gap-4">
+                    <button 
+                      onClick={() => { setActiveTab('cricket-cv'); setCvView('landing'); setCvStep(1); }}
+                      className="w-full sm:w-auto px-6 py-3.5 bg-[#F5C451] hover:bg-[#E2AF3C] text-[#0B1A30] font-extrabold rounded-lg shadow-md hover:scale-105 transform transition duration-150 uppercase tracking-wider text-xs flex items-center justify-center space-x-1.5 cursor-pointer font-sans"
+                    >
+                      <span>Create My Cricket CV</span>
+                      <ChevronRight className="h-4 w-4" />
+                    </button>
+
+                    <button 
+                      onClick={() => { try { sessionStorage.setItem('tcc_active_tab', 'eligibility'); sessionStorage.removeItem('tcc_eligibility_step'); sessionStorage.removeItem('tcc_confirmed_assessment'); } catch {} setActiveTab('eligibility'); setEligibilityStep(1); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
+                      className="w-full sm:w-auto px-6 py-3.5 bg-[#F5C451] hover:bg-[#E2AF3C] text-[#0B1A30] font-extrabold rounded-lg shadow-md hover:scale-105 transform transition duration-150 uppercase tracking-wider text-xs flex items-center justify-center space-x-1.5 cursor-pointer font-sans"
+                    >
+                      <span>Check Eligibility - UK 2027</span>
+                      <ChevronRight className="h-4 w-4" />
+                    </button>
+
+                    <button 
+                      onClick={() => { setActiveTab('book'); setBookingStep(1); }}
+                      className="w-full sm:w-auto px-6 py-3.5 bg-[#0B1A30] hover:bg-[#1A2E4C] border border-[#0B1A30] text-white font-extrabold rounded-lg hover:scale-105 transform transition duration-150 uppercase tracking-wider text-xs flex items-center justify-center space-x-1.5 cursor-pointer font-sans"
+                    >
+                      <span>Book Now</span>
+                      <ChevronRight className="h-4 w-4" />
+                    </button>
+                  </div>
+
                   {/* Quick Feature Grid */}
-                  <div className="flex flex-col sm:flex-row flex-wrap gap-3 pt-2">
+                  <div className="flex flex-col sm:flex-row flex-wrap gap-3 pt-4">
                     <div className="flex items-center space-x-2 bg-[#FDF8E7] px-4 py-2.5 rounded-xl border border-black w-full sm:w-auto justify-start">
                       <Globe className="h-4 w-4 text-[#0B1A30]" />
-                      <span className="text-[#0B1A30] text-xs font-bold">Global Cricket Network</span>
+                      <span className="text-[#0B1A30] text-xs font-bold">with Global Cricket Network</span>
                     </div>
                     <div className="flex items-center space-x-2 bg-[#FDF8E7] px-4 py-2.5 rounded-xl border border-black w-full sm:w-auto justify-start">
                       <Users className="h-4 w-4 text-[#0B1A30]" />
@@ -4461,25 +4488,6 @@ END:VCALENDAR`;
                       <Briefcase className="h-4 w-4 text-[#0B1A30]" />
                       <span className="text-[#0B1A30] text-xs font-bold">Career Opportunities</span>
                     </div>
-                  </div>
-
-                  {/* CTA Buttons */}
-                  <div className="pt-4 flex flex-col sm:flex-row gap-4">
-                    <button 
-                      onClick={() => { try { sessionStorage.setItem('tcc_active_tab', 'eligibility'); sessionStorage.removeItem('tcc_eligibility_step'); sessionStorage.removeItem('tcc_confirmed_assessment'); } catch {} setActiveTab('eligibility'); setEligibilityStep(1); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
-                      className="w-full sm:w-auto px-6 py-3.5 bg-[#F5C451] hover:bg-[#E2AF3C] text-[#0B1A30] font-extrabold rounded-lg shadow-md hover:scale-105 transform transition duration-150 uppercase tracking-wider text-xs flex items-center justify-center space-x-1.5 cursor-pointer font-sans"
-                    >
-                      <span>Check Eligibility - UK 2027</span>
-                      <ChevronRight className="h-4 w-4" />
-                    </button>
-                    
-                    <button 
-                      onClick={() => { setActiveTab('book'); setBookingStep(1); }}
-                      className="w-full sm:w-auto px-6 py-3.5 bg-[#0B1A30] hover:bg-[#1A2E4C] border border-[#0B1A30] text-white font-extrabold rounded-lg hover:scale-105 transform transition duration-150 uppercase tracking-wider text-xs flex items-center justify-center space-x-1.5 cursor-pointer font-sans"
-                    >
-                      <span>Book Now</span>
-                      <ChevronRight className="h-4 w-4" />
-                    </button>
                   </div>
                 </div>
 
