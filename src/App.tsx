@@ -1574,14 +1574,14 @@ END:VCALENDAR`;
           })();
 
           if (targetUser) {
-            if (!mergedCv.firstName) mergedCv.firstName = targetUser.firstName || '';
-            if (!mergedCv.lastName) mergedCv.lastName = targetUser.lastName || '';
-            if (!mergedCv.email) mergedCv.email = targetUser.email || '';
-            if (!mergedCv.phone) mergedCv.phone = targetUser.mobileNumber || '';
-            if (!mergedCv.countryOfResidence) mergedCv.countryOfResidence = targetUser.country || '';
-            if (!mergedCv.currentCity) mergedCv.currentCity = targetUser.stateProvince || '';
-            if (!mergedCv.nationality) mergedCv.nationality = targetUser.nationality || '';
-            if (!mergedCv.dateOfBirth) mergedCv.dateOfBirth = targetUser.dateOfBirth || '';
+            mergedCv.firstName = targetUser.firstName || '';
+            mergedCv.lastName = targetUser.lastName || '';
+            mergedCv.email = targetUser.email || '';
+            mergedCv.phone = targetUser.mobileNumber || '';
+            mergedCv.countryOfResidence = targetUser.country || '';
+            mergedCv.currentCity = targetUser.stateProvince || '';
+            mergedCv.nationality = targetUser.nationality || '';
+            mergedCv.dateOfBirth = targetUser.dateOfBirth || '';
           }
 
           setCvForm(mergedCv);

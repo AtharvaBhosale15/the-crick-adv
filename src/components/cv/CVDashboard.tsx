@@ -440,9 +440,9 @@ export default function CVDashboard({
                 <span className="font-bold text-[#1E293B] text-sm">{calculateAge(cv.dateOfBirth)}</span>
               </div>
               <div className="col-span-2">
-                <span className="text-[10px] text-slate-655 uppercase block mb-1 font-bold">Current Residence</span>
+                <span className="text-[10px] text-slate-655 uppercase block mb-1 font-bold">State / County / Province</span>
                 <span className="font-bold text-[#1E293B] text-sm">
-                  {cv.currentCity ? `${cv.currentCity}, ` : ''}{cv.countryOfResidence}
+                  {cv.currentCity || '-'}
                 </span>
               </div>
             </div>

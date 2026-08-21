@@ -843,11 +843,13 @@ app.post('/api/cv-login', (req, res) => {
     user: {
       id: dbUser.id,
       email: dbUser.email,
-      firstName: dbUser.first_name,
-      lastName: dbUser.last_name,
+      firstName: dbUser.first_name || dbUser.firstName,
+      lastName: dbUser.last_name || dbUser.lastName,
       country: dbUser.country || '',
-      stateProvince: dbUser.state_province || '',
-      mobileNumber: dbUser.mobile_number || ''
+      stateProvince: dbUser.state_province || dbUser.stateProvince || '',
+      mobileNumber: dbUser.mobile_number || dbUser.mobileNumber || '',
+      nationality: dbUser.nationality || '',
+      dateOfBirth: dbUser.date_of_birth || dbUser.dateOfBirth || ''
     }
   });
 });
@@ -872,11 +874,13 @@ app.get('/api/cv-auth-check', (req, res) => {
     user: {
       id: dbUser.id,
       email: dbUser.email,
-      firstName: dbUser.first_name,
-      lastName: dbUser.last_name,
+      firstName: dbUser.first_name || dbUser.firstName,
+      lastName: dbUser.last_name || dbUser.lastName,
       country: dbUser.country || '',
-      stateProvince: dbUser.state_province || '',
-      mobileNumber: dbUser.mobile_number || ''
+      stateProvince: dbUser.state_province || dbUser.stateProvince || '',
+      mobileNumber: dbUser.mobile_number || dbUser.mobileNumber || '',
+      nationality: dbUser.nationality || '',
+      dateOfBirth: dbUser.date_of_birth || dbUser.dateOfBirth || ''
     }
   });
 });
