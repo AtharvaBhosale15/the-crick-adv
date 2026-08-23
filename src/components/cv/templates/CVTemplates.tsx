@@ -1780,6 +1780,7 @@ export function PrestigeTemplate({ cv, accentColour, font, isPreview }: Template
                 <h2>Achievements</h2>
               </div>
               <ul className="bullet-list">
+                <li style={{ color: 'red', fontWeight: 'bold' }}>DEBUG: Length={cv.achievements.length}</li>
                 {cv.achievements.map((ach, idx) => {
                   if (typeof ach === 'string') {
                     return <li key={idx}>{ach}</li>;
