@@ -322,10 +322,10 @@ const CVCareerHighlightsBlock = ({ cv, accentColour }: { cv: CricketCVFull; acce
 
 const CVFormatStatisticsBlock = ({ cv, accentColour }: { cv: CricketCVFull; accentColour: string }) => {
   const stats = cv.oneDayStats;
-  if (!stats || stats.hasStats !== true) return null;
+  if (!stats || (stats.hasStats !== true && (stats.hasStats as any) !== 'true')) return null;
 
-  const showBatting = cv.showBatting !== false;
-  const showBowling = cv.showBowling !== false;
+  const showBatting = cv.showBatting !== false && (cv.showBatting as any) !== 'false';
+  const showBowling = cv.showBowling !== false && (cv.showBowling as any) !== 'false';
 
   if (!showBatting && !showBowling) return null;
 
@@ -1203,7 +1203,7 @@ export function PrestigeTemplate({ cv, accentColour, font, isPreview }: Template
 
   // Calculate Batting Average & Strike Rate safely
   const getBattingStats = (stats: any) => {
-    if (!stats || stats.hasStats !== true) return null;
+    if (!stats || (stats.hasStats !== true && (stats.hasStats as any) !== 'true')) return null;
     const matches = parseInt(stats.batMatches, 10) || 0;
     const innings = parseInt(stats.batInnings, 10) || 0;
     const runs = parseInt(stats.batRuns, 10) || 0;
@@ -1236,7 +1236,7 @@ export function PrestigeTemplate({ cv, accentColour, font, isPreview }: Template
   };
 
   const getBowlingStats = (stats: any) => {
-    if (!stats || stats.hasStats !== true) return null;
+    if (!stats || (stats.hasStats !== true && (stats.hasStats as any) !== 'true')) return null;
     const matches = parseInt(stats.bowlMatches, 10) || 0;
     const innings = parseInt(stats.bowlInnings, 10) || 0;
     const wickets = parseInt(stats.bowlWickets, 10) || 0;
@@ -1265,8 +1265,8 @@ export function PrestigeTemplate({ cv, accentColour, font, isPreview }: Template
   const battingStats = getBattingStats(cv.oneDayStats);
   const bowlingStats = getBowlingStats(cv.oneDayStats);
 
-  const battingVisible = battingStats !== null && cv.showBatting !== false;
-  const bowlingVisible = bowlingStats !== null && cv.showBowling !== false;
+  const battingVisible = battingStats !== null && cv.showBatting !== false && (cv.showBatting as any) !== 'false';
+  const bowlingVisible = bowlingStats !== null && cv.showBowling !== false && (cv.showBowling as any) !== 'false';
   const showStatsBlock = battingVisible || bowlingVisible;
 
   return (
@@ -1785,8 +1785,11 @@ export function PrestigeTemplate({ cv, accentColour, font, isPreview }: Template
               </div>
               <ul className="bullet-list">
                 {cv.achievements.map((ach, idx) => (
-                  <li key={ach.id || idx}>
-                    {ach.title} {ach.teamEvent ? `— ${ach.teamEvent}` : ''} {ach.opponentTeam ? `vs ${ach.opponentTeam}` : ''} ({ach.year})
+                  <li key={typeof ach === 'string' ? idx : (ach.id || idx)}>
+                    {typeof ach === 'string' 
+                      ? ach 
+                      : `${ach.title || ach.description || 'Award'}${ach.teamEvent ? ` — ${ach.teamEvent}` : ''}${ach.opponentTeam ? ` vs ${ach.opponentTeam}` : ''}${ach.year ? ` (${ach.year})` : ''}`
+                    }
                   </li>
                 ))}
               </ul>
