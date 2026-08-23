@@ -914,9 +914,14 @@ export default function CVBuilderForm({
               </div>
             </div>
 
-            <div className="bg-slate-950/80 p-3 rounded-lg border border-slate-850 flex items-start gap-2 text-[10px]">
-              <AlertCircle className="w-4 h-4 text-amber-500 flex-shrink-0 mt-0.5" />
-              <span className="text-white font-bold">Identity details (Name, Age, Nationality, State/Province) are verified and locked. To correct mistakes, request a change from the admin console.</span>
+            <div className="bg-slate-900 p-4 rounded-xl border border-slate-800 flex items-start gap-3 text-xs" style={{ color: '#ffffff' }}>
+              <AlertCircle className="w-5 h-5 text-amber-500 shrink-0 mt-0.5" />
+              <div className="space-y-1">
+                <span className="block font-bold text-amber-500 uppercase tracking-wider text-[10px]" style={{ color: '#f59e0b' }}>Security Notice</span>
+                <span className="block text-slate-200 font-medium leading-relaxed" style={{ color: '#e2e8f0' }}>
+                  Identity details (Name, Age, Nationality, State/Province) are verified and locked. To correct mistakes, please request a change from the admin console.
+                </span>
+              </div>
             </div>
 
             <div>
