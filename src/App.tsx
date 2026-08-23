@@ -3670,7 +3670,7 @@ END:VCALENDAR`;
                       value={loginPassword}
                       onChange={(e) => setLoginPassword(e.target.value)}
                       placeholder="••••••••"
-                      className={`w-full text-xs p-3 pr-10 border border-slate-300 rounded-xl focus:outline-none focus:border-[#D4AF37] bg-white text-slate-800 font-semibold font-sans ${showLoginPassword ? '' : 'font-mono'}`}
+                      className={`w-full text-xs p-3 pr-10 border border-slate-300 rounded-xl focus:outline-none focus:border-[#D4AF37] bg-white text-slate-800 font-semibold font-sans no-capitalize ${showLoginPassword ? '' : 'font-mono'}`}
                     />
                     <button
                       type="button"
@@ -6901,7 +6901,7 @@ END:VCALENDAR`;
                         required
                         value={adminPassword}
                         onChange={(e) => setAdminPassword(e.target.value)}
-                        className="w-full px-4 py-2.5 bg-slate-50 border border-slate-250 rounded text-sm focus:outline-none focus:border-navy-500"
+                        className="w-full px-4 py-2.5 bg-slate-50 border border-slate-250 rounded text-sm focus:outline-none focus:border-navy-500 no-capitalize"
                         placeholder="••••••••"
                       />
                     </div>

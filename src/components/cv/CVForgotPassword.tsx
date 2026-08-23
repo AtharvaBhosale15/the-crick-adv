@@ -175,7 +175,7 @@ export default function CVForgotPassword({ resetToken, onClose, onSuccess }: CVF
                       value={newPassword}
                       onChange={(e) => setNewPassword(e.target.value)}
                       placeholder="Min 8 characters"
-                      className="w-full bg-slate-950 border border-slate-800 p-2.5 pl-10 rounded text-white text-xs"
+                      className="w-full bg-slate-950 border border-slate-800 p-2.5 pl-10 rounded text-white text-xs no-capitalize"
                     />
                   </div>
                 </div>
@@ -189,7 +189,7 @@ export default function CVForgotPassword({ resetToken, onClose, onSuccess }: CVF
                       value={confirmPassword}
                       onChange={(e) => setConfirmPassword(e.target.value)}
                       placeholder="Min 8 characters"
-                      className="w-full bg-slate-950 border border-slate-800 p-2.5 pl-10 rounded text-white text-xs"
+                      className="w-full bg-slate-950 border border-slate-800 p-2.5 pl-10 rounded text-white text-xs no-capitalize"
                     />
                   </div>
                 </div>

@@ -147,7 +147,7 @@ export default function CVAuthModal({
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="••••••••"
-                  className={`w-full bg-slate-950 border border-slate-800 p-2.5 pl-10 pr-10 rounded text-white text-xs ${showPassword ? '' : 'font-mono'}`}
+                  className={`w-full bg-slate-950 border border-slate-800 p-2.5 pl-10 pr-10 rounded text-white text-xs no-capitalize ${showPassword ? '' : 'font-mono'}`}
                 />
                 <span
                   role="button"
