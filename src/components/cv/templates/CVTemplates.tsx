@@ -339,13 +339,11 @@ const CVFormatStatisticsBlock = ({ cv, accentColour }: { cv: CricketCVFull; acce
   const bowlBest = stats.bowlBestWickets || stats.bowlBestRuns ? `${stats.bowlBestWickets}/${stats.bowlBestRuns}` : '-';
 
   return (
-    <div>
-      <CVSectionHeading id="heading-stats">
+    <CVAtomicBlock id="block-stats-container">
+      <div>
         <h2 className="text-xs font-bold uppercase tracking-widest border-b pb-1 mb-3 text-slate-900">Career Statistics</h2>
-      </CVSectionHeading>
-      <div className="space-y-4">
-        {showBatting && (
-          <CVAtomicBlock id="block-stats-batting">
+        <div className="space-y-4">
+          {showBatting && (
             <div className="bg-slate-50/50 border border-slate-100 rounded-xl p-3 text-left">
               <div className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2 flex items-center gap-1.5">
                 <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: accentColour }} />
@@ -382,11 +380,9 @@ const CVFormatStatisticsBlock = ({ cv, accentColour }: { cv: CricketCVFull; acce
                 </table>
               </div>
             </div>
-          </CVAtomicBlock>
-        )}
+          )}
 
-        {showBowling && (
-          <CVAtomicBlock id="block-stats-bowling">
+          {showBowling && (
             <div className="bg-slate-50/50 border border-slate-100 rounded-xl p-3 text-left">
               <div className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2 flex items-center gap-1.5">
                 <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: accentColour }} />
@@ -403,7 +399,7 @@ const CVFormatStatisticsBlock = ({ cv, accentColour }: { cv: CricketCVFull; acce
                       <th className="p-1.5">Wkts</th>
                       <th className="p-1.5">Avg</th>
                       <th className="p-1.5">Econ</th>
-                      <th className="p-1.5 last:rounded-r-md">BBI</th>
+                      <th className="p-1.5 last:rounded-r-md">Best</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -421,10 +417,10 @@ const CVFormatStatisticsBlock = ({ cv, accentColour }: { cv: CricketCVFull; acce
                 </table>
               </div>
             </div>
-          </CVAtomicBlock>
-        )}
+          )}
+        </div>
       </div>
-    </div>
+    </CVAtomicBlock>
   );
 };
 
