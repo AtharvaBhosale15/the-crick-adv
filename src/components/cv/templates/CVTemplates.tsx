@@ -1780,14 +1780,22 @@ export function PrestigeTemplate({ cv, accentColour, font, isPreview }: Template
                 <h2>Achievements</h2>
               </div>
               <ul className="bullet-list">
-                {cv.achievements.map((ach, idx) => (
-                  <li key={typeof ach === 'string' ? idx : (ach.id || idx)}>
-                    {typeof ach === 'string' 
-                      ? ach 
-                      : `${ach.title || ach.description || 'Award'}${ach.teamEvent ? ` — ${ach.teamEvent}` : ''}${ach.opponentTeam ? ` vs ${ach.opponentTeam}` : ''}${ach.year ? ` (${ach.year})` : ''}`
-                    }
-                  </li>
-                ))}
+                {cv.achievements.map((ach, idx) => {
+                  if (typeof ach === 'string') {
+                    return <li key={idx}>{ach}</li>;
+                  }
+                  const title = ach.title || ach.description || 'Award';
+                  const parts = [];
+                  if (ach.teamEvent) parts.push(ach.teamEvent);
+                  if (ach.opponentTeam) parts.push(`vs ${ach.opponentTeam}`);
+                  const eventStr = parts.length > 0 ? ` — ${parts.join(', ')}` : '';
+                  const yearStr = ach.year ? ` (${ach.year})` : '';
+                  return (
+                    <li key={ach.id || idx}>
+                      {title}{eventStr}{yearStr}
+                    </li>
+                  );
+                })}
               </ul>
             </div>
           </CVAtomicBlock>
