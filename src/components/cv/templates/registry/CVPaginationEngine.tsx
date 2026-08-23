@@ -143,8 +143,8 @@ export const CVPaginatedRenderer = ({
         }
       });
 
-      // Height budget per page
-      const usableHeight = templateConfig.height - templateConfig.marginTop - templateConfig.marginBottom;
+      // Height budget per page (including a 20px safety buffer for cross-browser font/layout differences)
+      const usableHeight = templateConfig.height - templateConfig.marginTop - templateConfig.marginBottom - 20;
 
       // Group elements for a column
       const groupColumn = (colBlocks: any[]) => {
@@ -174,7 +174,7 @@ export const CVPaginatedRenderer = ({
             currentHeight = block.height;
           } else {
             pagesList[pagesList.length - 1].push(block.id);
-            currentHeight += block.height + (templateConfig.sectionGap / 2);
+            currentHeight += block.height + templateConfig.sectionGap;
           }
         }
         return pagesList;
