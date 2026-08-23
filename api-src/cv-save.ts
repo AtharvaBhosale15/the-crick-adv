@@ -96,7 +96,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     let existingCv: any = null;
     if (hasPostgres()) {
-      const q = await sql`SELECT * FROM cvs WHERE user_id = ${decoded.userId} LIMIT 1`;
+      const q = await sql`SELECT * FROM cvs WHERE email = ${decoded.email} LIMIT 1`;
       if (q.rows.length > 0) {
         existingCv = q.rows[0];
       }
@@ -119,9 +119,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     // Track Edits (Only count edits after CV is paid and it is not a style-only update)
     if (isPaid && existingCv && !isStyleUpdate) {
       if (newEditsUsed >= editsAllowed) {
-        return res.status(403).json({ 
+        return res.status(403).json({
           error: 'edit_limit_reached',
-          message: 'You have used all 5 edits for this year. Please contact admin to reset.' 
+          message: 'You have used all 5 edits for this year. Please contact admin to reset.'
         });
       }
       newEditsUsed += 1;
@@ -207,10 +207,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       }
     }
 
-    return res.status(200).json({ 
-      status: 'success', 
-      message: 'CV saved successfully', 
-      cv: updatedCv 
+    return res.status(200).json({
+      status: 'success',
+      message: 'CV saved successfully',
+      cv: updatedCv
     });
 
   } catch (error: any) {

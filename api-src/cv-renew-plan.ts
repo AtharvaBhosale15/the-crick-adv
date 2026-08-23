@@ -48,7 +48,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   try {
     if (hasPostgres()) {
-      const q = await sql`SELECT * FROM cvs WHERE user_id = ${decoded.userId} LIMIT 1`;
+      const q = await sql`SELECT * FROM cvs WHERE email = ${decoded.email} LIMIT 1`;
       if (q.rows.length === 0) {
         return res.status(404).json({ error: 'CV not found' });
       }
@@ -63,7 +63,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           edits_used = 0,
           edits_allowed = 5,
           cv_data = ${JSON.stringify(cvData)}
-        WHERE user_id = ${decoded.userId}
+        WHERE email = ${decoded.email}
       `;
       return res.status(200).json({ status: 'success', cv: cvData });
     } else {

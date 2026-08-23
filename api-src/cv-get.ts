@@ -70,7 +70,15 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           cv_data TEXT NOT NULL
         );
       `;
-      const q = await sql`SELECT * FROM cvs WHERE user_id = ${decoded.userId} LIMIT 1`;
+      try {
+        await sql`ALTER TABLE cvs ADD COLUMN IF NOT EXISTS user_id VARCHAR(50);`;
+        await sql`ALTER TABLE cvs ADD COLUMN IF NOT EXISTS edits_used INTEGER DEFAULT 0;`;
+        await sql`ALTER TABLE cvs ADD COLUMN IF NOT EXISTS edits_allowed INTEGER DEFAULT 5;`;
+        await sql`ALTER TABLE cvs ADD COLUMN IF NOT EXISTS identity_locked BOOLEAN DEFAULT FALSE;`;
+      } catch (migErr) {
+        console.error("Error migrating cvs columns:", migErr);
+      }
+      const q = await sql`SELECT * FROM cvs WHERE email = ${decoded.email} LIMIT 1`;
       if (q.rows.length > 0) {
         dbCv = q.rows[0];
       }

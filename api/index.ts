@@ -25,7 +25,6 @@ import saveBookings from '../api-src/save-bookings.js';
 import saveCv from '../api-src/save-cv.js';
 import saveSettings from '../api-src/save-settings.js';
 import verifyPayment from '../api-src/verify-payment.js';
-import inspectDb from '../api-src/inspect-db.js';
 
 const routes: Record<string, (req: VercelRequest, res: VercelResponse) => Promise<any> | any> = {
   'add-booking': addBooking,
@@ -42,7 +41,6 @@ const routes: Record<string, (req: VercelRequest, res: VercelResponse) => Promis
   'cv-verify-email': cvVerifyEmail,
   'cv-verify-payment': cvVerifyPayment,
   'debug-db': debugDb,
-  'inspect-db': inspectDb,
   'email-cv': emailCv,
   'get-assessments': getAssessments,
   'get-bookings': getBookings,
