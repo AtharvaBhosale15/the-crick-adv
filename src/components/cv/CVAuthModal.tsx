@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Mail, Lock, X, AlertCircle } from 'lucide-react';
+import { Mail, Lock, X, AlertCircle, Eye, EyeOff } from 'lucide-react';
 
 interface CVAuthModalProps {
   isOpen: boolean;
@@ -20,6 +20,7 @@ export default function CVAuthModal({
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   if (!isOpen) return null;
 
@@ -141,13 +142,24 @@ export default function CVAuthModal({
               <div className="relative">
                 <Lock className="absolute left-3 top-3 w-4 h-4 text-slate-500" />
                 <input 
-                  type="password" 
+                  type={showPassword ? "text" : "password"} 
                   required
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="••••••••"
-                  className="w-full bg-slate-950 border border-slate-800 p-2.5 pl-10 rounded text-white text-xs"
+                  className={`w-full bg-slate-950 border border-slate-800 p-2.5 pl-10 pr-10 rounded text-white text-xs ${showPassword ? '' : 'font-mono'}`}
                 />
+                <span
+                  role="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-3 text-slate-400 hover:text-white cursor-pointer select-none"
+                >
+                  {showPassword ? (
+                    <EyeOff className="w-4 h-4" />
+                  ) : (
+                    <Eye className="w-4 h-4" />
+                  )}
+                </span>
               </div>
             </div>
 

@@ -41,7 +41,9 @@ import {
   ExternalLink,
   Share2,
   MessageSquare,
-  Send
+  Send,
+  Eye,
+  EyeOff
 } from 'lucide-react';
 
 // Import images
@@ -716,6 +718,7 @@ export default function App() {
   const [verificationToken, setVerificationToken] = useState<string | null>(null);
   const [isSavingCv, setIsSavingCv] = useState(false);
   const [showForgotPasswordModal, setShowForgotPasswordModal] = useState(false);
+  const [showLoginPassword, setShowLoginPassword] = useState(false);
 
   // Eligibility Assessment State
   const [eligibilityStep, setEligibilityStep] = useState<number>(() => {
@@ -3670,14 +3673,27 @@ END:VCALENDAR`;
                       Forgot Password?
                     </button>
                   </div>
-                  <input 
-                    type="password" 
-                    required
-                    value={loginPassword}
-                    onChange={(e) => setLoginPassword(e.target.value)}
-                    placeholder="••••••••"
-                    className="w-full text-xs p-3 border border-slate-300 rounded-xl focus:outline-none focus:border-[#D4AF37] bg-white text-slate-800 font-semibold font-sans font-mono"
-                  />
+                  <div className="relative">
+                    <input 
+                      type={showLoginPassword ? "text" : "password"} 
+                      required
+                      value={loginPassword}
+                      onChange={(e) => setLoginPassword(e.target.value)}
+                      placeholder="••••••••"
+                      className={`w-full text-xs p-3 pr-10 border border-slate-300 rounded-xl focus:outline-none focus:border-[#D4AF37] bg-white text-slate-800 font-semibold font-sans ${showLoginPassword ? '' : 'font-mono'}`}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowLoginPassword(!showLoginPassword)}
+                      className="absolute right-3 top-3 text-slate-400 hover:text-slate-600 focus:outline-none"
+                    >
+                      {showLoginPassword ? (
+                        <EyeOff className="w-4 h-4" />
+                      ) : (
+                        <Eye className="w-4 h-4" />
+                      )}
+                    </button>
+                  </div>
                 </div>
 
                 <button 
