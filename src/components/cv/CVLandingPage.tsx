@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import { 
-  Award, 
   CheckCircle, 
   FileText, 
   Globe, 
@@ -154,13 +153,13 @@ export default function CVLandingPage({
           <>
             <button 
               onClick={onTriggerLogin}
-              className="px-5 py-2 rounded-xl text-xs font-bold border border-slate-700 text-slate-300 hover:text-white transition cursor-pointer font-sans"
+              className="px-6 py-2.5 rounded-xl text-sm font-bold bg-gold-gradient text-navy-950 hover:opacity-90 transition cursor-pointer font-sans shadow-md"
             >
               LOG IN
             </button>
             <button 
               onClick={onTriggerSignup}
-              className="px-5 py-2 rounded-xl text-xs font-bold bg-gold-gradient text-navy-950 hover:opacity-90 transition cursor-pointer font-sans"
+              className="px-6 py-2.5 rounded-xl text-sm font-bold bg-gold-gradient text-navy-950 hover:opacity-90 transition cursor-pointer font-sans shadow-md"
             >
               SIGN UP
             </button>
@@ -172,9 +171,7 @@ export default function CVLandingPage({
       <section className="relative overflow-hidden pt-12 pb-16 px-4 md:px-8 border-b border-slate-800">
         <div className="absolute inset-0 bg-radial-gradient from-blue-900/40 via-transparent to-transparent opacity-50" />
         <div className="max-w-6xl mx-auto text-center relative z-10">
-          <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold bg-gold-500/10 text-gold-400 border border-gold-500/20 mb-6 uppercase tracking-wider">
-            <Award className="w-3.5 h-3.5" /> Premium Cricket Service
-          </span>
+
           <h1 className="text-4xl md:text-6xl font-black text-white tracking-tight leading-none mb-6">
             Build a Cricket CV <br/>
             <span className="text-gradient-gold">That Gets You Noticed.</span>
@@ -201,7 +198,7 @@ export default function CVLandingPage({
             )}
           </div>
 
-          <div className="mt-8 text-sm text-slate-400 font-sans">
+          <div className="mt-8 text-lg md:text-xl text-slate-200 font-sans font-semibold">
             Includes 5 annual edits • Free live preview
           </div>
         </div>

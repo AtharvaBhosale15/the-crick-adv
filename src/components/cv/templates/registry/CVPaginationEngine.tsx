@@ -135,6 +135,7 @@ export const CVPaginatedRenderer = ({
           height: rect.height,
           top: rect.top - parentRect.top
         };
+        console.log(`[DEBUG_MEASURE] Block: ${id}, Height: ${rect.height}`);
 
         if (isLeftColumn) {
           leftBlocks.push(measured);

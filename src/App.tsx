@@ -687,6 +687,7 @@ export default function App() {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmView, setShowConfirmView] = useState(false);
+  const [showRegistrationSuccess, setShowRegistrationSuccess] = useState(false);
   const [loginEmail, setLoginEmail] = useState('');
   const [loginPassword, setLoginPassword] = useState('');
   const [loginError, setLoginError] = useState('');
@@ -3273,13 +3274,13 @@ END:VCALENDAR`;
           if (!res.ok) throw new Error(data.error || 'Registration failed');
 
           if (res.ok) {
-            alert("Please verify your email via the email sent on your registered mail id.");
             setConfirmPassword('');
             setShowConfirmView(false);
-            setCvView('login');
+            setShowRegistrationSuccess(true);
           } else {
-            alert(data.message || 'Registration completed successfully! Please verify your email.');
-            setCvView('landing');
+            setConfirmPassword('');
+            setShowConfirmView(false);
+            setShowRegistrationSuccess(true);
           }
         } catch (err: any) {
           alert(`Error: ${err.message}`);
@@ -3288,6 +3289,31 @@ END:VCALENDAR`;
 
       const strength = getPasswordStrength(cvForm.password || '');
 
+      if (showRegistrationSuccess) {
+        return (
+          <div className="py-12 bg-slate-50 min-h-[85vh] text-slate-800 flex items-center justify-center font-sans px-4 animate-fade-in">
+            <div className="bg-white border-4 border-black rounded-xl shadow-sm overflow-hidden w-full max-w-lg flex flex-col p-8 text-center space-y-6">
+              <h2 className="text-2xl font-display font-black text-[#0B1A30] uppercase">Success</h2>
+              <div className="text-slate-700 text-sm font-semibold">
+                Your Cricket CV Profile Link Has Been Sent To You Please Check Your Inbox or Spam Folder
+              </div>
+              <div className="text-[#D4AF37] font-bold text-lg p-3 bg-slate-50 border border-slate-200 rounded-xl">
+                {cvForm.email}
+              </div>
+              <button
+                onClick={() => {
+                  setShowRegistrationSuccess(false);
+                  setCvView('login');
+                }}
+                className="w-full py-3 rounded-xl font-bold bg-[#0B1A30] text-white hover:bg-navy-950 transition text-xs uppercase tracking-wider"
+              >
+                Go To Login
+              </button>
+            </div>
+          </div>
+        );
+      }
+
       if (showConfirmView) {
         const prefix = COUNTRY_CODES[cvForm.nationality] || '';
         const finalPhone = prefix ? `${prefix} ${cvForm.phone}` : cvForm.phone;
@@ -3295,10 +3321,8 @@ END:VCALENDAR`;
         return (
           <div className="py-12 bg-slate-50 min-h-[85vh] text-slate-800 flex items-center justify-center font-sans px-4 animate-fade-in">
             <div className="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden w-full max-w-lg flex flex-col">
-              {/* Header */}
               <div className="bg-[#0B1A30] text-[#D4AF37] px-6 py-4 border-b border-gold-500/20 flex items-center justify-between">
                 <span className="font-bold font-display uppercase text-xs tracking-wider">Confirm Profile Details</span>
-                <span className="text-[10px] text-gold-300/80 normal-case font-semibold font-sans">Cricket CV Registration</span>
               </div>
 
               {/* Body */}
@@ -3370,43 +3394,36 @@ END:VCALENDAR`;
       }
 
       return (
-        <div className="py-12 bg-slate-50 min-h-[85vh] text-slate-800 flex items-center justify-center font-sans">
-          <div className="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden w-full max-w-lg animate-fade-in flex flex-col">
-            {/* Header subbar styling matching Eligibility intake form */}
+        <div className="py-12 bg-slate-50 min-h-[85vh] text-slate-800 flex items-center justify-center">
+          <div style={{ fontFamily: 'Georgia, serif' }} className="bg-white border-4 border-black rounded-xl shadow-sm overflow-hidden w-full max-w-lg animate-fade-in flex flex-col">
             <div className="bg-[#0B1A30] text-[#D4AF37] px-6 py-4 border-b border-gold-500/20 flex items-center justify-between">
-              <span className="font-bold font-display uppercase text-xs tracking-wider">Create Your Account</span>
-              <span className="text-[10px] text-gold-300/80 normal-case font-semibold font-sans">Cricket CV Registration</span>
+              <span className="font-bold uppercase text-lg tracking-wide">Create Your Account</span>
             </div>
 
             <div className="p-6 space-y-6 text-left">
-              <div>
-                <h3 className="text-lg font-bold text-[#0B1A30] font-display uppercase tracking-tight">Player Registration Form</h3>
-                <p className="text-slate-500 text-xs mt-1 font-sans">Please fill out the form below to create your account and draft your CV.</p>
-              </div>
-
               <form onSubmit={(e) => { e.preventDefault(); handleOnboardSubmit(); }} className="space-y-5">
                 {/* First Name & Last Name */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="space-y-1.5">
-                    <label className="block text-xs font-bold text-slate-700 uppercase font-sans">First Name *</label>
+                    <label className="block text-xs font-bold text-slate-700 uppercase">First Name <span className="text-red-600">*</span></label>
                     <input 
                       type="text" 
                       required
                       value={cvForm.firstName}
                       onChange={(e) => setCvForm({ ...cvForm, firstName: capitalizeWords(e.target.value) })}
                       placeholder="Enter first name"
-                      className="w-full text-xs p-3 border border-slate-300 rounded-xl focus:outline-none focus:border-[#D4AF37] bg-white text-slate-800 font-semibold font-sans capitalize"
+                      className="w-full text-xs p-3 border-2 border-black rounded-xl focus:outline-none focus:border-[#D4AF37] bg-white text-slate-800 font-semibold font-sans capitalize"
                     />
                   </div>
                   <div className="space-y-1.5">
-                    <label className="block text-xs font-bold text-slate-700 uppercase font-sans">Last Name *</label>
+                    <label className="block text-xs font-bold text-slate-700 uppercase">Last Name <span className="text-red-600">*</span></label>
                     <input 
                       type="text" 
                       required
                       value={cvForm.lastName}
                       onChange={(e) => setCvForm({ ...cvForm, lastName: capitalizeWords(e.target.value) })}
                       placeholder="Enter last name"
-                      className="w-full text-xs p-3 border border-slate-300 rounded-xl focus:outline-none focus:border-[#D4AF37] bg-white text-slate-800 font-semibold font-sans capitalize"
+                      className="w-full text-xs p-3 border-2 border-black rounded-xl focus:outline-none focus:border-[#D4AF37] bg-white text-slate-800 font-semibold font-sans capitalize"
                     />
                   </div>
                 </div>
@@ -3414,7 +3431,7 @@ END:VCALENDAR`;
                 {/* Nationality & Age */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="space-y-1.5">
-                    <label className="block text-xs font-bold text-slate-700 uppercase font-sans">Nationality *</label>
+                    <label className="block text-xs font-bold text-slate-700 uppercase">Nationality <span className="text-red-600">*</span></label>
                     <select 
                       required
                       value={cvForm.nationality}
@@ -3427,7 +3444,7 @@ END:VCALENDAR`;
                           currentCity: ''
                         });
                       }}
-                      className="w-full text-xs p-3 border border-slate-300 rounded-xl focus:outline-none focus:border-[#D4AF37] bg-white text-slate-800 font-semibold font-sans"
+                      className="w-full text-xs p-3 border-2 border-black rounded-xl focus:outline-none focus:border-[#D4AF37] bg-white text-slate-800 font-semibold font-sans"
                     >
                       <option value="">Select Nationality</option>
                       <option value="India">India</option>
@@ -3442,9 +3459,8 @@ END:VCALENDAR`;
                     </select>
                   </div>
                   <div className="space-y-1.5">
-                    <label className="block text-xs font-bold text-slate-700 uppercase font-sans">Age *</label>
-                    <input 
-                      type="text" 
+                    <label className="block text-xs font-bold text-slate-700 uppercase">Age <span className="text-red-600">*</span></label>
+                    <select 
                       required
                       value={age}
                       onChange={(e) => {
@@ -3452,21 +3468,25 @@ END:VCALENDAR`;
                         setAge(val);
                         setCvForm({ ...cvForm, dateOfBirth: val });
                       }}
-                      placeholder="e.g. 25"
-                      className="w-full text-xs p-3 border border-slate-300 rounded-xl focus:outline-none focus:border-[#D4AF37] bg-white text-slate-800 font-semibold font-sans"
-                    />
+                      className="w-full text-xs p-3 border-2 border-black rounded-xl focus:outline-none focus:border-[#D4AF37] bg-white text-slate-800 font-normal font-sans"
+                    >
+                      <option value="" disabled>Select Age</option>
+                      {Array.from({ length: 43 }, (_, i) => i + 18).map(num => (
+                        <option key={num} value={num.toString()}>{num}</option>
+                      ))}
+                    </select>
                   </div>
                 </div>
 
                 {/* State / County / Province */}
                 <div className="space-y-1.5">
-                  <label className="block text-xs font-bold text-slate-700 uppercase font-sans">State / County / Province & Union Territories *</label>
+                  <label className="block text-xs font-bold text-slate-700 uppercase">State / County / Province & Union Territories <span className="text-red-600">*</span></label>
                   <select 
                     required
                     disabled={!cvForm.nationality}
                     value={cvForm.currentCity}
                     onChange={(e) => setCvForm({ ...cvForm, currentCity: e.target.value })}
-                    className="w-full text-xs p-3 border border-slate-300 rounded-xl focus:outline-none focus:border-[#D4AF37] bg-white text-slate-800 font-semibold font-sans disabled:bg-slate-100 disabled:cursor-not-allowed"
+                    className="w-full text-xs p-3 border-2 border-black rounded-xl focus:outline-none focus:border-[#D4AF37] bg-white text-slate-800 font-semibold font-sans disabled:bg-slate-100 disabled:cursor-not-allowed"
                   >
                     <option value="">
                       {!cvForm.nationality ? "Select Nationality First" : "Select State/Province/Territory"}
@@ -3480,9 +3500,9 @@ END:VCALENDAR`;
                 {/* Mobile Number & Email */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="space-y-1.5">
-                    <label className="block text-xs font-bold text-slate-700 uppercase font-sans">Mobile Number *</label>
+                    <label className="block text-xs font-bold text-slate-700 uppercase">Mobile Number <span className="text-red-600">*</span></label>
                     <div className="flex gap-2">
-                      <span className="bg-slate-100 border border-slate-300 px-3 py-2.5 rounded-xl text-xs font-bold text-slate-700 flex items-center justify-center min-w-[55px] font-mono">
+                      <span className="bg-slate-100 border border-black px-3 py-2.5 rounded-xl text-xs font-bold text-slate-700 flex items-center justify-center min-w-[55px]">
                         {COUNTRY_CODES[cvForm.nationality] || '+'}
                       </span>
                       <input 
@@ -3491,33 +3511,33 @@ END:VCALENDAR`;
                         value={cvForm.phone}
                         onChange={(e) => setCvForm({ ...cvForm, phone: e.target.value })}
                         placeholder="Mobile number"
-                        className="w-full text-xs p-3 border border-slate-300 rounded-xl focus:outline-none focus:border-[#D4AF37] bg-white text-slate-800 font-semibold font-sans font-mono"
+                        className="w-full text-xs p-3 border-2 border-black rounded-xl focus:outline-none focus:border-[#D4AF37] bg-white text-slate-800 font-semibold font-sans"
                       />
                     </div>
                   </div>
                   <div className="space-y-1.5">
-                    <label className="block text-xs font-bold text-slate-700 uppercase font-sans">Email Address *</label>
+                    <label className="block text-xs font-bold text-slate-700 uppercase">Email Address <span className="text-red-600">*</span></label>
                     <input 
                       type="email" 
                       required
                       value={cvForm.email}
                       onChange={(e) => setCvForm({ ...cvForm, email: e.target.value })}
                       placeholder="name@example.com"
-                      className="w-full text-xs p-3 border border-slate-300 rounded-xl focus:outline-none focus:border-[#D4AF37] bg-white text-slate-800 font-semibold font-sans no-capitalize"
+                      className="w-full text-xs p-3 border-2 border-black rounded-xl focus:outline-none focus:border-[#D4AF37] bg-white text-slate-800 font-semibold font-sans no-capitalize"
                     />
                   </div>
                 </div>
 
                 {/* Password & Strength Meter */}
                 <div className="space-y-1.5">
-                  <label className="block text-xs font-bold text-slate-700 uppercase font-sans">Account Password *</label>
+                  <label className="block text-xs font-bold text-slate-700 uppercase">Account Password <span className="text-red-600">*</span></label>
                   <input 
                     type={showPassword ? "text" : "password"} 
                     required
                     value={cvForm.password || ''}
                     onChange={(e) => setCvForm({ ...cvForm, password: e.target.value })}
                     placeholder="Min 8 characters for account login"
-                    className="w-full text-xs p-3 border border-slate-300 rounded-xl focus:outline-none focus:border-[#D4AF37] bg-white text-slate-800 font-semibold font-sans font-mono no-capitalize"
+                    className="w-full text-xs p-3 border-2 border-black rounded-xl focus:outline-none focus:border-[#D4AF37] bg-white text-slate-800 font-semibold font-sans no-capitalize"
                   />
                   {cvForm.password && (
                     <div className="space-y-1.5 mt-2 bg-slate-50 p-2.5 rounded-xl border border-slate-200">
@@ -3531,7 +3551,7 @@ END:VCALENDAR`;
                           />
                         ))}
                       </div>
-                      <div className={`text-[10px] font-bold uppercase tracking-wider ${strength.text}`}>
+                      <div className="text-[10px] font-bold uppercase tracking-wider">
                         Password Strength: {strength.label}
                       </div>
                     </div>
@@ -3539,20 +3559,20 @@ END:VCALENDAR`;
                 </div>
 
                 {/* Confirm Password */}
-                <div className="space-y-1.5 font-sans">
-                  <label className="block text-xs font-bold text-slate-700 uppercase">Confirm Password *</label>
+                <div className="space-y-1.5">
+                  <label className="block text-xs font-bold text-slate-700 uppercase">Confirm Password <span className="text-red-600">*</span></label>
                   <input 
                     type={showPassword ? "text" : "password"} 
                     required
                     value={confirmPassword}
                     onChange={(e) => setConfirmPassword(e.target.value)}
                     placeholder="Re-enter account password"
-                    className="w-full text-xs p-3 border border-slate-300 rounded-xl focus:outline-none focus:border-[#D4AF37] bg-white text-slate-800 font-semibold font-mono no-capitalize"
+                    className="w-full text-xs p-3 border-2 border-black rounded-xl focus:outline-none focus:border-[#D4AF37] bg-white text-slate-800 font-semibold font-sans no-capitalize"
                   />
                 </div>
 
                 {/* Show Password Toggle */}
-                <div className="flex items-center gap-2 mt-1.5 no-capitalize font-sans">
+                <div className="flex items-center gap-2 mt-1.5 no-capitalize">
                   <input 
                     type="checkbox"
                     id="show-signup-password"
@@ -3566,7 +3586,7 @@ END:VCALENDAR`;
                 </div>
 
                 {/* Navigation Buttons */}
-                <div className="flex justify-between items-center pt-6 border-t border-slate-100 font-sans">
+                <div className="flex justify-between items-center pt-6 border-t border-slate-100">
                   <button 
                     type="button"
                     onClick={() => setCvView('landing')}
@@ -3617,18 +3637,11 @@ END:VCALENDAR`;
 
       return (
         <div className="py-12 bg-slate-50 min-h-[85vh] text-slate-800 flex items-center justify-center font-sans px-4">
-          <div className="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden w-full max-w-md animate-fade-in flex flex-col">
-            {/* Header */}
-            <div className="bg-[#0B1A30] text-[#D4AF37] px-6 py-4 border-b border-gold-500/20 flex items-center justify-between">
-              <span className="font-bold font-display uppercase text-xs tracking-wider">Log In to Your Account</span>
-              <span className="text-[10px] text-gold-300/80 normal-case font-semibold font-sans">Cricket CV Portal</span>
-            </div>
-
+          <div className="bg-white border-4 border-black rounded-xl shadow-sm overflow-hidden w-full max-w-md animate-fade-in flex flex-col">
             {/* Body */}
             <div className="p-6 md:p-8 space-y-6 text-left">
               <div className="text-center">
-                <h3 className="text-lg font-bold text-[#0B1A30] font-display uppercase tracking-tight">Access Your Dashboard</h3>
-                <p className="text-slate-500 text-xs mt-1">Enter your details below to continue building or exporting your CV.</p>
+                <h3 className="text-xl font-bold text-[#0B1A30] font-display uppercase tracking-tight">Log in to your account</h3>
               </div>
 
               {loginError && (
@@ -3639,26 +3652,26 @@ END:VCALENDAR`;
 
               <form onSubmit={handleLoginSubmit} className="space-y-4">
                 <div className="space-y-1.5">
-                  <label className="block text-xs font-bold text-slate-700 uppercase font-sans">Email Address *</label>
+                  <label className="block text-xs font-bold text-black uppercase font-sans">Email Address *</label>
                   <input 
                     type="email" 
                     required
                     value={loginEmail}
                     onChange={(e) => setLoginEmail(e.target.value)}
                     placeholder="name@example.com"
-                    className="w-full text-xs p-3 border border-slate-300 rounded-xl focus:outline-none focus:border-[#D4AF37] bg-white text-slate-800 font-semibold font-sans"
+                    className="w-full text-xs p-3 border-2 border-black rounded-xl focus:outline-none focus:border-[#D4AF37] bg-white text-slate-800 font-semibold font-sans"
                   />
                 </div>
 
                 <div className="space-y-1.5">
                   <div className="flex justify-between items-center">
-                    <label className="block text-xs font-bold text-slate-700 uppercase font-sans">Password *</label>
+                    <label className="block text-xs font-bold text-black uppercase font-sans">Password *</label>
                     <button 
                       type="button"
                       onClick={() => {
                         setShowForgotPasswordModal(true);
                       }}
-                      className="text-[10px] text-[#D4AF37] font-semibold hover:underline"
+                      className="text-[10px] text-red-600 hover:text-red-750 font-semibold hover:underline"
                     >
                       Forgot Password?
                     </button>
@@ -3670,7 +3683,7 @@ END:VCALENDAR`;
                       value={loginPassword}
                       onChange={(e) => setLoginPassword(e.target.value)}
                       placeholder="••••••••"
-                      className={`w-full text-xs p-3 pr-10 border border-slate-300 rounded-xl focus:outline-none focus:border-[#D4AF37] bg-white text-slate-800 font-semibold font-sans no-capitalize ${showLoginPassword ? '' : 'font-mono'}`}
+                      className={`w-full text-xs p-3 pr-10 border-2 border-black rounded-xl focus:outline-none focus:border-[#D4AF37] bg-white text-slate-800 font-semibold font-sans no-capitalize ${showLoginPassword ? '' : 'font-mono'}`}
                     />
                     <button
                       type="button"
@@ -3695,8 +3708,8 @@ END:VCALENDAR`;
                 </button>
               </form>
 
-              <div className="border-t border-slate-100 pt-4 text-center text-xs text-slate-500 font-sans">
-                Don't have an account? {' '}
+              <div className="border-t border-slate-100 pt-4 flex flex-col sm:flex-row items-center justify-center gap-2.5 text-xs font-sans">
+                <span className="text-yellow-600 font-bold">Don't have an account?</span>
                 <button 
                   onClick={() => {
                     setCvStep(1);
@@ -3705,7 +3718,7 @@ END:VCALENDAR`;
                     setCvForm(initialCVFormFull('', '', '', ''));
                     setCvView('onboarding');
                   }}
-                  className="text-[#D4AF37] font-bold hover:underline"
+                  className="px-4 py-2 bg-[#800000] hover:bg-[#600000] text-white font-bold rounded-xl transition cursor-pointer shadow-md uppercase tracking-wider text-[10px]"
                 >
                   Start Building Now
                 </button>

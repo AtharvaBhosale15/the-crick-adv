@@ -122,7 +122,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const resendApiKey = process.env.RESEND_API_KEY;
     if (resendApiKey) {
       const resend = new Resend(resendApiKey.trim());
-      const fromEmail = process.env.RESEND_FROM_EMAIL || 'booking@thecricketadvisor.com';
+      const fromEmail = process.env.RESEND_FROM_EMAIL || 'thecricketadvisor@gmail.com';
       const verifyLink = `https://${req.headers.host || 'thecricketadvisor.com'}/#cricket-cv?verify=${verificationToken}`;
       
       const htmlContent = `

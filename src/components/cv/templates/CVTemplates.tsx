@@ -1777,7 +1777,7 @@ export function PrestigeTemplate({ cv, accentColour, font, isPreview }: Template
             <div className="section">
               <div className="section-title">
                 <div className="badge">&#11088;</div>
-                <h2>Achievements</h2>
+                <h2>Achievements TEST</h2>
               </div>
               <ul className="bullet-list">
                 <li style={{ color: 'red', fontWeight: 'bold' }}>DEBUG: Length={cv.achievements.length}</li>
