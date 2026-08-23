@@ -53,18 +53,18 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       const userRes = await sql`SELECT * FROM cv_users WHERE id = ${decoded.userId} LIMIT 1`;
       if (userRes.rows.length > 0) {
         dbUser = userRes.rows[0];
-        if (dbUser.email === 'atharvabhosale007@gmail.com' && (dbUser.country === null || dbUser.country === '')) {
+        if (dbUser.email) {
           try {
             await sql`
               UPDATE cv_users 
               SET 
-                first_name = COALESCE(first_name, 'atharva'), 
-                last_name = COALESCE(last_name, 'bhosale'), 
-                country = 'India', 
-                state_province = 'maharashtra', 
-                mobile_number = '9321885233', 
-                nationality = 'India', 
-                date_of_birth = '28'
+                first_name = COALESCE(NULLIF(first_name, ''), 'Player'),
+                last_name = COALESCE(NULLIF(last_name, ''), 'Profile'),
+                country = COALESCE(NULLIF(country, ''), 'India'), 
+                state_province = COALESCE(NULLIF(state_province, ''), 'Maharashtra'), 
+                mobile_number = COALESCE(NULLIF(mobile_number, ''), '9321885233'), 
+                nationality = COALESCE(NULLIF(nationality, ''), 'India'), 
+                date_of_birth = COALESCE(NULLIF(date_of_birth, ''), '28')
               WHERE email = ${dbUser.email};
             `;
             const refetch = await sql`SELECT * FROM cv_users WHERE id = ${decoded.userId} LIMIT 1`;

@@ -149,14 +149,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
 
     if (userDetails) {
-      if (!updatedCv.firstName) updatedCv.firstName = userDetails.first_name || userDetails.firstName || '';
-      if (!updatedCv.lastName) updatedCv.lastName = userDetails.last_name || userDetails.lastName || '';
-      if (!updatedCv.email) updatedCv.email = userDetails.email || decoded.email || '';
-      if (!updatedCv.phone) updatedCv.phone = userDetails.mobile_number || userDetails.mobileNumber || '';
-      if (!updatedCv.countryOfResidence) updatedCv.countryOfResidence = userDetails.country || '';
-      if (!updatedCv.currentCity) updatedCv.currentCity = userDetails.state_province || userDetails.stateProvince || '';
-      if (!updatedCv.nationality) updatedCv.nationality = userDetails.nationality || '';
-      if (!updatedCv.dateOfBirth) updatedCv.dateOfBirth = userDetails.date_of_birth || userDetails.dateOfBirth || '';
+      updatedCv.firstName = userDetails.first_name || userDetails.firstName || '';
+      updatedCv.lastName = userDetails.last_name || userDetails.lastName || '';
+      updatedCv.email = userDetails.email || decoded.email || '';
+      updatedCv.phone = userDetails.mobile_number || userDetails.mobileNumber || '';
+      updatedCv.countryOfResidence = userDetails.country || '';
+      updatedCv.currentCity = userDetails.state_province || userDetails.stateProvince || '';
+      updatedCv.nationality = userDetails.nationality || '';
+      updatedCv.dateOfBirth = userDetails.date_of_birth || userDetails.dateOfBirth || '';
     }
 
     // If identity is locked, keep the original name/DOB/nationality

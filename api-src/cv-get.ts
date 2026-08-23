@@ -91,14 +91,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     if (dbCv) {
       const cvData = hasPostgres() ? JSON.parse(dbCv.cv_data) : dbCv;
       if (userDetails) {
-        if (!cvData.firstName) cvData.firstName = userDetails.first_name || userDetails.firstName || '';
-        if (!cvData.lastName) cvData.lastName = userDetails.last_name || userDetails.lastName || '';
-        if (!cvData.email) cvData.email = userDetails.email || decoded.email || '';
-        if (!cvData.phone) cvData.phone = userDetails.mobile_number || userDetails.mobileNumber || '';
-        if (!cvData.countryOfResidence) cvData.countryOfResidence = userDetails.country || '';
-        if (!cvData.currentCity) cvData.currentCity = userDetails.state_province || userDetails.stateProvince || '';
-        if (!cvData.nationality) cvData.nationality = userDetails.nationality || '';
-        if (!cvData.dateOfBirth) cvData.dateOfBirth = userDetails.date_of_birth || userDetails.dateOfBirth || '';
+        cvData.firstName = userDetails.first_name || userDetails.firstName || '';
+        cvData.lastName = userDetails.last_name || userDetails.lastName || '';
+        cvData.email = userDetails.email || decoded.email || '';
+        cvData.phone = userDetails.mobile_number || userDetails.mobileNumber || '';
+        cvData.countryOfResidence = userDetails.country || '';
+        cvData.currentCity = userDetails.state_province || userDetails.stateProvince || '';
+        cvData.nationality = userDetails.nationality || '';
+        cvData.dateOfBirth = userDetails.date_of_birth || userDetails.dateOfBirth || '';
       }
       return res.status(200).json({ cv: cvData });
     } else {

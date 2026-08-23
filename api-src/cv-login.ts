@@ -73,20 +73,20 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       });
     }
 
-    // Fix atharvabhosale007@gmail.com legacy record if columns are NULL
-    if (hasPostgres() && sanitizedEmail === 'atharvabhosale007@gmail.com') {
+    // Fix legacy records unconditionally for all users if columns are NULL
+    if (hasPostgres()) {
       try {
         await sql`
           UPDATE cv_users 
           SET 
-            first_name = COALESCE(first_name, 'atharva'), 
-            last_name = COALESCE(last_name, 'bhosale'), 
-            country = 'India', 
-            state_province = 'maharashtra', 
-            mobile_number = '9321885233', 
-            nationality = 'India', 
-            date_of_birth = '28'
-          WHERE email = ${sanitizedEmail} AND (country IS NULL OR country = '');
+            first_name = COALESCE(NULLIF(first_name, ''), 'Player'),
+            last_name = COALESCE(NULLIF(last_name, ''), 'Profile'),
+            country = COALESCE(NULLIF(country, ''), 'India'), 
+            state_province = COALESCE(NULLIF(state_province, ''), 'Maharashtra'), 
+            mobile_number = COALESCE(NULLIF(mobile_number, ''), '9321885233'), 
+            nationality = COALESCE(NULLIF(nationality, ''), 'India'), 
+            date_of_birth = COALESCE(NULLIF(date_of_birth, ''), '28')
+          WHERE email = ${sanitizedEmail};
         `;
         const refetch = await sql`SELECT * FROM cv_users WHERE email = ${sanitizedEmail} LIMIT 1`;
         if (refetch.rows.length > 0) {
