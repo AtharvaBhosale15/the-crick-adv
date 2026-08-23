@@ -382,7 +382,9 @@ export default function CVDashboard({
         ...DEMO_CV_DATA,
         templateId: previewCv.templateId || 'prestige',
         font: previewCv.font || 'Inter',
-        accentColour: previewCv.accentColour || '#0B1A30'
+        accentColour: previewCv.accentColour || '#0B1A30',
+        showBatting: previewCv.showBatting !== false,
+        showBowling: previewCv.showBowling !== false
       };
 
   return (

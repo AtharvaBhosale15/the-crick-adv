@@ -1409,7 +1409,8 @@ export default function CVBuilderForm({
                 <div className="space-y-6 pt-2 animate-fade-in">
                   
                   {/* BATTING SECTION */}
-                  <div className="space-y-4">
+                  {cv.showBatting !== false && (
+                    <div className="space-y-4">
                     <h4 className="text-xs font-extrabold uppercase tracking-widest pb-1.5" style={{ borderBottom: '3.5px solid #000000', color: '#000000' }}>1. Batting Statistics</h4>
                     
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
@@ -1631,9 +1632,11 @@ export default function CVBuilderForm({
                       </div>
                     </div>
                   </div>
+                  )}
 
                   {/* BOWLING SECTION */}
-                  <div className="space-y-4">
+                  {cv.showBowling !== false && (
+                    <div className="space-y-4">
                     <h4 className="text-xs font-extrabold uppercase tracking-widest pb-1.5" style={{ borderBottom: '3.5px solid #000000', color: '#000000' }}>2. Bowling Statistics</h4>
                     
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
@@ -1824,6 +1827,7 @@ export default function CVBuilderForm({
                       </div>
                     </div>
                   </div>
+                  )}
 
                 </div>
               )}

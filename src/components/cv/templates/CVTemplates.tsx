@@ -77,8 +77,8 @@ const CVExtraProfileDetails = ({ cv }: { cv: CricketCVFull }) => {
       {cv.height && <div><strong>Height:</strong> {cv.height} cm</div>}
       {cv.playingRole && <div><strong>Role:</strong> {cv.playingRoleDetail || cv.playingRole}</div>}
       {cv.secondaryRole && <div><strong>Secondary Role:</strong> {cv.secondaryRole}</div>}
-      {cv.battingStyle && <div><strong>Batting:</strong> {cv.battingStyle}</div>}
-      {cv.bowlingStyle && <div><strong>Bowling:</strong> {cv.bowlingStyle}</div>}
+      {cv.battingStyle && cv.battingStyle.toLowerCase() !== 'none' && <div><strong>Batting:</strong> {cv.battingStyle}</div>}
+      {cv.bowlingStyle && cv.bowlingStyle.toLowerCase() !== 'none' && <div><strong>Bowling:</strong> {cv.bowlingStyle}</div>}
       {cv.throwingArm && <div><strong>Throw:</strong> {cv.throwingArm} Arm</div>}
       {cv.bowlingPace && <div><strong>Pace:</strong> {cv.bowlingPace}</div>}
       {cv.typeOfPlayerLevel && <div><strong>Player Level:</strong> {cv.typeOfPlayerLevel}</div>}
@@ -504,10 +504,10 @@ export function ExecutiveTemplate({ cv, accentColour, font, isPreview }: Templat
         <div className="grid md:grid-cols-3 gap-6">
           {/* Left Column: Personal, Cricket Profile, References */}
           <div className="md:col-span-1 space-y-6">
-            <div>
+            <CVAtomicBlock id="side-section-profile">
               <h2 className="text-xs font-bold uppercase tracking-widest border-b pb-1 mb-2 text-slate-900">Player Profile</h2>
               <CVExtraProfileDetails cv={cv} />
-            </div>
+            </CVAtomicBlock>
 
             {/* Statistics Summary */}
             <CVFormatStatisticsBlock cv={cv} accentColour={accentColour} />
@@ -522,15 +522,15 @@ export function ExecutiveTemplate({ cv, accentColour, font, isPreview }: Templat
           {/* Right Column: About, Playing History, Highlights, Education */}
           <div className="md:col-span-2 space-y-6">
             {cv.aboutPlayer && (
-              <div>
+              <CVAtomicBlock id="main-section-about">
                 <h2 className="text-xs font-bold uppercase tracking-widest border-b pb-1 mb-2 text-slate-900">About Me</h2>
                 <p className="text-xs text-slate-600 leading-relaxed whitespace-pre-line">{cv.aboutPlayer}</p>
-              </div>
+              </CVAtomicBlock>
             )}
 
             {/* Playing Career History */}
             {cv.careerHistory.length > 0 && (
-              <div>
+              <CVAtomicBlock id="main-section-history">
                 <h2 className="text-xs font-bold uppercase tracking-widest border-b pb-1 mb-3 text-slate-900">Career History</h2>
                 <div className="space-y-4">
                   {cv.careerHistory.map((item, cIdx) => (
@@ -553,7 +553,7 @@ export function ExecutiveTemplate({ cv, accentColour, font, isPreview }: Templat
                     </div>
                   ))}
                 </div>
-              </div>
+              </CVAtomicBlock>
             )}
 
             {/* Highlights */}
@@ -606,19 +606,16 @@ export function ProfessionalTemplate({ cv, accentColour, font, isPreview }: Temp
               <h1 className="text-2xl md:text-3xl font-black tracking-tight">{cv.firstName} {cv.lastName}</h1>
               <p className="text-xs font-bold text-gold-400 uppercase tracking-widest mt-1">{cv.playingRoleDetail || cv.playingRole || 'Professional Cricketer'}</p>
               <div className="flex flex-wrap gap-x-3 gap-y-1 text-[10px] text-slate-200 mt-2">
-                {cv.battingStyle && <span>{cv.battingStyle} Bat</span>}
-                {cv.bowlingStyle && (
-                  <>
-                    <span>•</span>
-                    <span>{cv.bowlingStyle}</span>
-                  </>
-                )}
-                {cv.height && (
-                  <>
-                    <span>•</span>
-                    <span>{cv.height} cm</span>
-                  </>
-                )}
+                {[
+                  cv.battingStyle && cv.battingStyle.toLowerCase() !== 'none' ? `${cv.battingStyle} Bat` : null,
+                  cv.bowlingStyle && cv.bowlingStyle.toLowerCase() !== 'none' ? cv.bowlingStyle : null,
+                  cv.height ? `${cv.height} cm` : null
+                ].filter(Boolean).map((text, idx, arr) => (
+                  <React.Fragment key={idx}>
+                    <span>{text}</span>
+                    {idx < arr.length - 1 && <span>•</span>}
+                  </React.Fragment>
+                ))}
               </div>
             </div>
           </div>
@@ -635,15 +632,17 @@ export function ProfessionalTemplate({ cv, accentColour, font, isPreview }: Temp
         <div className="grid md:grid-cols-3 gap-6 mb-6">
           <div className="md:col-span-2">
             {cv.aboutPlayer && (
-              <div>
+              <CVAtomicBlock id="main-section-about">
                 <h2 className="text-sm font-bold uppercase tracking-wider mb-2 border-b-2 pb-1" style={{ color: accentColour, borderColor: accentColour }}>About the Player</h2>
                 <p className="text-xs text-slate-600 leading-relaxed whitespace-pre-line">{cv.aboutPlayer}</p>
-              </div>
+              </CVAtomicBlock>
             )}
           </div>
           <div className="md:col-span-1">
-            <h2 className="text-sm font-bold uppercase tracking-wider mb-2 border-b-2 pb-1" style={{ color: accentColour, borderColor: accentColour }}>Profile Details</h2>
-            <CVExtraProfileDetails cv={cv} />
+            <CVAtomicBlock id="side-section-profile">
+              <h2 className="text-sm font-bold uppercase tracking-wider mb-2 border-b-2 pb-1" style={{ color: accentColour, borderColor: accentColour }}>Profile Details</h2>
+              <CVExtraProfileDetails cv={cv} />
+            </CVAtomicBlock>
           </div>
         </div>
 
@@ -655,7 +654,7 @@ export function ProfessionalTemplate({ cv, accentColour, font, isPreview }: Temp
 
         {/* Career Timeline */}
         {cv.careerHistory.length > 0 && (
-          <div className="mb-6">
+          <CVAtomicBlock id="main-section-history" className="mb-6">
             <h2 className="text-sm font-bold uppercase tracking-wider mb-3 border-b-2 pb-1" style={{ color: accentColour, borderColor: accentColour }}>Career History</h2>
             <div className="space-y-3">
               {cv.careerHistory.map((item, idx) => (
@@ -673,7 +672,7 @@ export function ProfessionalTemplate({ cv, accentColour, font, isPreview }: Temp
                 </div>
               ))}
             </div>
-          </div>
+          </CVAtomicBlock>
         )}
 
         {/* Highlights / Achievements */}
@@ -769,8 +768,8 @@ export function InternationalTemplate({ cv, accentColour, font, isPreview }: Tem
               {countryOfResidence && <div>Residence: <strong>{countryOfResidence}</strong></div>}
               {dateOfBirth && <div>DOB: <strong>{dateOfBirth}</strong></div>}
               {playingRole && <div>Role: <strong>{playingRole}</strong></div>}
-              {battingStyle && <div>Batting: <strong>{battingStyle}</strong></div>}
-              {bowlingStyle && <div>Bowling: <strong>{bowlingStyle}</strong></div>}
+              {battingStyle && battingStyle.toLowerCase() !== 'none' && <div>Batting: <strong>{battingStyle}</strong></div>}
+              {bowlingStyle && bowlingStyle.toLowerCase() !== 'none' && <div>Bowling: <strong>{bowlingStyle}</strong></div>}
               {cv.height && <div>Height: <strong>{cv.height} cm</strong></div>}
               {cv.languages && cv.languages.length > 0 && <div className="col-span-2">Languages: <strong>{cv.languages.join(', ')}</strong></div>}
             </div>
@@ -782,14 +781,14 @@ export function InternationalTemplate({ cv, accentColour, font, isPreview }: Tem
           {/* Main Info */}
           <div className="md:col-span-2 space-y-6">
             {aboutPlayer && (
-              <div>
+              <CVAtomicBlock id="main-section-about">
                 <h3 className="text-xs font-black uppercase tracking-wider mb-2 text-slate-950 animate-fade-in" style={{ color: accentColour }}>Professional Ambition</h3>
                 <p className="text-xs text-slate-600 leading-relaxed whitespace-pre-line">{aboutPlayer}</p>
-              </div>
+              </CVAtomicBlock>
             )}
 
             {careerHistory.length > 0 && (
-              <div>
+              <CVAtomicBlock id="main-section-history">
                 <h3 className="text-xs font-black uppercase tracking-wider mb-3 text-slate-950 border-b pb-1" style={{ color: accentColour }}>Playing Career</h3>
                 <div className="space-y-4">
                   {careerHistory.map((item, idx) => item && (
@@ -810,7 +809,7 @@ export function InternationalTemplate({ cv, accentColour, font, isPreview }: Tem
                     </div>
                   ))}
                 </div>
-              </div>
+              </CVAtomicBlock>
             )}
 
             {/* Achievements */}
@@ -832,60 +831,70 @@ export function InternationalTemplate({ cv, accentColour, font, isPreview }: Tem
           <div className="md:col-span-1 space-y-6">
             {/* Visa / Global Availability */}
             {(availability || overseasExperience || internationalExperience) && (
-              <div className="bg-slate-50 p-4 rounded-xl border border-slate-100">
-                <h3 className="text-xs font-black uppercase tracking-wider mb-2 text-slate-950">Availability</h3>
-                <div className="space-y-2 text-xs text-slate-700">
-                  {availability && <div>Availability: <strong>{availability}</strong></div>}
-                  {overseasExperience && <div>Overseas Exp: <strong>Yes</strong></div>}
-                  {internationalExperience && <div>Intl Exp: <strong>Yes</strong></div>}
+              <CVAtomicBlock id="side-section-availability">
+                <div className="bg-slate-50 p-4 rounded-xl border border-slate-100">
+                  <h3 className="text-xs font-black uppercase tracking-wider mb-2 text-slate-950">Availability</h3>
+                  <div className="space-y-2 text-xs text-slate-700">
+                    {availability && <div>Availability: <strong>{availability}</strong></div>}
+                    {overseasExperience && <div>Overseas Exp: <strong>Yes</strong></div>}
+                    {internationalExperience && <div>Intl Exp: <strong>Yes</strong></div>}
+                  </div>
                 </div>
-              </div>
+              </CVAtomicBlock>
             )}
 
             {/* Specialist Cricket Skills */}
             {cv.specialistSkills && cv.specialistSkills.length > 0 && (
-              <div className="bg-slate-50 p-4 rounded-xl border border-slate-100 text-left">
-                <h3 className="text-xs font-black uppercase tracking-wider mb-2 text-slate-950">Specialist Cricket Skills</h3>
-                <div className="flex flex-wrap gap-1.5">
-                  {cv.specialistSkills.map((skill) => (
-                    <span key={skill} className="text-[10px] bg-slate-200 text-slate-700 px-2 py-0.75 rounded-md font-semibold border border-slate-300">
-                      {skill}
-                    </span>
-                  ))}
+              <CVAtomicBlock id="side-section-skills">
+                <div className="bg-slate-50 p-4 rounded-xl border border-slate-100 text-left">
+                  <h3 className="text-xs font-black uppercase tracking-wider mb-2 text-slate-950">Specialist Cricket Skills</h3>
+                  <div className="flex flex-wrap gap-1.5">
+                    {cv.specialistSkills.map((skill) => (
+                      <span key={skill} className="text-[10px] bg-slate-200 text-slate-700 px-2 py-0.75 rounded-md font-semibold border border-slate-300">
+                        {skill}
+                      </span>
+                    ))}
+                  </div>
                 </div>
-              </div>
+              </CVAtomicBlock>
             )}
 
             {/* Education & Certs */}
-            <div className="bg-slate-50 p-4 rounded-xl border border-slate-100">
-              <h3 className="text-xs font-black uppercase tracking-wider mb-2 text-slate-950">Education & Certifications</h3>
-              <CVEducationBlock cv={cv} />
-            </div>
+            <CVAtomicBlock id="side-section-education">
+              <div className="bg-slate-50 p-4 rounded-xl border border-slate-100">
+                <h3 className="text-xs font-black uppercase tracking-wider mb-2 text-slate-950">Education & Certifications</h3>
+                <CVEducationBlock cv={cv} />
+              </div>
+            </CVAtomicBlock>
 
             {/* Fitness & Conditioning */}
             {cv.fitnessActivities && cv.fitnessActivities.length > 0 && (
-              <div className="bg-slate-50 p-4 rounded-xl border border-slate-100 text-left">
-                <h3 className="text-xs font-black uppercase tracking-wider mb-2 text-slate-950">Fitness & Conditioning</h3>
-                <div className="flex flex-wrap gap-1.5">
-                  {cv.fitnessActivities.map((act) => (
-                    <span key={act} className="text-[10px] bg-slate-200 text-slate-700 px-2 py-0.75 rounded-md font-semibold border border-slate-300">
-                      {act}
-                    </span>
-                  ))}
+              <CVAtomicBlock id="side-section-fitness">
+                <div className="bg-slate-50 p-4 rounded-xl border border-slate-100 text-left">
+                  <h3 className="text-xs font-black uppercase tracking-wider mb-2 text-slate-950">Fitness & Conditioning</h3>
+                  <div className="flex flex-wrap gap-1.5">
+                    {cv.fitnessActivities.map((act) => (
+                      <span key={act} className="text-[10px] bg-slate-200 text-slate-700 px-2 py-0.75 rounded-md font-semibold border border-slate-300">
+                        {act}
+                      </span>
+                    ))}
+                  </div>
                 </div>
-              </div>
+              </CVAtomicBlock>
             )}
 
             {/* Contact details */}
-            <div className="bg-slate-50 p-4 rounded-xl border border-slate-100">
-              <h3 className="text-xs font-black uppercase tracking-wider mb-2 text-slate-950">Contact Info</h3>
-              <div className="space-y-1 text-xs text-slate-700">
-                <div className="no-capitalize">Email: <strong>{email}</strong></div>
-                {phone && <div className="no-capitalize">Phone: <strong>{phone}</strong></div>}
-                {personalWebsite && <div className="truncate no-capitalize">Web: <strong>{personalWebsite}</strong></div>}
-                <CVAdditionalContact cv={cv} align="left" />
+            <CVAtomicBlock id="side-section-contact">
+              <div className="bg-slate-50 p-4 rounded-xl border border-slate-100">
+                <h3 className="text-xs font-black uppercase tracking-wider mb-2 text-slate-950">Contact Info</h3>
+                <div className="space-y-1 text-xs text-slate-700">
+                  <div className="no-capitalize">Email: <strong>{email}</strong></div>
+                  {phone && <div className="no-capitalize">Phone: <strong>{phone}</strong></div>}
+                  {personalWebsite && <div className="truncate no-capitalize">Web: <strong>{personalWebsite}</strong></div>}
+                  <CVAdditionalContact cv={cv} align="left" />
+                </div>
               </div>
-            </div>
+            </CVAtomicBlock>
           </div>
         </div>
       </div>
@@ -934,10 +943,10 @@ export function ClassicTemplate({ cv, accentColour, font, isPreview }: TemplateP
         {/* Content columns */}
         <div className="space-y-6">
           {cv.aboutPlayer && (
-            <div>
+            <CVAtomicBlock id="main-section-about">
               <h3 className="text-xs font-bold uppercase tracking-wider text-slate-900 border-b pb-1 mb-2">Profile</h3>
               <p className="text-xs text-slate-600 leading-relaxed whitespace-pre-line">{cv.aboutPlayer}</p>
-            </div>
+            </CVAtomicBlock>
           )}
 
           {/* Details Table style */}
@@ -954,7 +963,7 @@ export function ClassicTemplate({ cv, accentColour, font, isPreview }: TemplateP
 
           {/* Career Table */}
           {cv.careerHistory.length > 0 && (
-            <div>
+            <CVAtomicBlock id="main-section-history">
               <h3 className="text-xs font-bold uppercase tracking-wider text-slate-900 border-b pb-1 mb-3">Playing Experience</h3>
               <div className="space-y-4">
                 {cv.careerHistory.map((item, idx) => (
@@ -972,7 +981,7 @@ export function ClassicTemplate({ cv, accentColour, font, isPreview }: TemplateP
                   </div>
                 ))}
               </div>
-            </div>
+            </CVAtomicBlock>
           )}
 
           {/* Highlights */}
@@ -1020,28 +1029,30 @@ export function PerformanceTemplate({ cv, accentColour, font, isPreview }: Templ
 
       <div>
         {/* Left Bar Identity Block */}
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-stretch gap-6 pb-6 border-b mb-6 animate-fade-in">
-          <div className="flex items-center gap-4">
-            <PlayerPhoto photo={cv.profilePhoto} name={`${cv.firstName} ${cv.lastName}`} />
-            <div>
-              <h1 className="text-3xl font-black text-slate-950 uppercase tracking-tight">{cv.firstName} {cv.lastName}</h1>
-              <div className="inline-block px-2.5 py-1 text-xs font-bold text-white uppercase tracking-wider rounded mt-1.5" style={{ backgroundColor: accentColour }}>
-                {cv.playingRoleDetail || cv.playingRole || 'Cricket Athlete'}
-              </div>
-              <div className="mt-3 text-xs text-slate-600 space-y-1 text-left">
-                <div className="no-capitalize">Email: {cv.email}</div>
-                {cv.phone && <div className="no-capitalize">Phone: {cv.phone}</div>}
-                <div>Location: {cv.currentCity || ''}, {cv.countryOfResidence}</div>
-                {cv.personalWebsite && <div className="no-capitalize">Web: {cv.personalWebsite}</div>}
-                <CVAdditionalContact cv={cv} align="left" />
+        <CVAtomicBlock id="main-header">
+          <div className="flex flex-col md:flex-row justify-between items-start md:items-stretch gap-6 pb-6 border-b mb-6 animate-fade-in">
+            <div className="flex items-center gap-4">
+              <PlayerPhoto photo={cv.profilePhoto} name={`${cv.firstName} ${cv.lastName}`} />
+              <div>
+                <h1 className="text-3xl font-black text-slate-950 uppercase tracking-tight">{cv.firstName} {cv.lastName}</h1>
+                <div className="inline-block px-2.5 py-1 text-xs font-bold text-white uppercase tracking-wider rounded mt-1.5" style={{ backgroundColor: accentColour }}>
+                  {cv.playingRoleDetail || cv.playingRole || 'Cricket Athlete'}
+                </div>
+                <div className="mt-3 text-xs text-slate-600 space-y-1 text-left">
+                  <div className="no-capitalize">Email: {cv.email}</div>
+                  {cv.phone && <div className="no-capitalize">Phone: {cv.phone}</div>}
+                  <div>Location: {cv.currentCity || ''}, {cv.countryOfResidence}</div>
+                  {cv.personalWebsite && <div className="no-capitalize">Web: {cv.personalWebsite}</div>}
+                  <CVAdditionalContact cv={cv} align="left" />
+                </div>
               </div>
             </div>
+            
+            <div className="grid grid-cols-2 gap-4 text-xs text-slate-700 bg-slate-50 p-4 rounded-xl border border-slate-100 md:w-80 shrink-0">
+              <CVExtraProfileDetails cv={cv} />
+            </div>
           </div>
-          
-          <div className="grid grid-cols-2 gap-4 text-xs text-slate-700 bg-slate-50 p-4 rounded-xl border border-slate-100 md:w-80 shrink-0">
-            <CVExtraProfileDetails cv={cv} />
-          </div>
-        </div>
+        </CVAtomicBlock>
 
         {/* Stats High-Impact Block */}
         <CVFormatStatisticsBlock cv={cv} accentColour={accentColour} />
@@ -1051,15 +1062,17 @@ export function PerformanceTemplate({ cv, accentColour, font, isPreview }: Templ
 
         {/* Profile/About */}
         {cv.aboutPlayer && (
-          <div className="mb-6">
-            <h2 className="text-xs font-bold uppercase tracking-widest text-slate-900 mb-2">About The Athlete</h2>
-            <p className="text-xs text-slate-650 leading-relaxed whitespace-pre-line bg-slate-50/30 p-3 rounded-lg border border-slate-100">{cv.aboutPlayer}</p>
-          </div>
+          <CVAtomicBlock id="main-section-about">
+            <div className="mb-6">
+              <h2 className="text-xs font-bold uppercase tracking-widest text-slate-900 mb-2">About The Athlete</h2>
+              <p className="text-xs text-slate-655 leading-relaxed whitespace-pre-line bg-slate-50/30 p-3 rounded-lg border border-slate-100">{cv.aboutPlayer}</p>
+            </div>
+          </CVAtomicBlock>
         )}
 
         {/* Playing Career */}
         {cv.careerHistory.length > 0 && (
-          <div className="mb-6">
+          <CVAtomicBlock id="main-section-history" className="mb-6">
             <h2 className="text-xs font-bold uppercase tracking-widest text-slate-900 mb-3">Performance Log</h2>
             <div className="space-y-3">
               {cv.careerHistory.map((item, idx) => (
@@ -1077,7 +1090,7 @@ export function PerformanceTemplate({ cv, accentColour, font, isPreview }: Templ
                 </div>
               ))}
             </div>
-          </div>
+          </CVAtomicBlock>
         )}
 
         {/* Highlights */}
@@ -1651,10 +1664,10 @@ export function PrestigeTemplate({ cv, accentColour, font, isPreview }: Template
             {renderPlayerRoles()}
             <div className="meta-row">
               {cv.dateOfBirth && <span><span className="ico">&#128197;</span>Age: {calculateAge(cv.dateOfBirth)}</span>}
-              {cv.battingStyle && !cv.playingRoleDetail?.toLowerCase().replace(/-/g, ' ').includes(cv.battingStyle.toLowerCase().replace(/-/g, ' ').replace('handed', '').replace('handed', '').trim()) && (
+              {cv.battingStyle && cv.battingStyle.toLowerCase() !== 'none' && !cv.playingRoleDetail?.toLowerCase().replace(/-/g, ' ').includes(cv.battingStyle.toLowerCase().replace(/-/g, ' ').replace('handed', '').replace('handed', '').trim()) && (
                 <span><span className="ico">&#127951;</span>{cv.battingStyle} Bat</span>
               )}
-              {cv.bowlingStyle && !cv.playingRoleDetail?.toLowerCase().replace(/-/g, ' ').includes(cv.bowlingStyle.toLowerCase().replace(/-/g, ' ').trim()) && (
+              {cv.bowlingStyle && cv.bowlingStyle.toLowerCase() !== 'none' && !cv.playingRoleDetail?.toLowerCase().replace(/-/g, ' ').includes(cv.bowlingStyle.toLowerCase().replace(/-/g, ' ').trim()) && (
                 <span><span className="ico">&#127951;</span>{cv.bowlingStyle}</span>
               )}
             </div>
