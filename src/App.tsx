@@ -3297,7 +3297,7 @@ END:VCALENDAR`;
               <div className="text-slate-700 text-sm font-semibold">
                 Your Cricket CV Profile Link Has Been Sent To You Please Check Your Inbox or Spam Folder
               </div>
-              <div className="text-red-600 font-bold text-lg p-3 bg-slate-50 border border-slate-200 rounded-xl normal-case">
+              <div className="text-red-600 font-bold text-lg p-3 bg-slate-50 border border-slate-200 rounded-xl no-capitalize">
                 {cvForm.email}
               </div>
               <button
@@ -3359,7 +3359,7 @@ END:VCALENDAR`;
                   </div>
                   <div className="grid grid-cols-2 py-1.5">
                     <span className="font-semibold text-slate-400">Email Address</span>
-                    <span className="font-bold text-slate-900 normal-case">{cvForm.email}</span>
+                    <span className="font-bold text-slate-900 no-capitalize">{cvForm.email}</span>
                   </div>
                 </div>
 
@@ -3523,7 +3523,7 @@ END:VCALENDAR`;
                       value={cvForm.email}
                       onChange={(e) => setCvForm({ ...cvForm, email: e.target.value })}
                       placeholder="name@example.com"
-                      className="w-full text-xs p-3 border-2 border-black rounded-xl focus:outline-none focus:border-[#D4AF37] bg-white text-slate-800 font-semibold font-sans normal-case"
+                      className="w-full text-xs p-3 border-2 border-black rounded-xl focus:outline-none focus:border-[#D4AF37] bg-white text-slate-800 font-semibold font-sans no-capitalize"
                     />
                   </div>
                 </div>
@@ -3537,7 +3537,7 @@ END:VCALENDAR`;
                     value={cvForm.password || ''}
                     onChange={(e) => setCvForm({ ...cvForm, password: e.target.value })}
                     placeholder="Min 8 characters for account login"
-                    className="w-full text-xs p-3 border-2 border-black rounded-xl focus:outline-none focus:border-[#D4AF37] bg-white text-slate-800 font-semibold font-sans normal-case"
+                    className="w-full text-xs p-3 border-2 border-black rounded-xl focus:outline-none focus:border-[#D4AF37] bg-white text-slate-800 font-semibold font-sans no-capitalize"
                   />
                   {cvForm.password && (
                     <div className="space-y-1.5 mt-2 bg-slate-50 p-2.5 rounded-xl border border-slate-200">
@@ -3567,12 +3567,12 @@ END:VCALENDAR`;
                     value={confirmPassword}
                     onChange={(e) => setConfirmPassword(e.target.value)}
                     placeholder="Re-enter account password"
-                    className="w-full text-xs p-3 border-2 border-black rounded-xl focus:outline-none focus:border-[#D4AF37] bg-white text-slate-800 font-semibold font-sans normal-case"
+                    className="w-full text-xs p-3 border-2 border-black rounded-xl focus:outline-none focus:border-[#D4AF37] bg-white text-slate-800 font-semibold font-sans no-capitalize"
                   />
                 </div>
 
                 {/* Show Password Toggle */}
-                <div className="flex items-center gap-2 mt-1.5 normal-case">
+                <div className="flex items-center gap-2 mt-1.5 no-capitalize">
                   <input 
                     type="checkbox"
                     id="show-signup-password"
@@ -3683,7 +3683,7 @@ END:VCALENDAR`;
                       value={loginPassword}
                       onChange={(e) => setLoginPassword(e.target.value)}
                       placeholder="••••••••"
-                      className={`w-full text-xs p-3 pr-10 border-2 border-black rounded-xl focus:outline-none focus:border-[#D4AF37] bg-white text-slate-800 font-semibold font-sans normal-case ${showLoginPassword ? '' : 'font-mono'}`}
+                      className={`w-full text-xs p-3 pr-10 border-2 border-black rounded-xl focus:outline-none focus:border-[#D4AF37] bg-white text-slate-800 font-semibold font-sans no-capitalize ${showLoginPassword ? '' : 'font-mono'}`}
                     />
                     <button
                       type="button"
@@ -5392,7 +5392,7 @@ END:VCALENDAR`;
                     <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden animate-fade-in">
                       <div className="bg-[#0B1A30] text-[#D4AF37] px-6 py-4 rounded-t-xl font-bold font-display uppercase text-xs tracking-wider border-b border-gold-500/20 flex items-center justify-between">
                         <span>Section 1: Personal Details & Contact</span>
-                        <span className="text-[10px] text-gold-300/80 normal-case font-semibold font-sans">Fields 1–6</span>
+                        <span className="text-[10px] text-gold-300/80 no-capitalize font-semibold font-sans">Fields 1–6</span>
                       </div>
                       <div className="p-6 space-y-6">
                         {/* Q1 First Name */}
@@ -5508,7 +5508,7 @@ END:VCALENDAR`;
                     <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden animate-fade-in">
                       <div className="bg-[#0B1A30] text-[#D4AF37] px-6 py-4 rounded-t-xl font-bold font-display uppercase text-xs tracking-wider border-b border-gold-500/20 flex items-center justify-between">
                         <span>Section 2: Cricket Credentials & Play History</span>
-                        <span className="text-[10px] text-gold-300/80 normal-case font-semibold font-sans">Fields 7–13</span>
+                        <span className="text-[10px] text-gold-300/80 no-capitalize font-semibold font-sans">Fields 7–13</span>
                       </div>
                       <div className="p-6 space-y-6">
                         
@@ -5652,7 +5652,7 @@ END:VCALENDAR`;
                     <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden animate-fade-in">
                       <div className="bg-[#0B1A30] text-[#D4AF37] px-6 py-4 rounded-t-xl font-bold font-display uppercase text-xs tracking-wider border-b border-gold-500/20 flex items-center justify-between">
                         <span>Section 3: Background Declarations</span>
-                        <span className="text-[10px] text-gold-300/80 normal-case font-semibold font-sans">Fields 14–16</span>
+                        <span className="text-[10px] text-gold-300/80 no-capitalize font-semibold font-sans">Fields 14–16</span>
                       </div>
                       <div className="p-6 space-y-6">
                         
@@ -6914,7 +6914,7 @@ END:VCALENDAR`;
                         required
                         value={adminPassword}
                         onChange={(e) => setAdminPassword(e.target.value)}
-                        className="w-full px-4 py-2.5 bg-slate-50 border border-slate-250 rounded text-sm focus:outline-none focus:border-navy-500 normal-case"
+                        className="w-full px-4 py-2.5 bg-slate-50 border border-slate-250 rounded text-sm focus:outline-none focus:border-navy-500 no-capitalize"
                         placeholder="••••••••"
                       />
                     </div>
