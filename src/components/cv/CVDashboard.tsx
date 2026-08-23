@@ -380,7 +380,7 @@ export default function CVDashboard({
     ? previewCv
     : {
         ...DEMO_CV_DATA,
-        templateId: previewCv.templateId || 'executive',
+        templateId: previewCv.templateId || 'prestige',
         font: previewCv.font || 'Inter',
         accentColour: previewCv.accentColour || '#0B1A30'
       };

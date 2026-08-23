@@ -299,7 +299,7 @@ export const initialCVForm = (userId: string = '', email: string = '', firstName
   userId,
   playerProfileId: '',
   referenceNumber: '',
-  templateId: 'executive',
+  templateId: 'prestige',
   font: 'Inter',
   accentColour: '#0B1A30', // Default Navy
   status: 'draft',
@@ -383,7 +383,7 @@ export const DEMO_CV_DATA: CricketCVFull = {
   userId: 'demo-user-id',
   playerProfileId: 'TCA-PP-2026-999999',
   referenceNumber: 'TCA-CV-2026-DEMO99',
-  templateId: 'executive',
+  templateId: 'prestige',
   font: 'Inter',
   accentColour: '#0B1A30',
   status: 'complete',

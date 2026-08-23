@@ -914,9 +914,9 @@ export default function CVBuilderForm({
               </div>
             </div>
 
-            <div className="bg-slate-950/80 p-3 rounded-lg border border-slate-850 flex items-start gap-2 text-[10px]" style={{ color: '#000000' }}>
-              <AlertCircle className="w-4 h-4 text-black flex-shrink-0 mt-0.5" style={{ color: '#000000' }} />
-              <span style={{ color: '#000000', fontWeight: 'bold' }}>Identity details (Name, Age, Nationality, State/Province) are verified and locked. To correct mistakes, request a change from the admin console.</span>
+            <div className="bg-slate-950/80 p-3 rounded-lg border border-slate-850 flex items-start gap-2 text-[10px]">
+              <AlertCircle className="w-4 h-4 text-amber-500 flex-shrink-0 mt-0.5" />
+              <span className="text-white font-bold">Identity details (Name, Age, Nationality, State/Province) are verified and locked. To correct mistakes, request a change from the admin console.</span>
             </div>
 
             <div>

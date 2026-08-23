@@ -19,7 +19,7 @@ const demoCV: CricketCVFull = {
   userId: "demo_user",
   playerProfileId: "TCA-PP-2026-000001",
   referenceNumber: "TCA-CV-2026-DEMO",
-  templateId: "executive",
+  templateId: "prestige",
   font: "Inter",
   accentColour: "#0B1A30",
   status: "draft",

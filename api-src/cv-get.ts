@@ -115,7 +115,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         id: `cv_${Date.now()}`,
         userId: decoded.userId,
         referenceNumber: `TCA-CV-${new Date().getFullYear()}-${Math.floor(100000 + Math.random() * 900000)}`,
-        templateId: 'executive',
+        templateId: 'prestige',
         font: 'Inter',
         accentColour: '#0B1A30',
         paymentStatus: 'Pending',
