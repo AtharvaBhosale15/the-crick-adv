@@ -53,6 +53,23 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     let dbCv: any = null;
 
     if (hasPostgres()) {
+      await sql`
+        CREATE TABLE IF NOT EXISTS cvs (
+          id VARCHAR(50) PRIMARY KEY,
+          user_id VARCHAR(50) NOT NULL,
+          reference_number VARCHAR(100) NOT NULL,
+          first_name VARCHAR(255) NOT NULL,
+          last_name VARCHAR(255) NOT NULL,
+          email VARCHAR(255) NOT NULL,
+          payment_status VARCHAR(50) NOT NULL,
+          download_status VARCHAR(50) NOT NULL,
+          edits_used INTEGER DEFAULT 0,
+          edits_allowed INTEGER DEFAULT 5,
+          identity_locked BOOLEAN DEFAULT FALSE,
+          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+          cv_data TEXT NOT NULL
+        );
+      `;
       const q = await sql`SELECT * FROM cvs WHERE user_id = ${decoded.userId} LIMIT 1`;
       if (q.rows.length > 0) {
         dbCv = q.rows[0];

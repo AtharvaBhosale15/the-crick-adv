@@ -730,7 +730,7 @@ app.post('/api/email-cv', async (req, res) => {
 
 // --- PREMIUM CRICKET CV BUILDER EXTENSION ENDPOINTS ---
 
-import { generateSalt, hashPassword, signToken, verifyToken } from './api/utils/cv-auth.js';
+import { generateSalt, hashPassword, signToken, verifyToken } from './api-src/utils/cv-auth.js';
 
 const LOCAL_USERS_PATH = path.join(process.cwd(), 'cv-users-db.json');
 
