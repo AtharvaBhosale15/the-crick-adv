@@ -683,7 +683,7 @@ export default function App() {
   const [cvView, setCvView] = useState<'landing' | 'onboarding' | 'login' | 'form' | 'styling' | 'preview' | 'success' | 'final-cv' | 'dashboard'>('landing');
   const [cvStep, setCvStep] = useState<number>(1);
   const [cvForm, setCvForm] = useState<CricketCVFull>(() => initialCVFormFull('', '', '', ''));
-  const [age, setAge] = useState<number | ''>('');
+  const [age, setAge] = useState<string>('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmView, setShowConfirmView] = useState(false);
@@ -3323,7 +3323,7 @@ END:VCALENDAR`;
                   </div>
                   <div className="grid grid-cols-2 py-1.5 border-b border-slate-200/60">
                     <span className="font-semibold text-slate-400">Age</span>
-                    <span className="font-bold text-slate-900">{age} Years</span>
+                    <span className="font-bold text-slate-900">{age.toLowerCase().includes('year') ? age : `${age} Years`}</span>
                   </div>
                   <div className="grid grid-cols-2 py-1.5 border-b border-slate-200/60">
                     <span className="font-semibold text-slate-400">State / Province</span>
@@ -3443,28 +3443,18 @@ END:VCALENDAR`;
                   </div>
                   <div className="space-y-1.5">
                     <label className="block text-xs font-bold text-slate-700 uppercase font-sans">Age *</label>
-                    <select 
+                    <input 
+                      type="text" 
                       required
                       value={age}
                       onChange={(e) => {
                         const val = e.target.value;
-                        if (val) {
-                          const ageVal = parseInt(val, 10);
-                          setAge(ageVal);
-                          const birthYear = new Date().getFullYear() - ageVal;
-                          setCvForm({ ...cvForm, dateOfBirth: `${birthYear}-01-01` });
-                        } else {
-                          setAge('');
-                          setCvForm({ ...cvForm, dateOfBirth: '' });
-                        }
+                        setAge(val);
+                        setCvForm({ ...cvForm, dateOfBirth: val });
                       }}
+                      placeholder="e.g. 25"
                       className="w-full text-xs p-3 border border-slate-300 rounded-xl focus:outline-none focus:border-[#D4AF37] bg-white text-slate-800 font-semibold font-sans"
-                    >
-                      <option value="">Select Age</option>
-                      {Array.from({ length: 28 }, (_, i) => 18 + i).map(ageVal => (
-                        <option key={ageVal} value={ageVal}>{ageVal}</option>
-                      ))}
-                    </select>
+                    />
                   </div>
                 </div>
 

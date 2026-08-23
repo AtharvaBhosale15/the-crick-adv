@@ -73,6 +73,30 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       });
     }
 
+    // Fix atharvabhosale007@gmail.com legacy record if columns are NULL
+    if (hasPostgres() && sanitizedEmail === 'atharvabhosale007@gmail.com') {
+      try {
+        await sql`
+          UPDATE cv_users 
+          SET 
+            first_name = COALESCE(first_name, 'atharva'), 
+            last_name = COALESCE(last_name, 'bhosale'), 
+            country = 'India', 
+            state_province = 'maharashtra', 
+            mobile_number = '9321885233', 
+            nationality = 'India', 
+            date_of_birth = '28'
+          WHERE email = ${sanitizedEmail} AND (country IS NULL OR country = '');
+        `;
+        const refetch = await sql`SELECT * FROM cv_users WHERE email = ${sanitizedEmail} LIMIT 1`;
+        if (refetch.rows.length > 0) {
+          dbUser = refetch.rows[0];
+        }
+      } catch (updateErr) {
+        console.error("Error patching legacy user:", updateErr);
+      }
+    }
+
     // Generate JWT Token
     const jwtSecret = process.env.CV_JWT_SECRET || 'tca_cv_default_jwt_secret_key_2026';
     const payload = {

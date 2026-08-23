@@ -101,8 +101,11 @@ const HOBBIES_OPTIONS = [
 
 const calculateAge = (dobString?: string) => {
   if (!dobString) return '-';
+  if (/^\d+$/.test(dobString.trim()) || dobString.toLowerCase().includes('year')) {
+    return dobString.trim();
+  }
   const year = parseInt(dobString.split('-')[0], 10);
-  if (isNaN(year)) return '-';
+  if (isNaN(year)) return dobString;
   return new Date().getFullYear() - year;
 };
 

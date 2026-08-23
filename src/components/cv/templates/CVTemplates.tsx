@@ -1131,8 +1131,11 @@ export function PrestigeTemplate({ cv, accentColour, font, isPreview }: Template
 
   const calculateAge = (dobString?: string) => {
     if (!dobString) return '';
+    if (/^\d+$/.test(dobString.trim()) || dobString.toLowerCase().includes('year')) {
+      return dobString.trim();
+    }
     const birthDate = new Date(dobString);
-    if (isNaN(birthDate.getTime())) return '';
+    if (isNaN(birthDate.getTime())) return dobString;
     const today = new Date();
     let age = today.getFullYear() - birthDate.getFullYear();
     const m = today.getMonth() - birthDate.getMonth();

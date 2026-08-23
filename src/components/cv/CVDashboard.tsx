@@ -51,9 +51,12 @@ export default function CVDashboard({
 
   const calculateAge = (dobString?: string) => {
     if (!dobString) return '-';
+    if (/^\d+$/.test(dobString.trim()) || dobString.toLowerCase().includes('year')) {
+      return dobString.trim();
+    }
     const year = parseInt(dobString.split('-')[0], 10);
-    if (isNaN(year)) return '-';
-    return new Date().getFullYear() - year;
+    if (isNaN(year)) return dobString;
+    return (new Date().getFullYear() - year).toString();
   };
   const [showTokenConfirmModal, setShowTokenConfirmModal] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
