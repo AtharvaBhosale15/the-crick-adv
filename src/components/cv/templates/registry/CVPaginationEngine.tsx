@@ -226,21 +226,23 @@ export const CVPaginatedRenderer = ({
   );
 
   if (!pages) {
-    // While pages are computing, render inside a properly-sized container so
-    // templates that use height:100% (e.g. Prestige) resolve correctly for
-    // the measurement pass.
+    // While pages are computing, render inside a container that lets all blocks
+    // flow at their natural heights so the measurement sandbox can read correct
+    // offsetHeights for every block — including achievements deep in the main column.
+    // Using visibility:hidden + overflow:visible prevents layout thrashing while
+    // keeping the Prestige sidebar from clamping the main content column.
     return (
       <div
         ref={sandboxRef}
         style={{
           width: `${templateConfig.width}px`,
-          height: `${templateConfig.height}px`,
-          overflow: 'hidden',
+          minHeight: `${templateConfig.height}px`,
+          overflow: 'visible',
           position: 'relative',
+          visibility: 'hidden',
         }}
         className={`bg-white template-${cv.templateId}`}
       >
-        {isPreview && <Watermark />}
         <PageContext.Provider value={{ allowedIds: null, isPreview }}>
           <TemplateComponent cv={cv} accentColour={accentColour} font={font} isPreview={isPreview} />
         </PageContext.Provider>
