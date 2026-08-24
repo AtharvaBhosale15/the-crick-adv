@@ -610,7 +610,7 @@ export default function CVDashboard({
           </div>
 
           {/* Live Preview Container (col-span-7) */}
-          <div className="lg:col-span-7 h-[820px] rounded-xl overflow-hidden shadow-xl border border-slate-200">
+          <div className="lg:col-span-7 h-[500px] lg:h-[820px] rounded-xl overflow-hidden shadow-xl border border-slate-200">
             <CVLivePreview cv={previewCVData} isPreview={true} />
           </div>
 

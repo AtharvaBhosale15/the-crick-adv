@@ -72,7 +72,7 @@ const CVExtraProfileDetails = ({ cv }: { cv: CricketCVFull }) => {
   const showLanguages = cv.languages && cv.languages.length > 0;
   return (
     <div className="space-y-1.5 text-xs text-slate-700">
-      {cv.nationality && <div><strong>Nationality:</strong> {cv.nationality}</div>}
+      {cv.nationality && <div><strong>Country:</strong> {cv.nationality}</div>}
       {cv.dateOfBirth && <div><strong>DOB:</strong> {cv.dateOfBirth}</div>}
       {cv.height && <div><strong>Height:</strong> {String(cv.height).includes("'") ? cv.height : `${cv.height} cm`}</div>}
       {cv.playingRole && <div><strong>Role:</strong> {cv.playingRoleDetail || cv.playingRole}</div>}
@@ -760,7 +760,7 @@ export function InternationalTemplate({ cv, accentColour, font, isPreview }: Tem
             <h1 className="text-3xl font-black text-slate-950">{firstName} {lastName}</h1>
             <p className="text-sm font-bold text-slate-500 uppercase tracking-widest mt-1">International Placement Profile</p>
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-y-2 gap-x-4 text-xs text-slate-700 mt-4 bg-slate-50 p-3 rounded-lg border border-slate-100">
-              {nationality && <div>Nationality: <strong>{nationality}</strong></div>}
+              {nationality && <div>Country: <strong>{nationality}</strong></div>}
               {countryOfResidence && <div>Residence: <strong>{countryOfResidence}</strong></div>}
               {dateOfBirth && <div>DOB: <strong>{dateOfBirth}</strong></div>}
               {playingRole && <div>Role: <strong>{playingRole}</strong></div>}
@@ -1691,7 +1691,7 @@ export function PrestigeTemplate({ cv, accentColour, font, isPreview }: Template
                 )}
                 {cv.nationality && (
                   <>
-                    <dt>Nationality</dt>
+                    <dt>Country</dt>
                     <dd>{cv.nationality}</dd>
                   </>
                 )}

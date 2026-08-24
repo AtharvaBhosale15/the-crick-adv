@@ -718,6 +718,7 @@ export default function App() {
   const [forgotPasswordToken, setForgotPasswordToken] = useState<string | null>(null);
   const [verificationToken, setVerificationToken] = useState<string | null>(null);
   const [isSavingCv, setIsSavingCv] = useState(false);
+  const [isTransitioning, setIsTransitioning] = useState(false);
   const [showForgotPasswordModal, setShowForgotPasswordModal] = useState(false);
   const [showLoginPassword, setShowLoginPassword] = useState(false);
 
@@ -3201,7 +3202,8 @@ END:VCALENDAR`;
         "Canada": ["Ontario", "Quebec", "British Columbia", "Alberta", "Manitoba", "Saskatchewan", "Nova Scotia", "New Brunswick", "Newfoundland and Labrador", "Prince Edward Island", "Northwest Territories", "Yukon", "Nunavut"],
         "United States of America": ["California", "Texas", "Florida", "New York", "Pennsylvania", "Illinois", "Ohio", "Georgia", "North Carolina", "Washington", "Massachusetts", "Virginia", "New Jersey", "Michigan", "Colorado", "Arizona", "Maryland", "Indiana", "Tennessee", "Missouri", "Wisconsin", "Minnesota", "Kentucky", "Oregon", "Alabama", "Louisiana", "South Carolina", "Oklahoma", "Connecticut", "Iowa", "Utah", "Nevada", "Arkansas", "Mississippi", "Kansas", "New Mexico", "Nebraska", "Idaho", "West Virginia", "Hawaii", "New Hampshire", "Maine", "Montana", "Rhode Island", "Delaware", "South Dakota", "North Dakota", "Alaska", "Vermont", "Wyoming", "Washington D.C.", "Puerto Rico", "Guam", "U.S. Virgin Islands", "American Samoa", "Northern Mariana Islands"],
         "Oman": ["Muscat", "Dhofar", "Ad Dakhiliyah", "Al Batinah North", "Al Batinah South", "Ash Sharqiyah North", "Ash Sharqiyah South", "Ad Dhahirah", "Al Buraimi", "Musandam", "Al Wusta"],
-        "Zimbabwe": ["Harare", "Bulawayo", "Mashonaland Central", "Mashonaland East", "Mashonaland West", "Matabeleland North", "Matabeleland South", "Midlands", "Manicaland", "Masvingo"]
+        "Zimbabwe": ["Harare", "Bulawayo", "Mashonaland Central", "Mashonaland East", "Mashonaland West", "Matabeleland North", "Matabeleland South", "Midlands", "Manicaland", "Masvingo"],
+        "United Kingdom": ["England", "Scotland", "Wales", "Northern Ireland"]
       };
 
       const COUNTRY_CODES: Record<string, string> = {
@@ -3212,6 +3214,7 @@ END:VCALENDAR`;
         "South Africa": "+27",
         "Canada": "+1",
         "United States of America": "+1",
+        "United Kingdom": "+44",
         "Oman": "+968",
         "Zimbabwe": "+263"
       };
@@ -3342,7 +3345,7 @@ END:VCALENDAR`;
                     <span className="font-bold text-slate-900">{cvForm.lastName}</span>
                   </div>
                   <div className="grid grid-cols-2 py-1.5 border-b border-slate-200/60">
-                    <span className="font-semibold text-slate-400">Nationality</span>
+                    <span className="font-semibold text-slate-400">Country</span>
                     <span className="font-bold text-slate-900">{cvForm.nationality}</span>
                   </div>
                   <div className="grid grid-cols-2 py-1.5 border-b border-slate-200/60">
@@ -3428,10 +3431,10 @@ END:VCALENDAR`;
                   </div>
                 </div>
 
-                {/* Nationality & Age */}
+                {/* Country & Age */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="space-y-1.5">
-                    <label className="block text-xs font-bold text-slate-700 uppercase">Nationality <span className="text-red-600">*</span></label>
+                    <label className="block text-xs font-bold text-slate-700 uppercase">Country <span className="text-red-600">*</span></label>
                     <select 
                       required
                       value={cvForm.nationality}
@@ -3446,7 +3449,7 @@ END:VCALENDAR`;
                       }}
                       className="w-full text-xs p-3 border-2 border-black rounded-xl focus:outline-none focus:border-[#D4AF37] bg-white text-slate-800 font-semibold font-sans"
                     >
-                      <option value="">Select Nationality</option>
+                      <option value="">Select Country</option>
                       <option value="India">India</option>
                       <option value="Sri Lanka">Sri Lanka</option>
                       <option value="New Zealand">New Zealand</option>
@@ -3454,6 +3457,7 @@ END:VCALENDAR`;
                       <option value="South Africa">South Africa</option>
                       <option value="Canada">Canada</option>
                       <option value="United States of America">United States of America</option>
+                      <option value="United Kingdom">United Kingdom</option>
                       <option value="Oman">Oman</option>
                       <option value="Zimbabwe">Zimbabwe</option>
                     </select>
@@ -4001,8 +4005,13 @@ END:VCALENDAR`;
               onChange={(updated) => setCvForm(updated)}
               onSaveDraft={async () => { await handleSaveCvDraft(cvForm, true); }} // isStyleUpdate=true: no token cost inside form
               onNext={async () => {
-                await handleSaveCvDraft(cvForm, true); // Save content, no token cost
-                setCvView('styling');
+                setIsTransitioning(true);
+                try {
+                  await handleSaveCvDraft(cvForm, true); // Save content, no token cost
+                  setCvView('styling');
+                } finally {
+                  setIsTransitioning(false);
+                }
               }}
               onPrev={() => setCvView('dashboard')}
               isSaving={isSavingCv}
@@ -4022,12 +4031,17 @@ END:VCALENDAR`;
               setCvForm(updated);
             }}
             onNext={async () => {
-              // Save styles as style update (no edits token cost)
-              await handleSaveCvDraft(cvForm, true);
-              if (cvForm.paymentStatus === 'Paid') {
-                setCvView('final-cv');
-              } else {
-                setCvView('preview');
+              setIsTransitioning(true);
+              try {
+                // Save styles as style update (no edits token cost)
+                await handleSaveCvDraft(cvForm, true);
+                if (cvForm.paymentStatus === 'Paid') {
+                  setCvView('final-cv');
+                } else {
+                  setCvView('preview');
+                }
+              } finally {
+                setIsTransitioning(false);
               }
             }}
             onPrev={() => setCvView('form')}
@@ -9635,6 +9649,21 @@ END:VCALENDAR`;
         <div style={{ position: 'absolute', left: '-9999px', top: '-9999px', pointerEvents: 'none' }} aria-hidden="true">
           <div id="cv-download-print-capture" style={{ width: '794px', position: 'relative', backgroundColor: '#ffffff' }}>
             <CVTemplateRenderer cv={cvForm} accentColour={cvForm.accentColour} font={cvForm.font} isPreview={false} />
+          </div>
+        </div>
+      )}
+
+      {isTransitioning && (
+        <div className="fixed inset-0 bg-[#0B1A30]/80 backdrop-blur-sm z-50 flex items-center justify-center animate-fade-in font-sans">
+          <div className="bg-white border-2 border-black p-8 rounded-2xl max-w-xs w-full text-center space-y-4 shadow-2xl">
+            <div className="flex justify-center">
+              <svg className="animate-spin h-10 w-10 text-[#D4AF37]" viewBox="0 0 24 24">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+              </svg>
+            </div>
+            <p className="text-[#0B1A30] font-black text-sm tracking-wider uppercase">Loading...</p>
+            <p className="text-slate-500 text-xs font-semibold">Please wait while we prepare your document.</p>
           </div>
         </div>
       )}

@@ -304,8 +304,7 @@ export default function CVStyleStep({ cv, onChange, onNext, onPrev }: CVStyleSte
 
         {/* Right: Live preview */}
         <div
-          className="lg:col-span-7 rounded-xl overflow-hidden shadow-xl border border-slate-800"
-          style={{ height: '820px' }}
+          className="lg:col-span-7 rounded-xl overflow-hidden shadow-xl border border-slate-800 h-[500px] lg:h-[820px]"
         >
           <CVLivePreview cv={cv} isPreview={true} />
         </div>

@@ -76,7 +76,7 @@ export default function CVLivePreview({ cv, isPreview = true }: CVLivePreviewPro
       <div
         ref={outerRef}
         className="flex-1 overflow-y-auto flex items-start justify-center p-4"
-        style={{ background: '#0a0d1a' }}
+        style={{ background: '#0a0d1a', WebkitOverflowScrolling: 'touch', touchAction: 'pan-y' }}
       >
         {/* Wrapper exactly the scaled A4 size — prevents any browser overflow/clip */}
         <div style={{ width: scaledW, height: scaledH, position: 'relative', flexShrink: 0 }} className="shadow-2xl">

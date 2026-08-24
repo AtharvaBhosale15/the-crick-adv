@@ -105,7 +105,7 @@ export default function CVFinalView({ cv, onDownloadCleanPDF, onGoToDashboard }:
         </div>
 
         {/* Live Preview Without Watermark */}
-        <div className="lg:col-span-8 rounded-xl overflow-hidden shadow-2xl border border-slate-850" style={{ height: '820px' }}>
+        <div className="lg:col-span-8 rounded-xl overflow-hidden shadow-2xl border border-slate-850 h-[500px] lg:h-[820px]">
           <CVLivePreview cv={cv} isPreview={true} />
         </div>
 
