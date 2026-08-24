@@ -74,7 +74,7 @@ const CVExtraProfileDetails = ({ cv }: { cv: CricketCVFull }) => {
     <div className="space-y-1.5 text-xs text-slate-700">
       {cv.nationality && <div><strong>Nationality:</strong> {cv.nationality}</div>}
       {cv.dateOfBirth && <div><strong>DOB:</strong> {cv.dateOfBirth}</div>}
-      {cv.height && <div><strong>Height:</strong> {cv.height} cm</div>}
+      {cv.height && <div><strong>Height:</strong> {String(cv.height).includes("'") ? cv.height : `${cv.height} cm`}</div>}
       {cv.playingRole && <div><strong>Role:</strong> {cv.playingRoleDetail || cv.playingRole}</div>}
       {cv.secondaryRole && <div><strong>Secondary Role:</strong> {cv.secondaryRole}</div>}
       {cv.battingStyle && cv.battingStyle.toLowerCase() !== 'none' && <div><strong>Batting:</strong> {cv.battingStyle}</div>}
@@ -605,7 +605,7 @@ export function ProfessionalTemplate({ cv, accentColour, font, isPreview }: Temp
                 {[
                   cv.battingStyle && cv.battingStyle.toLowerCase() !== 'none' ? `${cv.battingStyle} Bat` : null,
                   cv.bowlingStyle && cv.bowlingStyle.toLowerCase() !== 'none' ? cv.bowlingStyle : null,
-                  cv.height ? `${cv.height} cm` : null
+                  cv.height ? (String(cv.height).includes("'") ? cv.height : `${cv.height} cm`) : null
                 ].filter(Boolean).map((text, idx, arr) => (
                   <React.Fragment key={idx}>
                     <span>{text}</span>
@@ -766,7 +766,7 @@ export function InternationalTemplate({ cv, accentColour, font, isPreview }: Tem
               {playingRole && <div>Role: <strong>{playingRole}</strong></div>}
               {battingStyle && battingStyle.toLowerCase() !== 'none' && <div>Batting: <strong>{battingStyle}</strong></div>}
               {bowlingStyle && bowlingStyle.toLowerCase() !== 'none' && <div>Bowling: <strong>{bowlingStyle}</strong></div>}
-              {cv.height && <div>Height: <strong>{cv.height} cm</strong></div>}
+              {cv.height && <div>Height: <strong>{String(cv.height).includes("'") ? cv.height : `${cv.height} cm`}</strong></div>}
               {cv.languages && cv.languages.length > 0 && <div className="col-span-2">Languages: <strong>{cv.languages.join(', ')}</strong></div>}
             </div>
           </div>
@@ -1686,7 +1686,7 @@ export function PrestigeTemplate({ cv, accentColour, font, isPreview }: Template
                 {cv.height && (
                   <>
                     <dt>Height</dt>
-                    <dd>{cv.height} cm</dd>
+                    <dd>{String(cv.height).includes("'") ? cv.height : `${cv.height} cm`}</dd>
                   </>
                 )}
                 {cv.nationality && (

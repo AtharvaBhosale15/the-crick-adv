@@ -903,16 +903,25 @@ export default function CVBuilderForm({
                 />
               </div>
               <div>
-                <label className="block text-xs text-slate-400 mb-1.5 font-bold">Height (cm)</label>
+                <label className="block text-xs text-slate-400 mb-1.5 font-bold">Height</label>
                 <select 
                   value={cv.height || ''}
                   onChange={(e) => updateCVField('height', e.target.value)}
                   className="w-full bg-slate-950 border border-slate-800 p-2.5 rounded text-white text-xs focus:border-gold-500 outline-none"
                 >
                   <option value="">Select Height</option>
-                  {Array.from({ length: 351 }, (_, i) => i + 50).map(h => (
-                    <option key={h} value={h}>{h} cm</option>
-                  ))}
+                  {(() => {
+                    const options = [];
+                    for (let ft = 4; ft <= 15; ft++) {
+                      const maxIn = ft === 15 ? 0 : 11;
+                      for (let inch = 0; inch <= maxIn; inch++) {
+                        options.push(`${ft}'${inch}"`);
+                      }
+                    }
+                    return options.map(opt => (
+                      <option key={opt} value={opt}>{opt}</option>
+                    ));
+                  })()}
                 </select>
               </div>
             </div>
@@ -1252,13 +1261,6 @@ export default function CVBuilderForm({
               <h3 className="text-base font-bold text-white flex items-center gap-1.5">
                 <Layers className="w-4 h-4 text-gold-400" /> Experience and Teams
               </h3>
-              <button 
-                onClick={addCareerEntry}
-                className="flex items-center gap-1 text-xs hover:opacity-80 transition-all font-black cursor-pointer"
-                style={{ color: '#0A192F', background: 'transparent', border: 'none' }}
-              >
-                <Plus className="w-3.5 h-3.5" style={{ color: '#0A192F' }} /> Add Team
-              </button>
             </div>
 
             {cv.careerHistory.length === 0 ? (
@@ -1271,13 +1273,13 @@ export default function CVBuilderForm({
                   <div key={item.id} className="bg-slate-950 p-4 rounded-xl border border-slate-850 space-y-3 relative">
                     <button 
                       onClick={() => removeCareerEntry(item.id)}
-                      className="absolute top-3 right-3 text-red-500 hover:text-red-400 p-1 hover:bg-slate-900 rounded"
+                      className="absolute top-3 right-3 text-red-500 hover:text-red-400 p-1 hover:bg-slate-900 rounded cursor-pointer"
                     >
                       <Trash2 className="w-4 h-4" />
                     </button>
                     
                     <div className="space-y-3">
-                      <div className="grid grid-cols-2 gap-3">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                         <div>
                           <label className="block text-[10px] text-slate-500 mb-1 font-bold">Team Name</label>
                           <input 
@@ -1309,7 +1311,7 @@ export default function CVBuilderForm({
                         </div>
                       </div>
 
-                      <div className="grid grid-cols-2 gap-3">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                         <div>
                           <label className="block text-[10px] text-slate-500 mb-1 font-bold">Starting Year</label>
                           <select 
@@ -1343,6 +1345,15 @@ export default function CVBuilderForm({
                 ))}
               </div>
             )}
+
+            <div className="flex justify-end pt-2">
+              <button 
+                onClick={addCareerEntry}
+                className="flex items-center gap-1.5 text-xs px-3.5 py-2.5 bg-[#D4AF37] hover:bg-[#b8952d] text-[#0A192F] font-black rounded-xl transition-all cursor-pointer shadow-md uppercase tracking-wider"
+              >
+                <Plus className="w-4.5 h-4.5" /> Add Team
+              </button>
+            </div>
           </div>
         )}
 
