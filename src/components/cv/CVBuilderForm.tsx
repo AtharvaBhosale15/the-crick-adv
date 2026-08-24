@@ -1399,7 +1399,7 @@ export default function CVBuilderForm({
                         onChange={(e) => updateCVField('showBatting', e.target.checked)}
                         className="sr-only peer"
                       />
-                      <div className="w-8 h-4 bg-red-600 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-slate-100 after:border-slate-200 after:border after:rounded-full after:h-3 after:w-3 after:transition-all peer-checked:bg-green-600"></div>
+                      <div className="w-11 h-6 bg-red-600 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-slate-100 after:border-slate-200 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-green-600"></div>
                     </label>
                   </div>
                   {/* Bowling Toggle */}
@@ -1412,7 +1412,7 @@ export default function CVBuilderForm({
                         onChange={(e) => updateCVField('showBowling', e.target.checked)}
                         className="sr-only peer"
                       />
-                      <div className="w-8 h-4 bg-red-600 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-slate-100 after:border-slate-200 after:border after:rounded-full after:h-3 after:w-3 after:transition-all peer-checked:bg-green-600"></div>
+                      <div className="w-11 h-6 bg-red-600 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-slate-100 after:border-slate-200 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-green-600"></div>
                     </label>
                   </div>
                 </div>
@@ -1436,7 +1436,7 @@ export default function CVBuilderForm({
                     onChange={(e) => updateFormatStats('oneDay', 'hasStats', e.target.checked)}
                     className="sr-only peer"
                   />
-                  <div className="w-10 h-5 bg-red-600 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-slate-100 after:border-slate-200 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-green-600"></div>
+                  <div className="w-11 h-6 bg-red-600 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-slate-100 after:border-slate-200 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-green-600"></div>
                 </label>
               </div>
 
@@ -1551,7 +1551,7 @@ export default function CVBuilderForm({
                               onChange={(e) => updateFormatStats('oneDay', 'batHighestNotOut', e.target.checked)}
                               className="sr-only peer"
                             />
-                            <div className="w-8 h-4 bg-red-600 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-slate-100 after:border-slate-200 after:border after:rounded-full after:h-3 after:w-3 after:transition-all peer-checked:bg-green-600"></div>
+                            <div className="w-11 h-6 bg-red-600 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-slate-100 after:border-slate-200 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-green-600"></div>
                           </label>
                         </div>
                       </div>
@@ -1631,7 +1631,7 @@ export default function CVBuilderForm({
                       <div className="bg-slate-950 p-4 rounded-xl border border-slate-850 space-y-3 text-left">
                         <div>
                           <label className="block text-xs text-white font-bold tracking-wide uppercase">Stumpings</label>
-                          <span className="text-[10px] text-slate-500 block mt-0.5">Stumpings affected in career.</span>
+                          <span className="text-[10px] text-slate-500 block mt-0.5">Stumpings Taken In Career.</span>
                         </div>
                         <div className="relative mt-1">
                           <input 
@@ -1791,12 +1791,22 @@ export default function CVBuilderForm({
                                 const wickets = parseInt(parts[0], 10);
                                 const runs = parseInt(parts[1], 10);
                                 if (!isNaN(wickets) && !isNaN(runs)) {
-                                  updateFormatStats('oneDay', 'bowlBestWickets', wickets);
-                                  updateFormatStats('oneDay', 'bowlBestRuns', runs);
+                                  const statsField = 'oneDayStats';
+                                  const currentStats = cv[statsField] || createDefaultFormatStats(false);
+                                  updateCVField(statsField, {
+                                    ...currentStats,
+                                    bowlBestWickets: Math.max(0, wickets),
+                                    bowlBestRuns: Math.max(0, runs)
+                                  });
                                 }
                               } else if (raw === '') {
-                                updateFormatStats('oneDay', 'bowlBestWickets', 0);
-                                updateFormatStats('oneDay', 'bowlBestRuns', 0);
+                                const statsField = 'oneDayStats';
+                                const currentStats = cv[statsField] || createDefaultFormatStats(false);
+                                updateCVField(statsField, {
+                                  ...currentStats,
+                                  bowlBestWickets: 0,
+                                  bowlBestRuns: 0
+                                });
                               }
                             }}
                             className="w-full bg-slate-900 border border-slate-800 focus:border-gold-500 p-2.5 rounded-lg text-white font-bold text-sm focus:outline-none"
@@ -1953,7 +1963,7 @@ export default function CVBuilderForm({
             {(() => {
               const selectedCount = cv.specialistSkills?.length || 0;
               return (
-                <div className="bg-slate-900/60 p-4 rounded-xl border border-slate-800/80 flex justify-between items-center">
+                <div className="bg-slate-900/60 p-4 rounded-xl border border-slate-800/80 flex flex-col md:flex-row justify-between items-start md:items-center gap-3">
                   <div>
                     <span className="text-xs font-bold uppercase tracking-wide" style={{ color: '#ffffff', display: 'inline-block', lineHeight: 'normal' }}>
                       Select up to 5 skills
