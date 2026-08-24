@@ -1648,6 +1648,13 @@ export function PrestigeTemplate({ cv, accentColour, font, isPreview }: Template
             </div>
           </CVAtomicBlock>
         )}
+
+        {cv.showReferences === 'request' && (
+          <CVAtomicBlock id="side-references-request" className="side-section">
+            <div className="side-heading">References</div>
+            <div className="text-[10px] text-slate-350 italic text-left">References available upon request.</div>
+          </CVAtomicBlock>
+        )}
       </CVColumn>
 
       {/* ============ MAIN ============ */}
