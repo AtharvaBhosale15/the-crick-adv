@@ -224,8 +224,8 @@ export default function CVBuilderForm({
     if (!cv.battingStyle) return "Please select your Batting Style.";
     if (!cv.aboutPlayer || !cv.aboutPlayer.trim()) return "Please fill in the About Player bio section.";
     const wordCount = cv.aboutPlayer ? cv.aboutPlayer.trim().split(/\s+/).filter(Boolean).length : 0;
-    if (wordCount > 2000) {
-      return "About Player section cannot exceed 2000 words.";
+    if (wordCount > 280) {
+      return "About Player section cannot exceed 280 words to ensure it fits on Page 1.";
     }
     return '';
   };
@@ -1238,8 +1238,8 @@ export default function CVBuilderForm({
               <div>
                 <div className="flex justify-between items-center mb-1.5">
                   <label className="block text-xs text-slate-400 font-bold">About the Player (Bio Summary)</label>
-                  <span className={`text-[10px] font-mono px-1.5 py-0.5 rounded font-bold ${wordCount > 2000 ? 'text-red-500 bg-red-500/10' : 'text-slate-400 bg-slate-100'}`}>
-                    {wordCount} / 2000 words
+                  <span className={`text-[10px] font-mono px-1.5 py-0.5 rounded font-bold ${wordCount > 280 ? 'text-red-500 bg-red-500/10' : 'text-slate-400 bg-slate-100'}`}>
+                    {wordCount} / 280 words
                   </span>
                 </div>
                 <textarea
@@ -1915,7 +1915,7 @@ export default function CVBuilderForm({
                         onChange({ ...cv, mediaLinks: newLinks });
                       }}
                       placeholder={`https://example.com/link-${index + 1}`}
-                      className="w-full bg-slate-900 border border-slate-850 rounded-xl px-4 py-3 text-xs text-white focus:outline-none focus:border-gold-500 transition font-sans"
+                      className="w-full bg-slate-900 border border-slate-850 rounded-xl px-4 py-3 text-xs text-white focus:outline-none focus:border-gold-500 transition font-sans no-capitalize"
                     />
                   </div>
                 );

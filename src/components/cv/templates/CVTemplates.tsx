@@ -443,7 +443,7 @@ const CVMediaLinksBlock = ({ cv, accentColour }: { cv: CricketCVFull; accentColo
             <CVAtomicBlock key={idx} id={`block-media-link-${idx}`}>
               <div className="text-xs text-slate-750 font-medium py-1 border-b border-dashed border-slate-100 last:border-0 flex items-start gap-2 text-left">
                 <span className="w-1.5 h-1.5 rounded-full shrink-0 mt-1.5" style={{ backgroundColor: accentColour }} />
-                <a href={href} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline break-all">
+                <a href={href} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline break-all no-capitalize">
                   {link}
                 </a>
               </div>
@@ -1783,10 +1783,9 @@ export function PrestigeTemplate({ cv, accentColour, font, isPreview }: Template
             <div className="section">
               <div className="section-title">
                 <div className="badge">&#11088;</div>
-                <h2>Achievements TEST</h2>
+                <h2>Achievements</h2>
               </div>
               <ul className="bullet-list">
-                <li style={{ color: 'red', fontWeight: 'bold' }}>DEBUG: Length={cv.achievements.length}</li>
                 {cv.achievements.map((ach, idx) => {
                   if (typeof ach === 'string') {
                     return <li key={idx}>{ach}</li>;
@@ -1913,7 +1912,7 @@ export function PrestigeTemplate({ cv, accentColour, font, isPreview }: Template
                     : `https://${link}`;
                   return (
                     <li key={idx} style={{ wordBreak: 'break-all' }}>
-                      <a href={href} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">
+                      <a href={href} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline no-capitalize">
                         {link}
                       </a>
                     </li>

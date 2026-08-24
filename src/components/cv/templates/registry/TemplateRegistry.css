@@ -88,6 +88,7 @@ svg *,
 /* Exclude inputs/elements that must preserve case */
 .cv-workspace-container input[type="email"],
 .cv-workspace-container input[type="password"],
+.cv-workspace-container input[type="url"],
 .cv-workspace-container .no-capitalize,
 .cv-workspace-container .no-capitalize * {
   text-transform: none !important;
