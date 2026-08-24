@@ -78,22 +78,6 @@
     "created_at": "2026-08-19T09:12:14.427Z"
   },
   {
-    "id": "user_1787137423617",
-    "email": "atharva.bhosale1534@gmail.com",
-    "password_hash": "c75bec4b738b1df468a9b6b84129a0787b22b29ad4d7b13ea8a7afc09ef3f95f12a93237483eef9f7947b6b50853b85a3993d6d187ac70e7ccdbe7eed74666c5",
-    "password_salt": "709c6e896083dc216179e4713aa44ce1",
-    "first_name": "Atharva",
-    "last_name": "Bhosale",
-    "country": "India",
-    "state_province": "Maharashtra",
-    "mobile_number": "9321885233",
-    "nationality": "Indian",
-    "date_of_birth": "2026-08-01",
-    "email_verified": true,
-    "verification_token": null,
-    "created_at": "2026-08-19T11:03:43.619Z"
-  },
-  {
     "id": "user_1787165729487",
     "email": "atharvabhosale1@gmail.com",
     "password_hash": "08a3ece8b4b3eec172595d7b0cee1ba75dfd3a723071690f2527dfe4fb41ed8acc5218423cbc5569dd358ab8ef64f21ce50c8ab75ccb0164434f39d78ee879ab",
@@ -125,23 +109,6 @@
     "email_verified": true,
     "verification_token": null,
     "created_at": "2026-08-20T07:01:34.516Z",
-    "identityLocked": true
-  },
-  {
-    "id": "user_1787296388823",
-    "email": "prakash.palande@gmail.com",
-    "password_hash": "d05f95a6e24e4a827dcbdbe457d1fce393abe1724d086cb2ea84aba0380a97f895af5a21dce97375e04cb3410a6ce647a6d57f73a9d0a38c153c4848ec316907",
-    "password_salt": "168c36e4bb36ea0ecf9add42a8d1a0cb",
-    "first_name": "prakash",
-    "last_name": "palande",
-    "country": "India",
-    "state_province": "Maharashtra",
-    "mobile_number": "+91 9325663932",
-    "nationality": "India",
-    "date_of_birth": "1981-01-01",
-    "email_verified": true,
-    "verification_token": null,
-    "created_at": "2026-08-21T07:13:08.825Z",
     "identityLocked": true
   },
   {
