@@ -3297,7 +3297,7 @@ END:VCALENDAR`;
               <div className="text-slate-700 text-sm font-semibold">
                 Your Cricket CV Profile Link Has Been Sent To You Please Check Your Inbox or Spam Folder
               </div>
-              <div className="text-red-600 font-bold text-lg p-3 bg-slate-50 border border-slate-200 rounded-xl no-capitalize">
+              <div className="text-red-600 font-bold text-base sm:text-lg p-3 bg-slate-50 border border-slate-200 rounded-xl no-capitalize break-all">
                 {cvForm.email}
               </div>
               <button
@@ -3359,7 +3359,7 @@ END:VCALENDAR`;
                   </div>
                   <div className="grid grid-cols-2 py-1.5">
                     <span className="font-semibold text-slate-400">Email Address</span>
-                    <span className="font-bold text-slate-900 no-capitalize">{cvForm.email}</span>
+                    <span className="font-bold text-slate-900 no-capitalize break-all">{cvForm.email}</span>
                   </div>
                 </div>
 
