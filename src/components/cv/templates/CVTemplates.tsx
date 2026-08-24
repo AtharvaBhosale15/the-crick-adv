@@ -532,7 +532,7 @@ export function ExecutiveTemplate({ cv, accentColour, font, isPreview }: Templat
                   {cv.careerHistory.map((item, cIdx) => (
                     <div key={cIdx} className="relative pl-3 border-l-2" style={{ borderColor: accentColour }}>
                       <div className="flex justify-between items-start text-xs mb-0.5 text-left">
-                        <span className="font-bold text-slate-900">{item.teamName}{item.country ? ` (${item.country})` : ''}</span>
+                        <span className="font-bold text-slate-900">{item.teamName}{item.country ? ` - ${item.country}` : ''}</span>
                         <span className="text-slate-500 font-semibold shrink-0">{item.startYear} - {item.endYear || 'Present'}</span>
                       </div>
                       {(item.role || item.level) && (
@@ -657,7 +657,7 @@ export function ProfessionalTemplate({ cv, accentColour, font, isPreview }: Temp
                 <div key={idx} className="flex justify-between items-start gap-4 text-xs text-left">
                   <div className="w-24 text-slate-500 font-bold shrink-0">{item.startYear} - {item.endYear || 'Present'}</div>
                   <div className="flex-1">
-                    <h4 className="font-bold text-slate-950">{item.teamName}{item.country ? ` (${item.country})` : ''}</h4>
+                    <h4 className="font-bold text-slate-950">{item.teamName}{item.country ? ` - ${item.country}` : ''}</h4>
                     {(item.role || item.level) && (
                       <p className="text-[10px] text-slate-500 uppercase font-semibold">
                         {[item.role, item.level].filter(Boolean).join(' • ')}
@@ -790,7 +790,7 @@ export function InternationalTemplate({ cv, accentColour, font, isPreview }: Tem
                   {careerHistory.map((item, idx) => item && (
                     <div key={item.id || idx} className="bg-slate-50/50 p-3 rounded-lg border border-slate-100 text-left">
                       <div className="flex justify-between font-bold text-xs text-slate-900">
-                        <span>{item.teamName}{item.country ? ` (${item.country})` : ''}</span>
+                        <span>{item.teamName}{item.country ? ` - ${item.country}` : ''}</span>
                         <span style={{ color: accentColour }} className="shrink-0">{item.startYear} - {item.endYear || 'Present'}</span>
                       </div>
                       {(item.role || item.level) && (
@@ -965,12 +965,12 @@ export function ClassicTemplate({ cv, accentColour, font, isPreview }: TemplateP
                 {cv.careerHistory.map((item, idx) => (
                   <div key={idx} className="text-xs text-left">
                     <div className="flex justify-between font-bold text-slate-950">
-                      <span>{item.teamName}{item.role ? ` - ${item.role}` : ''}</span>
+                      <span>{item.teamName}{item.country ? ` - ${item.country}` : ''}{item.role ? ` - ${item.role}` : ''}</span>
                       <span className="shrink-0">{item.startYear} - {item.endYear || 'Present'}</span>
                     </div>
-                    {(item.country || item.level) && (
+                    {item.level && (
                       <div className="text-[10px] text-slate-500 italic mb-1">
-                        {[item.country, item.level].filter(Boolean).join(' | ')}
+                        {item.level}
                       </div>
                     )}
                     {item.description && <p className="text-slate-650 whitespace-pre-line">{item.description}</p>}
@@ -1074,8 +1074,7 @@ export function PerformanceTemplate({ cv, accentColour, font, isPreview }: Templ
               {cv.careerHistory.map((item, idx) => (
                 <div key={idx} className="bg-slate-50 p-3 rounded-lg border border-slate-100 flex justify-between items-center gap-4 text-xs text-left">
                   <div>
-                    <span className="font-bold text-slate-950">{item.teamName}</span>
-                    {item.country && <span className="text-slate-500 text-[10px] ml-2">({item.country})</span>}
+                    <span className="font-bold text-slate-950">{item.teamName}{item.country ? ` - ${item.country}` : ''}</span>
                     {(item.role || item.level) && (
                       <div className="text-[10px] text-slate-500 font-semibold mt-0.5">
                         {[item.role, item.level].filter(Boolean).join(' • ')}
@@ -1737,7 +1736,7 @@ export function PrestigeTemplate({ cv, accentColour, font, isPreview }: Template
                   <div key={idx} className="timeline-entry">
                     <div className="years">{item.startYear} &ndash; {item.endYear || 'Present'}</div>
                     <div>
-                      <div className="team">{item.teamName}{item.country ? ` (${item.country})` : ''}</div>
+                      <div className="team">{item.teamName}{item.country ? ` - ${item.country}` : ''}</div>
                       {((item.role && item.role !== 'Player') || (item.level && item.level !== 'Club')) && (
                         <div className="role">
                           {[

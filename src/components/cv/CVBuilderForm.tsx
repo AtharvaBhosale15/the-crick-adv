@@ -904,13 +904,16 @@ export default function CVBuilderForm({
               </div>
               <div>
                 <label className="block text-xs text-slate-400 mb-1.5 font-bold">Height (cm)</label>
-                <input 
-                  type="number" 
+                <select 
                   value={cv.height || ''}
                   onChange={(e) => updateCVField('height', e.target.value)}
-                  placeholder="Height in cm"
                   className="w-full bg-slate-950 border border-slate-800 p-2.5 rounded text-white text-xs focus:border-gold-500 outline-none"
-                />
+                >
+                  <option value="">Select Height</option>
+                  {Array.from({ length: 351 }, (_, i) => i + 50).map(h => (
+                    <option key={h} value={h}>{h} cm</option>
+                  ))}
+                </select>
               </div>
             </div>
 
@@ -1274,15 +1277,36 @@ export default function CVBuilderForm({
                     </button>
                     
                     <div className="space-y-3">
-                      <div>
-                        <label className="block text-[10px] text-slate-500 mb-1 font-bold">Team Name</label>
-                        <input 
-                          type="text" 
-                          value={item.teamName}
-                          onChange={(e) => updateCareerEntry(item.id, 'teamName', e.target.value)}
-                          placeholder="e.g. Mumbai Indians, Yorkshire CCC"
-                          className="w-full bg-slate-900 border border-slate-800 p-2 rounded text-white text-xs"
-                        />
+                      <div className="grid grid-cols-2 gap-3">
+                        <div>
+                          <label className="block text-[10px] text-slate-500 mb-1 font-bold">Team Name</label>
+                          <input 
+                            type="text" 
+                            value={item.teamName}
+                            onChange={(e) => updateCareerEntry(item.id, 'teamName', e.target.value)}
+                            placeholder="e.g. Mumbai Indians, Yorkshire CCC"
+                            className="w-full bg-slate-900 border border-slate-800 p-2 rounded text-white text-xs"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-[10px] text-slate-500 mb-1 font-bold">Country</label>
+                          <select 
+                            value={item.country || ''}
+                            onChange={(e) => updateCareerEntry(item.id, 'country', e.target.value)}
+                            className="w-full bg-slate-900 border border-slate-800 p-2 rounded text-white text-xs"
+                          >
+                            <option value="">Select Country</option>
+                            <option value="India">India</option>
+                            <option value="Sri Lanka">Sri Lanka</option>
+                            <option value="New Zealand">New Zealand</option>
+                            <option value="Australia">Australia</option>
+                            <option value="South Africa">South Africa</option>
+                            <option value="Canada">Canada</option>
+                            <option value="United States Of America">United States Of America</option>
+                            <option value="Oman">Oman</option>
+                            <option value="Zimbabwe">Zimbabwe</option>
+                          </select>
+                        </div>
                       </div>
 
                       <div className="grid grid-cols-2 gap-3">
