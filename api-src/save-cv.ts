@@ -42,7 +42,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   try {
     if (hasPostgres()) {
       try {
-        // Ensure table exists
         await sql`
           CREATE TABLE IF NOT EXISTS cvs (
             id VARCHAR(50) PRIMARY KEY,
@@ -52,6 +51,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             email VARCHAR(255) NOT NULL,
             payment_status VARCHAR(50) NOT NULL,
             download_status VARCHAR(50) NOT NULL,
+            edits_used INTEGER DEFAULT 0,
+            edits_allowed INTEGER DEFAULT 5,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             cv_data TEXT NOT NULL
           );
@@ -61,10 +62,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         await sql`
           INSERT INTO cvs (
             id, reference_number, first_name, last_name, email,
-            payment_status, download_status, cv_data, created_at
+            payment_status, download_status, edits_used, edits_allowed, cv_data, created_at
           ) VALUES (
             ${cv.id}, ${cv.referenceNumber}, ${cv.firstName}, ${cv.lastName}, ${cv.email},
-            ${cv.paymentStatus || 'Pending'}, ${cv.downloadStatus || 'LOCKED'}, ${JSON.stringify(cv)}, ${cv.createdAt || new Date().toISOString()}
+            ${cv.paymentStatus || 'Pending'}, ${cv.downloadStatus || 'LOCKED'}, ${cv.editsUsed || 0}, ${cv.editsAllowed || 5}, ${JSON.stringify(cv)}, ${cv.createdAt || new Date().toISOString()}
           )
           ON CONFLICT (id) DO UPDATE SET
             reference_number = EXCLUDED.reference_number,
@@ -73,6 +74,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             email = EXCLUDED.email,
             payment_status = EXCLUDED.payment_status,
             download_status = EXCLUDED.download_status,
+            edits_used = EXCLUDED.edits_used,
+            edits_allowed = EXCLUDED.edits_allowed,
             cv_data = EXCLUDED.cv_data;
         `;
       } catch (dbError) {

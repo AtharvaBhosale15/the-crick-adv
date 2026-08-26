@@ -1682,6 +1682,49 @@ END:VCALENDAR`;
     fetchGlobalSlots();
   }, []);
 
+  // Periodic background sync for CV details (updates dashboard/edits remaining automatically)
+  useEffect(() => {
+    if (!cvToken || (cvView !== 'dashboard' && cvView !== 'final-cv')) return;
+    
+    const interval = setInterval(async () => {
+      try {
+        const res = await fetch(`/api/cv-get?t=${Date.now()}`, {
+          headers: { 'Authorization': `Bearer ${cvToken}` }
+        });
+        if (res.ok) {
+          const data = await res.json();
+          if (data.cv) {
+            const mergedCv = {
+              ...initialCVFormFull('', '', '', ''),
+              ...data.cv
+            };
+            const targetUser = cvUser || (() => {
+              try {
+                const u = sessionStorage.getItem('cv_user');
+                return u ? JSON.parse(u) : null;
+              } catch { return null; }
+            })();
+            if (targetUser) {
+              if (targetUser.firstName) mergedCv.firstName = targetUser.firstName;
+              if (targetUser.lastName) mergedCv.lastName = targetUser.lastName;
+              if (targetUser.email) mergedCv.email = targetUser.email;
+              if (targetUser.mobileNumber) mergedCv.phone = targetUser.mobileNumber;
+              if (targetUser.country) mergedCv.countryOfResidence = targetUser.country;
+              if (targetUser.stateProvince) mergedCv.currentCity = targetUser.stateProvince;
+              if (targetUser.nationality) mergedCv.nationality = targetUser.nationality;
+              if (targetUser.dateOfBirth) mergedCv.dateOfBirth = targetUser.dateOfBirth;
+            }
+            setCvForm(mergedCv);
+          }
+        }
+      } catch (err) {
+        console.error('Error auto-syncing CV details:', err);
+      }
+    }, 15000); // sync every 15 seconds
+
+    return () => clearInterval(interval);
+  }, [cvToken, cvView, cvUser]);
+
   // --- LOCALSTORAGE INITIALIZATION ---
   useEffect(() => {
     // 1. Initial Players
@@ -3136,6 +3179,43 @@ END:VCALENDAR`;
     }
   };
 
+  const handleUpdateCvEdits = async (cv: any, increment: boolean) => {
+    const currentAllowed = cv.editsAllowed || 5;
+    const currentUsed = cv.editsUsed || 0;
+    let newAllowed = currentAllowed;
+    let newUsed = currentUsed;
+
+    if (increment) {
+      if (currentUsed > 0) {
+        newUsed = currentUsed - 1;
+      } else {
+        newAllowed = currentAllowed + 1;
+      }
+    } else {
+      const currentLeft = currentAllowed - currentUsed;
+      if (currentLeft > 0) {
+        newUsed = currentUsed + 1;
+      } else {
+        if (newAllowed > 0) {
+          newAllowed = currentAllowed - 1;
+        }
+      }
+    }
+
+    const updatedCv = {
+      ...cv,
+      editsAllowed: newAllowed,
+      editsUsed: newUsed
+    };
+
+    const success = await handleSaveCv(updatedCv);
+    if (success) {
+      setCvList(prev => prev.map(c => c.id === cv.id ? updatedCv : c));
+    } else {
+      alert("Failed to update CV edits on the server.");
+    }
+  };
+
   const handleEmailCv = async (cvData: CricketCV, targetEmail: string) => {
     setIsSendingCvEmail(true);
     setEmailDeliveryError('');
@@ -4011,11 +4091,11 @@ END:VCALENDAR`;
             <CVBuilderForm 
               cv={cvForm}
               onChange={(updated) => setCvForm(updated)}
-              onSaveDraft={async () => { await handleSaveCvDraft(cvForm, true); }} // isStyleUpdate=true: no token cost inside form
-              onNext={async () => {
+              onSaveDraft={async (latestCv) => { await handleSaveCvDraft(latestCv ?? cvForm, true); }}
+              onNext={async (latestCv) => {
                 setIsTransitioning(true);
                 try {
-                  await handleSaveCvDraft(cvForm, true); // Save content, no token cost
+                  await handleSaveCvDraft(latestCv ?? cvForm, true); // Save content, no token cost
                   setCvView('styling');
                 } finally {
                   setIsTransitioning(false);
@@ -4038,12 +4118,12 @@ END:VCALENDAR`;
             onChange={(updated) => {
               setCvForm(updated);
             }}
-            onNext={async () => {
+            onNext={async (latestCv) => {
               setIsTransitioning(true);
               try {
                 // Save styles as style update (no edits token cost)
-                await handleSaveCvDraft(cvForm, true);
-                if (cvForm.paymentStatus === 'Paid') {
+                await handleSaveCvDraft(latestCv ?? cvForm, true);
+                if ((latestCv ?? cvForm).paymentStatus === 'Paid') {
                   setCvView('final-cv');
                 } else {
                   setCvView('preview');
@@ -8721,7 +8801,25 @@ END:VCALENDAR`;
                                 </span>
                               </td>
                               <td className="py-3.5 px-4 font-semibold text-slate-650">
-                                {((cv.editsAllowed || 5) - (cv.editsUsed || 0))} / {cv.editsAllowed || 5}
+                                <div className="flex items-center space-x-1.5">
+                                  <span>{((cv.editsAllowed || 5) - (cv.editsUsed || 0))} / {cv.editsAllowed || 5}</span>
+                                  <div className="flex flex-col -space-y-0.5">
+                                    <button
+                                      onClick={() => handleUpdateCvEdits(cv, true)}
+                                      className="p-0.5 hover:bg-slate-155 rounded text-emerald-600 hover:text-emerald-700 cursor-pointer transition"
+                                      title="Increase edits remaining"
+                                    >
+                                      <ChevronUp className="w-3.5 h-3.5" />
+                                    </button>
+                                    <button
+                                      onClick={() => handleUpdateCvEdits(cv, false)}
+                                      className="p-0.5 hover:bg-slate-155 rounded text-red-600 hover:text-red-700 cursor-pointer transition"
+                                      title="Decrease edits remaining"
+                                    >
+                                      <ChevronDown className="w-3.5 h-3.5" />
+                                    </button>
+                                  </div>
+                                </div>
                               </td>
                               <td className="py-3.5 px-4 text-slate-500">
                                 {cv.purchaseDate ? new Date(cv.purchaseDate).toLocaleDateString('en-IN') : (cv.paymentStatus === 'Paid' ? new Date(cv.createdAt).toLocaleDateString('en-IN') : '-')}

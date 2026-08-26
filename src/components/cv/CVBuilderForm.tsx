@@ -25,8 +25,8 @@ import CVColourSelector from './CVColourSelector';
 interface CVBuilderFormProps {
   cv: CricketCVFull;
   onChange: (cv: CricketCVFull) => void;
-  onSaveDraft: () => Promise<void>;
-  onNext: () => void | Promise<void>;
+  onSaveDraft: (cv: CricketCVFull) => Promise<void>;
+  onNext: (cv: CricketCVFull) => void | Promise<void>;
   onPrev: () => void;
   isSaving: boolean;
   isIdentityLocked: boolean;
@@ -224,8 +224,13 @@ export default function CVBuilderForm({
     if (!cv.battingStyle) return "Please select your Batting Style.";
     if (!cv.aboutPlayer || !cv.aboutPlayer.trim()) return "Please fill in the About Player bio section.";
     const wordCount = cv.aboutPlayer ? cv.aboutPlayer.trim().split(/\s+/).filter(Boolean).length : 0;
-    if (wordCount > 280) {
-      return "About Player section cannot exceed 280 words to ensure it fits on Page 1.";
+    if (wordCount > 120) {
+      return "About Player section cannot exceed 120 words to ensure it fits on Page 1. Please shorten your bio.";
+    }
+    // Count paragraph breaks (consecutive blank lines count as one)
+    const paragraphCount = cv.aboutPlayer.split(/\n\s*\n/).filter(p => p.trim().length > 0).length;
+    if (paragraphCount > 4) {
+      return "About Player section cannot have more than 4 paragraphs to ensure it fits on Page 1. Please merge some paragraphs.";
     }
     return '';
   };
@@ -365,12 +370,12 @@ export default function CVBuilderForm({
     }
 
     setValidationError('');
-    onSaveDraft();
+    onSaveDraft(cv);
     if (currentStep < steps.length) {
       setCurrentStep(prev => prev + 1);
       window.scrollTo(0, 0);
     } else {
-      onNext();
+      onNext(cv);
     }
   };
 
@@ -826,7 +831,7 @@ export default function CVBuilderForm({
           <button 
             key={s.num}
             onClick={() => {
-              onSaveDraft();
+              onSaveDraft(cv);
               setCurrentStep(s.num);
             }}
             className={`h-2 flex-1 min-w-[30px] rounded transition-all ${
@@ -1078,6 +1083,7 @@ export default function CVBuilderForm({
         {/* STEP 2: CRICKET PROFILE */}
         {currentStep === 2 && (() => {
           const wordCount = cv.aboutPlayer ? cv.aboutPlayer.trim().split(/\s+/).filter(Boolean).length : 0;
+          const paragraphCount = cv.aboutPlayer ? cv.aboutPlayer.split(/\n\s*\n/).filter(p => p.trim().length > 0).length : 0;
           return (
             <div className="space-y-4 text-left animate-fade-in">
               <h3 className="text-base font-bold text-white mb-2 flex items-center gap-1.5">
@@ -1238,17 +1244,38 @@ export default function CVBuilderForm({
               <div>
                 <div className="flex justify-between items-center mb-1.5">
                   <label className="block text-xs text-slate-400 font-bold">About the Player (Bio Summary)</label>
-                  <span className={`text-[10px] font-mono px-1.5 py-0.5 rounded font-bold ${wordCount > 280 ? 'text-red-500 bg-red-500/10' : 'text-slate-400 bg-slate-100'}`}>
-                    {wordCount} / 280 words
-                  </span>
+                  <div className="flex items-center gap-2">
+                    <span className={`text-[10px] font-mono px-1.5 py-0.5 rounded font-bold ${paragraphCount > 4 ? 'text-red-500 bg-red-500/10' : 'text-slate-400 bg-slate-100'}`}>
+                      {paragraphCount} / 4 para
+                    </span>
+                    <span className={`text-[10px] font-mono px-1.5 py-0.5 rounded font-bold ${wordCount > 120 ? 'text-red-500 bg-red-500/10' : wordCount > 100 ? 'text-amber-400 bg-amber-400/10' : 'text-slate-400 bg-slate-100'}`}>
+                      {wordCount} / 120 words
+                    </span>
+                  </div>
                 </div>
                 <textarea
                   value={cv.aboutPlayer || ''}
-                  onChange={(e) => updateCVField('aboutPlayer', e.target.value)}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    // Block input if word count exceeds 120
+                    const wc = val.trim().split(/\s+/).filter(Boolean).length;
+                    if (wc <= 120) {
+                      updateCVField('aboutPlayer', val);
+                    }
+                  }}
                   placeholder="Briefly describe your cricket journey, key playing achievements, and career goals."
                   rows={6}
-                  className="w-full bg-slate-950 border border-slate-800 p-2.5 rounded text-white text-xs font-sans resize-none"
+                  className={`w-full bg-slate-950 border p-2.5 rounded text-white text-xs font-sans resize-none ${
+                    wordCount > 120 || paragraphCount > 4
+                      ? 'border-red-500'
+                      : wordCount > 100
+                      ? 'border-amber-400/60'
+                      : 'border-slate-800'
+                  }`}
                 />
+                <p className="text-[10px] text-slate-500 mt-1.5 leading-relaxed">
+                  ⚠️ Keep your bio to <strong className="text-slate-400">max 120 words</strong> and <strong className="text-slate-400">max 4 paragraphs</strong> to ensure it stays on Page 1 of your CV.
+                </p>
               </div>
             </div>
           );
