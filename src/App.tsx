@@ -77,6 +77,13 @@ import CVFinalView from './components/cv/CVFinalView';
 import html2canvas from 'html2canvas-pro';
 import CVTemplateRenderer from './components/cv/templates/CVTemplates';
 
+// --- CRICKET SKILLS ASSESSMENT PORTAL IMPORTS ---
+import { CricketAssessmentForm } from './components/assessment/CricketAssessmentForm';
+import { PaymentCheckout as AssessmentPaymentCheckout } from './components/assessment/PaymentCheckout';
+import { SubmissionSummary as AssessmentSubmissionSummary } from './components/assessment/SubmissionSummary';
+import { SubmissionData as AssessmentSubmissionData } from './components/assessment/types';
+
+
 
 // --- TYPES ---
 interface CricketCV {
@@ -668,7 +675,7 @@ const isSlotPastInIST = (slot: string, selectedDate: string) => {
 export default function App() {
   // --- CORE STATE ---
   // Restore from sessionStorage so React remounts (e.g., from an error boundary reset) don't lose navigation state
-  const [activeTab, setActiveTab] = useState<'main' | 'book' | 'admin' | 'placements' | 'eligibility' | 'cricket-cv'>(() => {
+  const [activeTab, setActiveTab] = useState<'main' | 'book' | 'admin' | 'placements' | 'eligibility' | 'cricket-cv' | 'cricket-assessment'>(() => {
     const hash = window.location.hash;
     if (hash === '#eligibility') return 'eligibility';
     if (hash === '#book') return 'book';
@@ -731,6 +738,9 @@ export default function App() {
   const [activeSection, setActiveSection] = useState<1 | 2 | 3>(1);
   const [eligibilityForm, setEligibilityForm] = useState<EligibilityForm>(initialEligibilityForm);
   const [assessments, setAssessments] = useState<EligibilityForm[]>([]);
+  const [skillsList, setSkillsList] = useState<AssessmentSubmissionData[]>([]);
+  const [assessmentView, setAssessmentView] = useState<'landing' | 'form' | 'checkout' | 'summary'>('landing');
+  const [assessmentSubmission, setAssessmentSubmission] = useState<AssessmentSubmissionData | null>(null);
   const [isProcessingEligibilityPayment, setIsProcessingEligibilityPayment] = useState(false);
   const [eligibilityPaymentError, setEligibilityPaymentError] = useState('');
   const [confirmedAssessment, setConfirmedAssessment] = useState<EligibilityForm | null>(() => {
@@ -770,7 +780,7 @@ export default function App() {
   const [adminUsername, setAdminUsername] = useState('');
   const [adminPassword, setAdminPassword] = useState('');
   const [adminError, setAdminError] = useState('');
-  const [adminSubTab, setAdminSubTab] = useState<'all' | 'bank' | 'bookings' | 'assessments' | 'prices' | 'dates' | 'players' | 'calendar' | 'settings' | 'cvs' | 'economics'>('all');
+  const [adminSubTab, setAdminSubTab] = useState<'all' | 'bank' | 'bookings' | 'assessments' | 'prices' | 'dates' | 'players' | 'calendar' | 'settings' | 'cvs' | 'economics' | 'skills-assessments'>('all');
   const [economicsTimeframe, setEconomicsTimeframe] = useState<'daily' | 'weekly' | 'monthly' | 'quarterly' | 'yearly' | 'all-time'>('monthly');
   const [selectedInvoiceBooking, setSelectedInvoiceBooking] = useState<Booking | null>(null);
   const [editingBooking, setEditingBooking] = useState<Booking | null>(null);
@@ -2463,6 +2473,17 @@ END:VCALENDAR`;
           } catch (err) {
             console.error('Error fetching CVs for admin:', err);
           }
+
+          // Load Skills Assessments
+          try {
+            const skillsResp = await fetch(`/api/get-skills-assessments?secret=${encodeURIComponent(typedPassword)}`);
+            if (skillsResp.ok) {
+              const cloudSkills = await skillsResp.json();
+              setSkillsList(cloudSkills);
+            }
+          } catch (err) {
+            console.error('Error fetching skills assessments for admin:', err);
+          }
           return;
         }
       }
@@ -2499,6 +2520,16 @@ END:VCALENDAR`;
         } catch (err) {
           console.error('Error fetching CVs for admin:', err);
         }
+
+        try {
+          const skillsResp = await fetch(`/api/get-skills-assessments?secret=${encodeURIComponent(typedPassword)}`);
+          if (skillsResp.ok) {
+            const cloudSkills = await skillsResp.json();
+            setSkillsList(cloudSkills);
+          }
+        } catch (err) {
+          console.error('Error fetching skills assessments for admin:', err);
+        }
       } else {
         setAdminError(`Invalid username or password. Default password is: cricket2026`);
       }
@@ -2526,6 +2557,16 @@ END:VCALENDAR`;
           }
         } catch (err) {
           console.error('Error fetching CVs for admin:', err);
+        }
+
+        try {
+          const skillsResp = await fetch(`/api/get-skills-assessments?secret=${encodeURIComponent(typedPassword)}`);
+          if (skillsResp.ok) {
+            const cloudSkills = await skillsResp.json();
+            setSkillsList(cloudSkills);
+          }
+        } catch (err) {
+          console.error('Error fetching skills assessments for admin:', err);
         }
       } else {
         setAdminError(`Invalid username or password. Default password is: cricket2026`);
@@ -4397,6 +4438,67 @@ END:VCALENDAR`;
     );
   };
 
+  // --- CRICKET SKILLS ASSESSMENT PORTAL WORKSPACE ---
+  const renderSkillsAssessmentWorkspace = () => {
+    const handleOpenForm = () => {
+      setAssessmentSubmission(null);
+      setAssessmentView('form');
+    };
+
+    const handleCloseForm = () => {
+      setAssessmentView('landing');
+    };
+
+    const handleFormSubmitted = (data: AssessmentSubmissionData) => {
+      setAssessmentSubmission(data);
+      setAssessmentView('checkout');
+    };
+
+    const handlePaymentSuccess = (updatedData: AssessmentSubmissionData) => {
+      setAssessmentSubmission(updatedData);
+    };
+
+    return (
+      <div className="flex-1 max-w-7xl w-full mx-auto px-4 py-8 flex flex-col justify-center animate-fade-in font-sans min-h-[80vh]">
+        {assessmentView === 'landing' && (
+          <div className="text-center max-w-4xl mx-auto space-y-8 py-8 flex flex-col items-center justify-center w-full">
+            <h2 className="text-[clamp(12px,3.1vw,42px)] font-black tracking-tight text-[#0B1A30] leading-tight font-display whitespace-nowrap text-center block w-full">
+              Official Cricket Skills Certification Assessment Test
+            </h2>
+
+            <div className="pt-4 flex flex-col items-center justify-center">
+              {/* <button
+                id="cricket-skills-assessment-test-btn"
+                onClick={handleOpenForm}
+                className="group relative inline-flex items-center justify-center gap-3 px-10 py-5 bg-[#0B1A30] hover:bg-slate-900 text-amber-400 font-black text-xl md:text-2xl rounded-2xl shadow-2xl shadow-[#0B1A30]/30 hover:shadow-amber-500/20 transform hover:-translate-y-1 transition-all duration-200 cursor-pointer border-4 border-amber-500"
+              >
+                <Award size={28} className="text-amber-400 group-hover:rotate-12 transition-transform duration-300" />
+                <span>Start Cricket Skills Certification Test</span>
+                <ChevronRight size={26} className="text-amber-400 group-hover:translate-x-1 transition-transform" />
+              </button> */}
+            </div>
+          </div>
+        )}
+
+        {assessmentView === 'form' && (
+          <CricketAssessmentForm
+            onClose={handleCloseForm}
+            onSubmitSuccess={handleFormSubmitted}
+          />
+        )}
+
+        {assessmentView === 'checkout' && assessmentSubmission && (
+          <AssessmentPaymentCheckout
+            submission={assessmentSubmission}
+            onPaymentSuccess={handlePaymentSuccess}
+            onBackToEdit={() => setAssessmentView('form')}
+          />
+        )}
+      </div>
+    );
+  };
+
+
 
   return (
     <div className="min-h-screen flex flex-col font-sans">
@@ -4430,11 +4532,8 @@ END:VCALENDAR`;
                 <span className="absolute bottom-0 left-0 w-full h-[3px] bg-[#D4AF37] rounded-full"></span>
               )}
             </button>
-            <button onClick={() => scrollToSection('why-choose-me')} className="py-2 text-[#0B1A30] hover:text-[#D4AF37] transition cursor-pointer whitespace-nowrap">Why Choose Me</button>
             <button onClick={() => scrollToSection('about-me')} className="py-2 text-[#0B1A30] hover:text-[#D4AF37] transition cursor-pointer whitespace-nowrap">About Me</button>
-            <button onClick={() => scrollToSection('services')} className="py-2 text-[#0B1A30] hover:text-[#D4AF37] transition cursor-pointer whitespace-nowrap">My Services</button>
-            <button onClick={() => scrollToSection('faq')} className="py-2 text-[#0B1A30] hover:text-[#D4AF37] transition cursor-pointer">FAQ</button>
-            <button onClick={() => scrollToSection('contact')} className="py-2 text-[#0B1A30] hover:text-[#D4AF37] transition cursor-pointer font-sans whitespace-nowrap">Contact</button>
+            <button onClick={() => scrollToSection('services')} className="py-2 text-[#0B1A30] hover:text-[#D4AF37] transition cursor-pointer whitespace-nowrap">Our Services</button>
           </nav>
 
           {/* Action buttons (Check Eligibility, Book Now, Create My Cricket CV) & Mobile Hamburger */}
@@ -4447,17 +4546,24 @@ END:VCALENDAR`;
             </button>
 
             <button 
-              onClick={() => { setActiveTab('book'); setBookingStep(1); }}
-              className="hidden lg:inline-block px-2 sm:px-2.5 py-2 text-[10px] xl:text-[11px] font-extrabold bg-[#0B1A30] hover:bg-[#1A2E4C] text-white rounded-lg hover:scale-105 hover:shadow-lg transition transform duration-150 uppercase tracking-widest cursor-pointer font-sans whitespace-nowrap"
-            >
-              Book Now
-            </button>
-
-            <button 
               onClick={() => { setActiveTab('cricket-cv'); setCvView('landing'); setCvStep(1); }}
               className="hidden lg:inline-block px-2 sm:px-2.5 py-2 text-[10px] xl:text-[11px] font-extrabold bg-[#F5C451] hover:bg-[#E2AF3C] text-[#0B1A30] rounded-lg shadow-sm hover:scale-105 hover:shadow transition transform duration-150 uppercase tracking-widest cursor-pointer font-sans whitespace-nowrap"
             >
               Create My Cricket CV
+            </button>
+
+            {/* <button 
+              onClick={() => { setActiveTab('cricket-assessment'); setAssessmentView('landing'); }}
+              className="hidden lg:inline-block px-2 sm:px-2.5 py-2 text-[10px] xl:text-[11px] font-extrabold bg-[#F5C451] hover:bg-[#E2AF3C] text-[#0B1A30] rounded-lg shadow-sm hover:scale-105 hover:shadow transition transform duration-150 uppercase tracking-widest cursor-pointer font-sans whitespace-nowrap"
+            >
+              Cricket Skills Certification
+            </button> */}
+
+            <button 
+              onClick={() => { setActiveTab('book'); setBookingStep(1); }}
+              className="hidden lg:inline-block px-2 sm:px-2.5 py-2 text-[10px] xl:text-[11px] font-extrabold bg-[#0B1A30] hover:bg-[#1A2E4C] text-white rounded-lg hover:scale-105 hover:shadow-lg transition transform duration-150 uppercase tracking-widest cursor-pointer font-sans whitespace-nowrap"
+            >
+              Book Now
             </button>
 
             {/* Hamburger Toggle Button */}
@@ -4478,28 +4584,28 @@ END:VCALENDAR`;
           <div className="xl:hidden bg-[#0B1A30] border-t border-navy-700/55 px-4 py-3 shadow-xl animate-fade-in">
             <nav className="flex flex-col space-y-2 text-sm font-sans font-normal tracking-wider uppercase text-slate-100">
               <button 
-                onClick={() => scrollToSection('home')} 
+                onClick={() => { scrollToSection('home'); setMobileMenuOpen(false); }} 
                 className="text-left py-2 border-b border-navy-800/60 hover:text-gold-400 transition"
               >
                 Home
               </button>
               <button 
-                onClick={() => scrollToSection('why-choose-me')} 
-                className="text-left py-2 border-b border-navy-800/60 hover:text-gold-400 transition"
-              >
-                Why Choose Me
-              </button>
-              <button 
-                onClick={() => scrollToSection('about-me')} 
+                onClick={() => { scrollToSection('about-me'); setMobileMenuOpen(false); }} 
                 className="text-left py-2 border-b border-navy-800/60 hover:text-gold-400 transition"
               >
                 About Me
               </button>
               <button 
-                onClick={() => scrollToSection('services')} 
+                onClick={() => { scrollToSection('services'); setMobileMenuOpen(false); }} 
                 className="text-left py-2 border-b border-navy-800/60 hover:text-gold-400 transition"
               >
-                My Services
+                Our Services
+              </button>
+              <button 
+                onClick={() => { try { sessionStorage.setItem('tcc_active_tab', 'eligibility'); sessionStorage.removeItem('tcc_eligibility_step'); sessionStorage.removeItem('tcc_confirmed_assessment'); } catch {} setActiveTab('eligibility'); setEligibilityStep(1); setMobileMenuOpen(false); window.scrollTo({ top: 0, behavior: 'smooth' }); }} 
+                className="text-left py-2 border-b border-navy-800/60 hover:text-gold-400 transition"
+              >
+                Check Eligibility - UK 2027
               </button>
               <button 
                 onClick={() => { setActiveTab('cricket-cv'); setCvView('landing'); setCvStep(1); setMobileMenuOpen(false); }} 
@@ -4507,29 +4613,17 @@ END:VCALENDAR`;
               >
                 Create My Cricket CV
               </button>
-              <button 
-                onClick={() => { setActiveTab('eligibility'); setEligibilityStep(1); setMobileMenuOpen(false); }} 
-                className="text-left py-2 border-b border-navy-800/60 hover:text-gold-400 transition"
+              {/* <button 
+                onClick={() => { setActiveTab('cricket-assessment'); setAssessmentView('landing'); setMobileMenuOpen(false); }} 
+                className="text-left py-2 border-b border-navy-800/60 hover:text-gold-400 text-gold-400 font-bold transition"
               >
-                Check Eligibility - UK 2027
-              </button>
+                Cricket Skills Certification
+              </button> */}
               <button 
                 onClick={() => { setActiveTab('book'); setBookingStep(1); setMobileMenuOpen(false); }} 
-                className="text-left py-2 border-b border-navy-800/60 hover:text-gold-400 transition"
-              >
-                Book Appointment
-              </button>
-              <button 
-                onClick={() => scrollToSection('faq')} 
-                className="text-left py-2 border-b border-navy-800/60 hover:text-gold-400 transition"
-              >
-                FAQ
-              </button>
-              <button 
-                onClick={() => scrollToSection('contact')} 
                 className="text-left py-2 hover:text-gold-400 transition"
               >
-                Contact
+                Book Appointment
               </button>
             </nav>
           </div>
@@ -4650,6 +4744,14 @@ END:VCALENDAR`;
                   {/* CTA Buttons */}
                   <div className="pt-2 flex flex-col sm:flex-row flex-wrap gap-4">
                     <button 
+                      onClick={() => { try { sessionStorage.setItem('tcc_active_tab', 'eligibility'); sessionStorage.removeItem('tcc_eligibility_step'); sessionStorage.removeItem('tcc_confirmed_assessment'); } catch {} setActiveTab('eligibility'); setEligibilityStep(1); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
+                      className="w-full sm:w-auto px-6 py-3.5 bg-[#F5C451] hover:bg-[#E2AF3C] text-[#0B1A30] font-extrabold rounded-lg shadow-md hover:scale-105 transform transition duration-150 uppercase tracking-wider text-xs flex items-center justify-center space-x-1.5 cursor-pointer font-sans"
+                    >
+                      <span>Check Eligibility - UK 2027</span>
+                      <ChevronRight className="h-4 w-4" />
+                    </button>
+
+                    <button 
                       onClick={() => { setActiveTab('cricket-cv'); setCvView('landing'); setCvStep(1); }}
                       className="w-full sm:w-auto px-6 py-3.5 bg-[#F5C451] hover:bg-[#E2AF3C] text-[#0B1A30] font-extrabold rounded-lg shadow-md hover:scale-105 transform transition duration-150 uppercase tracking-wider text-xs flex items-center justify-center space-x-1.5 cursor-pointer font-sans"
                     >
@@ -4657,13 +4759,13 @@ END:VCALENDAR`;
                       <ChevronRight className="h-4 w-4" />
                     </button>
 
-                    <button 
-                      onClick={() => { try { sessionStorage.setItem('tcc_active_tab', 'eligibility'); sessionStorage.removeItem('tcc_eligibility_step'); sessionStorage.removeItem('tcc_confirmed_assessment'); } catch {} setActiveTab('eligibility'); setEligibilityStep(1); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
+                    {/* <button 
+                      onClick={() => { setActiveTab('cricket-assessment'); setAssessmentView('landing'); }}
                       className="w-full sm:w-auto px-6 py-3.5 bg-[#F5C451] hover:bg-[#E2AF3C] text-[#0B1A30] font-extrabold rounded-lg shadow-md hover:scale-105 transform transition duration-150 uppercase tracking-wider text-xs flex items-center justify-center space-x-1.5 cursor-pointer font-sans"
                     >
-                      <span>Check Eligibility - UK 2027</span>
+                      <span>Cricket Skills Certification</span>
                       <ChevronRight className="h-4 w-4" />
-                    </button>
+                    </button> */}
 
                     <button 
                       onClick={() => { setActiveTab('book'); setBookingStep(1); }}
@@ -6368,6 +6470,8 @@ END:VCALENDAR`;
 
       {activeTab === 'cricket-cv' && renderCricketCvWorkspace()}
 
+      {activeTab === 'cricket-assessment' && renderSkillsAssessmentWorkspace()}
+
       {activeTab === 'book' && (
           <div className="py-12 bg-slate-50 min-h-[85vh]">
             <div className="max-w-4xl mx-auto px-4">
@@ -7119,6 +7223,14 @@ END:VCALENDAR`;
                       <FileText className="h-4 w-4 text-gold-500" />
                       <span>Assessments ({assessments.length})</span>
                     </button>
+
+                    <button 
+                      onClick={() => setAdminSubTab('skills-assessments')}
+                      className={`px-4 py-2 text-xs font-bold rounded-lg uppercase tracking-wider transition flex items-center space-x-1.5 cursor-pointer ${adminSubTab === 'skills-assessments' ? 'bg-navy-900 text-white shadow-md font-extrabold' : 'bg-slate-100 text-slate-700 hover:bg-slate-200 border border-slate-200'}`}
+                    >
+                      <Award className="h-4 w-4 text-gold-500" />
+                      <span>Skills Assessments ({skillsList.length})</span>
+                    </button>
                     <button 
                       onClick={() => setAdminSubTab('prices')}
                       className={`px-4 py-2 text-xs font-bold rounded-lg uppercase tracking-wider transition flex items-center space-x-1.5 cursor-pointer ${adminSubTab === 'prices' ? 'bg-navy-900 text-white shadow-md font-extrabold' : 'bg-slate-100 text-slate-700 hover:bg-slate-200 border border-slate-200'}`}
@@ -7488,6 +7600,83 @@ END:VCALENDAR`;
                                     </button>
                                   )}
                                 </div>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Dedicated Skills Assessments View */}
+                  {adminSubTab === 'skills-assessments' && (
+                    <div className="bg-white rounded-2xl shadow-xl border border-navy-100 p-6 sm:p-8 space-y-6 animate-fade-in font-sans">
+                      <div className="flex flex-col sm:flex-row justify-between sm:items-center border-b border-slate-150 pb-4 gap-4">
+                        <div>
+                          <div className="flex items-center space-x-2">
+                            <Award className="h-6 w-6 text-gold-500" />
+                            <h3 className="text-xl font-bold font-display text-navy-900 uppercase">Skills Assessments</h3>
+                          </div>
+                          <p className="text-xs text-slate-500 mt-1">
+                            All submitted Skills Certification Assessments from candidates.
+                          </p>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <span className="px-3 py-1 bg-gold-100 text-gold-800 text-xs font-bold rounded-full border border-gold-300">
+                            {skillsList.length} Skills Assessments Received
+                          </span>
+                        </div>
+                      </div>
+
+                      {skillsList.length === 0 ? (
+                        <div className="p-8 text-center text-slate-400 bg-slate-50 rounded-xl border border-slate-200">
+                          <FileText className="h-8 w-8 mx-auto mb-2 text-slate-300" />
+                          <p className="text-xs">No skills assessments submitted yet.</p>
+                        </div>
+                      ) : (
+                        <div className="space-y-3">
+                          {skillsList.map((skillAss) => (
+                            <div key={skillAss.id} className="p-4 rounded-xl bg-slate-50 border border-slate-200 text-xs hover:border-slate-300 transition">
+                              <div className="flex justify-between items-start flex-wrap gap-3">
+                                <div className="space-y-1 flex-1">
+                                  <div className="flex items-center gap-2 flex-wrap">
+                                    <span className="font-mono text-[10px] text-slate-400 font-bold">{skillAss.id}</span>
+                                    <span
+                                      className="px-2 py-0.5 rounded-full text-[10px] font-bold uppercase border border-emerald-300 text-emerald-700 bg-emerald-50"
+                                    >
+                                      ✓ Paid & Confirmed
+                                    </span>
+                                    <span className="px-2 py-0.5 bg-blue-50 text-blue-700 border border-blue-200 rounded text-[10px] font-bold">
+                                      {skillAss.testMode} Test
+                                    </span>
+                                  </div>
+                                  <h4 className="font-bold text-sm text-navy-900">
+                                    {skillAss.firstName} {skillAss.lastName}
+                                  </h4>
+                                  <p className="text-slate-500">
+                                    <strong>Age:</strong> {skillAss.age} ({skillAss.isAbove18 === 'Yes' ? '18+' : `Minor, Relation: ${skillAss.applicantRelation}`})
+                                  </p>
+                                  <p className="text-slate-500">
+                                    <strong>Email:</strong> {skillAss.email} | <strong>Mobile:</strong> <span className="font-mono">{skillAss.mobileCountryCode} {skillAss.mobileNumber}</span>
+                                  </p>
+                                  <p className="text-slate-500">
+                                    <strong>Nationality:</strong> {skillAss.nationality} | <strong>Residence:</strong> {skillAss.countryOfResidence}
+                                  </p>
+                                  <p className="text-slate-500">
+                                    <strong>Role:</strong> {skillAss.playingRole} | <strong>Specialty:</strong> <span className="text-[#0B1A30] font-semibold">{skillAss.subRole}</span>
+                                  </p>
+                                  {skillAss.submittedAt && (
+                                    <p className="text-slate-400 text-[10px]">
+                                      Submitted: {skillAss.submittedAt}
+                                    </p>
+                                  )}
+                                </div>
+                                {skillAss.paymentDetails && (
+                                  <div className="flex flex-col items-end gap-1">
+                                    <span className="font-bold text-navy-900 font-display text-sm">₹{skillAss.paymentDetails.amount?.toLocaleString('en-IN') || (skillAss.testMode === 'Online' ? 10000 : 14999)}</span>
+                                    <span className="text-[10px] text-slate-400 font-mono">Tx ID: {skillAss.paymentDetails.transactionId}</span>
+                                  </div>
+                                )}
                               </div>
                             </div>
                           ))}

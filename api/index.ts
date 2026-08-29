@@ -25,6 +25,9 @@ import saveBookings from '../api-src/save-bookings.js';
 import saveCv from '../api-src/save-cv.js';
 import saveSettings from '../api-src/save-settings.js';
 import verifyPayment from '../api-src/verify-payment.js';
+import verifySkillsAssessment from '../api-src/verify-skills-assessment.js';
+import getSkillsAssessments from '../api-src/get-skills-assessments.js';
+
 
 const routes: Record<string, (req: VercelRequest, res: VercelResponse) => Promise<any> | any> = {
   'add-booking': addBooking,
@@ -51,6 +54,8 @@ const routes: Record<string, (req: VercelRequest, res: VercelResponse) => Promis
   'save-cv': saveCv,
   'save-settings': saveSettings,
   'verify-payment': verifyPayment,
+  'verify-skills-assessment': verifySkillsAssessment,
+  'get-skills-assessments': getSkillsAssessments,
 };
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {

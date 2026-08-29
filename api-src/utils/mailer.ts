@@ -119,3 +119,55 @@ export const sendAssessmentEmail = async (assessment: any): Promise<boolean> => 
     return false;
   }
 };
+
+export const sendSkillsAssessmentEmail = async (assessment: any): Promise<boolean> => {
+  const apiKey = process.env.RESEND_API_KEY;
+
+  if (!apiKey) {
+    console.warn('[Resend Mailer] RESEND_API_KEY is not set. Skipping automatic skills assessment email dispatch.');
+    return false;
+  }
+
+  const resend = new Resend(apiKey.trim());
+  const fromEmail = process.env.RESEND_FROM_EMAIL || 'booking@thecricketadvisor.com';
+
+  const htmlContent = `
+    <div style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; border: 1px solid #e0e0e0; border-radius: 8px; overflow: hidden;">
+      <div style="background-color: #0b1a30; padding: 20px; text-align: center; color: white;">
+        <h2 style="margin: 0; color: #ffffff;">Skills Assessment Registered</h2>
+        <p style="margin: 5px 0 0 0; font-size: 14px; color: #cbd5e1;">The Cricket Advisor</p>
+      </div>
+      <div style="padding: 25px; background-color: #ffffff;">
+        <p>Dear ${assessment.firstName || 'Player'},</p>
+        <p>Your payment for the Cricket Skills Certification Assessment Test is successful.</p>
+        
+        <div style="background-color: #f8fafc; padding: 15px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #D4AF37; border-top: 1px solid #e2e8f0; border-right: 1px solid #e2e8f0; border-bottom: 1px solid #e2e8f0;">
+          <p style="margin: 4px 0; font-size: 13px;"><strong>Assessment ID:</strong></p>
+          <p style="margin: 4px 0; font-size: 16px; font-family: monospace; color: #0b1a30; font-weight: bold;">${assessment.id}</p>
+          <p style="margin: 4px 0; font-size: 13px;"><strong>Test Format:</strong> ${assessment.testMode} Test</p>
+          <p style="margin: 4px 0; font-size: 13px;"><strong>Playing Role:</strong> ${assessment.playingRole}</p>
+          <p style="margin: 4px 0; font-size: 13px;"><strong>Specialty:</strong> ${assessment.subRole}</p>
+        </div>
+
+        <p><strong>The Cricket Advisor team will connect with you in the next 3 to 5 working days</strong> to schedule your personalized video assessment slot or ground academy location. Please keep your phone and email active.</p>
+        
+        <p>Thank You,</p>
+        <p style="margin-top: 20px; font-size: 14px; line-height: 1.5;">Team<br><strong>The Cricket Advisor</strong></p>
+      </div>
+    </div>
+  `;
+
+  try {
+    await resend.emails.send({
+      from: `The Cricket Advisor <${fromEmail}>`,
+      to: assessment.email,
+      subject: `Skills Assessment Registered Successfully - ${assessment.id}`,
+      html: htmlContent,
+    });
+    console.log(`[Resend Mailer] Skills assessment confirmation email successfully sent to ${assessment.email}`);
+    return true;
+  } catch (err) {
+    console.error('[Resend Mailer] Failed to send skills assessment confirmation email:', err);
+    return false;
+  }
+};

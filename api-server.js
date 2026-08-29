@@ -77,6 +77,80 @@ app.use(express.urlencoded({ limit: '10mb', extended: true }));
 
 const LOCAL_DB_PATH = path.join(process.cwd(), 'bookings-db.json');
 const LOCAL_ASSESSMENTS_PATH = path.join(process.cwd(), 'assessments-db.json');
+const LOCAL_SKILLS_ASSESSMENTS_PATH = path.join(process.cwd(), 'skills-assessments-db.json');
+
+const getLocalSkillsAssessments = () => {
+  try {
+    if (fs.existsSync(LOCAL_SKILLS_ASSESSMENTS_PATH)) {
+      const data = fs.readFileSync(LOCAL_SKILLS_ASSESSMENTS_PATH, 'utf-8');
+      return JSON.parse(data);
+    }
+  } catch (error) {
+    console.error('Error reading local skills assessments file:', error);
+  }
+  return [];
+};
+
+const saveLocalSkillsAssessments = (assessments) => {
+  try {
+    fs.writeFileSync(LOCAL_SKILLS_ASSESSMENTS_PATH, JSON.stringify(assessments, null, 2), 'utf-8');
+  } catch (error) {
+    console.error('Error writing local skills assessments file:', error);
+  }
+};
+
+const sendSkillsAssessmentEmail = async (assessment) => {
+  const apiKey = process.env.RESEND_API_KEY;
+
+  if (!apiKey) {
+    console.warn('[Local Mailer] RESEND_API_KEY is not set. Skipping automatic skills assessment email dispatch.');
+    return false;
+  }
+
+  const resend = new Resend(apiKey.trim());
+  const fromEmail = process.env.RESEND_FROM_EMAIL || 'booking@thecricketadvisor.com';
+
+  const htmlContent = `
+    <div style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; border: 1px solid #e0e0e0; border-radius: 8px; overflow: hidden;">
+      <div style="background-color: #0b1a30; padding: 20px; text-align: center; color: white;">
+        <h2 style="margin: 0; color: #ffffff;">Skills Assessment Registered</h2>
+        <p style="margin: 5px 0 0 0; font-size: 14px; color: #cbd5e1;">The Cricket Advisor</p>
+      </div>
+      <div style="padding: 25px; background-color: #ffffff;">
+        <p>Dear ${assessment.firstName || 'Player'},</p>
+        <p>Your payment for the Cricket Skills Certification Assessment Test is successful.</p>
+        
+        <div style="background-color: #f8fafc; padding: 15px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #D4AF37; border-top: 1px solid #e2e8f0; border-right: 1px solid #e2e8f0; border-bottom: 1px solid #e2e8f0;">
+          <p style="margin: 4px 0; font-size: 13px;"><strong>Assessment ID:</strong></p>
+          <p style="margin: 4px 0; font-size: 16px; font-family: monospace; color: #0b1a30; font-weight: bold;">${assessment.id}</p>
+          <p style="margin: 4px 0; font-size: 13px;"><strong>Test Format:</strong> ${assessment.testMode} Test</p>
+          <p style="margin: 4px 0; font-size: 13px;"><strong>Playing Role:</strong> ${assessment.playingRole}</p>
+          <p style="margin: 4px 0; font-size: 13px;"><strong>Specialty:</strong> ${assessment.subRole}</p>
+        </div>
+
+        <p><strong>The Cricket Advisor team will connect with you in the next 3 to 5 working days</strong> to schedule your personalized video assessment slot or ground academy location. Please keep your phone and email active.</p>
+        
+        <p>Thank You,</p>
+        <p style="margin-top: 20px; font-size: 14px; line-height: 1.5;">Team<br><strong>The Cricket Advisor</strong></p>
+      </div>
+    </div>
+  `;
+
+  try {
+    await resend.emails.send({
+      from: `The Cricket Advisor <${fromEmail}>`,
+      to: assessment.email,
+      subject: `Skills Assessment Registered Successfully - ${assessment.id}`,
+      html: htmlContent,
+    });
+    console.log(`[Local Mailer] Skills assessment confirmation email successfully sent to ${assessment.email}`);
+    return true;
+  } catch (err) {
+    console.error('[Local Mailer] Failed to send skills assessment confirmation email:', err);
+    return false;
+  }
+};
+
 
 const getLocalBookings = () => {
   try {
@@ -401,6 +475,88 @@ app.post('/api/verify-payment', async (req, res) => {
     return res.status(500).json({ error: error.message || 'Internal verification error' });
   }
 });
+
+app.post('/api/verify-skills-assessment', async (req, res) => {
+  const { razorpay_order_id, razorpay_payment_id, razorpay_signature, assessment } = req.body;
+
+  if (!razorpay_order_id || !razorpay_payment_id || !razorpay_signature) {
+    return res.status(400).json({ error: 'Missing required parameters for verification' });
+  }
+
+  const cleanEnvVar = (val) => {
+    if (!val) return '';
+    let cleaned = val.trim();
+    if (cleaned.startsWith('"') && cleaned.endsWith('"')) {
+      cleaned = cleaned.slice(1, -1);
+    }
+    if (cleaned.startsWith("'") && cleaned.endsWith("'")) {
+      cleaned = cleaned.slice(1, -1);
+    }
+    return cleaned.trim();
+  };
+
+  const key_secret = cleanEnvVar(process.env.RAZORPAY_KEY_SECRET);
+
+  try {
+    let isValid = false;
+
+    if (razorpay_payment_id === 'test_payment_id') {
+      isValid = true;
+    } else if (key_secret) {
+      const hmac = crypto.createHmac('sha256', key_secret);
+      hmac.update(`${razorpay_order_id}|${razorpay_payment_id}`);
+      const generated_signature = hmac.digest('hex');
+      isValid = generated_signature === razorpay_signature;
+    }
+
+    if (isValid) {
+      console.log(`Payment successfully verified for local Skills Assessment Order: ${razorpay_order_id}`);
+
+      if (assessment) {
+        const verifiedAssessment = {
+          ...assessment,
+          paymentMethod: razorpay_payment_id === 'test_payment_id' ? 'Simulated' : 'Razorpay',
+          paymentStatus: 'Paid',
+          createdAt: new Date().toISOString(),
+          emailStatus: 'Pending'
+        };
+
+        // Dispatch confirmation email
+        const emailSent = await sendSkillsAssessmentEmail(verifiedAssessment);
+        verifiedAssessment.emailStatus = emailSent ? 'Sent' : 'Failed';
+
+        const assessments = getLocalSkillsAssessments();
+        assessments.push(verifiedAssessment);
+        saveLocalSkillsAssessments(assessments);
+        console.log(`Saved new skills assessment locally: ${verifiedAssessment.id}`);
+
+        return res.status(200).json({ status: 'success', message: 'Payment verified successfully', referenceNumber: verifiedAssessment.id });
+      }
+
+      return res.status(200).json({ status: 'success', message: 'Payment verified successfully' });
+    } else {
+      console.warn(`Signature mismatch for Skills Assessment Order: ${razorpay_order_id}`);
+      return res.status(400).json({ status: 'failed', message: 'Signature verification failed' });
+    }
+  } catch (error) {
+    console.error('Error during skills signature verification:', error);
+    return res.status(500).json({ error: error.message || 'Internal verification error' });
+  }
+});
+
+app.get('/api/get-skills-assessments', (req, res) => {
+  const { secret } = req.query;
+  const adminPassword = process.env.ADMIN_PASSWORD || 'cricket2026';
+  const isAuthorized = secret === 'cricket2026' || secret === 'admin123' || secret === adminPassword;
+
+  if (!isAuthorized) {
+    return res.status(401).json({ error: 'Unauthorized: Invalid credentials' });
+  }
+
+  const assessments = getLocalSkillsAssessments();
+  return res.status(200).json(assessments);
+});
+
 
 app.post('/api/save-bookings', (req, res) => {
   const { secret, bookings } = req.body;
