@@ -83,6 +83,8 @@ import { PaymentCheckout as AssessmentPaymentCheckout } from './components/asses
 import { SubmissionSummary as AssessmentSubmissionSummary } from './components/assessment/SubmissionSummary';
 import { SubmissionData as AssessmentSubmissionData } from './components/assessment/types';
 
+// --- COACHES CORNER IMPORTS ---
+import { CoachesCorner } from './components/coaches-corner/CoachesCorner';
 
 
 // --- TYPES ---
@@ -778,6 +780,7 @@ export default function App() {
   
   // Admin Login State
   const [isAdminLoggedIn, setIsAdminLoggedIn] = useState(false);
+  const [showCoachesCorner, setShowCoachesCorner] = useState(false);
   const [adminUsername, setAdminUsername] = useState('');
   const [adminPassword, setAdminPassword] = useState('');
   const [adminError, setAdminError] = useState('');
@@ -7205,6 +7208,14 @@ END:VCALENDAR`;
                       <h2 className="text-2xl sm:text-3xl font-extrabold text-white font-display">TCC Management Console</h2>
                     </div>
                     <div className="flex space-x-3">
+                      <button
+                        onClick={() => setShowCoachesCorner(true)}
+                        className="px-4 py-2 bg-amber-500 hover:bg-amber-400 text-[#0B1A30] text-xs font-extrabold uppercase tracking-wider rounded border border-amber-400 flex items-center space-x-2 shadow-lg"
+                        title="Open Coaches Corner – Assessment Report Generator"
+                      >
+                        <span>🏏</span>
+                        <span>Coaches Corner</span>
+                      </button>
                       <button 
                         onClick={handleExportCSV}
                         className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-white text-xs font-bold uppercase tracking-wider rounded border border-slate-700 flex items-center space-x-2"
@@ -7731,6 +7742,22 @@ END:VCALENDAR`;
                           <span className="px-3 py-1 bg-gold-100 text-gold-800 text-xs font-bold rounded-full border border-gold-300">
                             {assessments.length} Assessments Received
                           </span>
+                          <button
+                            onClick={async () => {
+                              try {
+                                const resp = await fetch(`/api/get-assessments?secret=${encodeURIComponent(adminPassword)}`);
+                                if (resp.ok) {
+                                  const fresh = await resp.json();
+                                  setAssessments(fresh);
+                                }
+                              } catch (e) { console.error('Refresh failed', e); }
+                            }}
+                            className="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-[10px] font-bold rounded-lg uppercase tracking-wider flex items-center space-x-1 transition cursor-pointer"
+                            title="Re-fetch latest assessments from the cloud database"
+                          >
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>
+                            <span>Refresh from Cloud</span>
+                          </button>
                         </div>
                       </div>
 
@@ -7750,12 +7777,12 @@ END:VCALENDAR`;
                                     <span
                                       className="px-2 py-0.5 rounded-full text-[10px] font-bold uppercase border"
                                       style={{
-                                        borderColor: assessment.paymentStatus === 'paid' ? '#10b981' : assessment.paymentStatus === 'failed' ? '#ef4444' : '#f59e0b',
-                                        color: assessment.paymentStatus === 'paid' ? '#047857' : assessment.paymentStatus === 'failed' ? '#b91c1c' : '#92400e',
-                                        backgroundColor: assessment.paymentStatus === 'paid' ? '#f0fdf4' : assessment.paymentStatus === 'failed' ? '#fef2f2' : '#fffbeb',
+                                        borderColor: assessment.paymentStatus?.toLowerCase() === 'paid' ? '#10b981' : assessment.paymentStatus?.toLowerCase() === 'failed' ? '#ef4444' : '#f59e0b',
+                                        color: assessment.paymentStatus?.toLowerCase() === 'paid' ? '#047857' : assessment.paymentStatus?.toLowerCase() === 'failed' ? '#b91c1c' : '#92400e',
+                                        backgroundColor: assessment.paymentStatus?.toLowerCase() === 'paid' ? '#f0fdf4' : assessment.paymentStatus?.toLowerCase() === 'failed' ? '#fef2f2' : '#fffbeb',
                                       }}
                                     >
-                                      {assessment.paymentStatus === 'paid' ? '✓ Payment Verified' : assessment.paymentStatus === 'failed' ? '✗ Payment Failed' : '⏳ Pending'}
+                                      {assessment.paymentStatus?.toLowerCase() === 'paid' ? '✓ Payment Verified' : assessment.paymentStatus?.toLowerCase() === 'failed' ? '✗ Payment Failed' : '⏳ Pending'}
                                     </span>
                                   </div>
                                   <h4 className="font-bold text-sm text-navy-900">
@@ -9997,6 +10024,14 @@ END:VCALENDAR`;
             <p className="text-slate-500 text-xs font-semibold">Please wait while we prepare your document.</p>
           </div>
         </div>
+      )}
+
+      {/* ============== COACHES CORNER OVERLAY ============== */}
+      {showCoachesCorner && (
+        <CoachesCorner
+          onClose={() => setShowCoachesCorner(false)}
+          skillsList={skillsList}
+        />
       )}
 
     </div>
