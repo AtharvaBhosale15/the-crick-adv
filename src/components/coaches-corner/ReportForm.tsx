@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { X, Download, ChevronDown, ChevronUp, Trophy, Star, Loader2, MessageSquare, Save, CheckCircle } from "lucide-react";
 import { getCategories, initialScores, ScoresMap, categoryAverage, grandAverage, CategoryGroup, getAllKeys } from "./OnlineReportCategories";
 import { SubmissionData } from "../assessment/types";
@@ -194,18 +194,23 @@ export const ReportForm: React.FC<ReportFormProps> = ({ candidate, onClose }) =>
       const pdf = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
       const pdfWidth = pdf.internal.pageSize.getWidth();
       const pdfHeight = pdf.internal.pageSize.getHeight();
-      const imgWidth = pdfWidth - 20;
+      const margin = 10;
+      const imgWidth = pdfWidth - (margin * 2);
       const imgHeight = (canvas.height * imgWidth) / canvas.width;
 
-      let yPos = 10;
-      let remainingHeight = imgHeight;
+      const pageHeightLimit = pdfHeight - (margin * 2);
+      let heightLeft = imgHeight;
+      let position = margin;
+      let isFirstPage = true;
 
-      while (remainingHeight > 0) {
-        if (yPos > 10) pdf.addPage();
-        const pageHeight = pdfHeight - 20;
-        pdf.addImage(imgData, "PNG", 10, yPos === 10 ? 10 : 10, imgWidth, imgHeight, undefined, "FAST");
-        remainingHeight -= pageHeight;
-        yPos = 10;
+      while (heightLeft > 0) {
+        if (!isFirstPage) {
+          pdf.addPage();
+        }
+        pdf.addImage(imgData, "PNG", margin, position, imgWidth, imgHeight, undefined, "FAST");
+        heightLeft -= pageHeightLimit;
+        position -= pageHeightLimit;
+        isFirstPage = false;
       }
 
       pdf.save(`CoachReport_${candidate.firstName}_${candidate.lastName}_${candidate.id}.pdf`);
