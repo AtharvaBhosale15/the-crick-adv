@@ -1490,6 +1490,8 @@ END:VCALENDAR`;
         setActiveTab('cricket-cv');
       } else if (hash === '#cricket-assessment') {
         setActiveTab('cricket-assessment');
+      } else if (hash === '#coaches') {
+        setShowCoachesCorner(true);
       } else if (!hash || hash === '#home') {
         setActiveTab('main');
       }
@@ -10029,7 +10031,12 @@ END:VCALENDAR`;
       {/* ============== COACHES CORNER OVERLAY ============== */}
       {showCoachesCorner && (
         <CoachesCorner
-          onClose={() => setShowCoachesCorner(false)}
+          onClose={() => {
+            setShowCoachesCorner(false);
+            if (window.location.hash === '#coaches') {
+              window.history.replaceState(null, '', window.location.pathname + window.location.search);
+            }
+          }}
           skillsList={skillsList}
         />
       )}
