@@ -35,7 +35,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   try {
     const razorpay = new Razorpay({ key_id, key_secret });
     const options = {
-      amount: Math.round(amount), // Amount in paise
+      amount: Math.round(amount * 100), // Amount in paise
       currency: 'INR',
       receipt: `receipt_order_${Date.now()}`,
     };
