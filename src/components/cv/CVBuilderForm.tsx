@@ -1358,6 +1358,7 @@ export default function CVBuilderForm({
                           >
                             <option value="">Select Country</option>
                             <option value="India">India</option>
+                            <option value="United Kingdom">United Kingdom</option>
                             <option value="Sri Lanka">Sri Lanka</option>
                             <option value="New Zealand">New Zealand</option>
                             <option value="Australia">Australia</option>
