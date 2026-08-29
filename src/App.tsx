@@ -4498,7 +4498,7 @@ END:VCALENDAR`;
             </h2>
 
             <div className="pt-4 flex flex-col items-center justify-center">
-              {/* <button
+              <button
                 id="cricket-skills-assessment-test-btn"
                 onClick={handleOpenForm}
                 className="group relative inline-flex items-center justify-center gap-3 px-10 py-5 bg-[#0B1A30] hover:bg-slate-900 text-amber-400 font-black text-xl md:text-2xl rounded-2xl shadow-2xl shadow-[#0B1A30]/30 hover:shadow-amber-500/20 transform hover:-translate-y-1 transition-all duration-200 cursor-pointer border-4 border-amber-500"
@@ -4506,7 +4506,7 @@ END:VCALENDAR`;
                 <Award size={28} className="text-amber-400 group-hover:rotate-12 transition-transform duration-300" />
                 <span>Start Cricket Skills Certification Test</span>
                 <ChevronRight size={26} className="text-amber-400 group-hover:translate-x-1 transition-transform" />
-              </button> */}
+              </button>
             </div>
           </div>
         )}
