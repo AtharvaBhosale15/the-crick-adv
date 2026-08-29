@@ -1,5 +1,6 @@
 import { createClient as createKVClient } from '@vercel/kv';
 import type { VercelRequest, VercelResponse } from '@vercel/node';
+import { sql } from '@vercel/postgres';
 
 const getKVClient = () => {
   // 1. Direct standard checks
@@ -124,7 +125,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   let sampleRows: any[] = [];
 
   try {
-    const { sql } = require('@vercel/postgres');
     postgresStatus = 'Checking...';
     
     // Check if table exists and describe columns
