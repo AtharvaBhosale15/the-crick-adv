@@ -678,6 +678,18 @@ export const PaymentCheckout: React.FC<PaymentCheckoutProps> = ({
                     <span className="text-xs text-slate-500 font-bold block">Email ID</span>
                     <span className="font-bold text-slate-900 truncate block">{submission.email}</span>
                   </div>
+                  <div>
+                    <span className="text-xs text-slate-500 font-bold block">Amount Paid</span>
+                    <span className="font-extrabold text-emerald-700 font-display text-base">
+                      ₹{(transactionDetails?.amount || amount).toLocaleString('en-IN')} INR
+                    </span>
+                  </div>
+                  <div>
+                    <span className="text-xs text-slate-500 font-bold block">Payment Method</span>
+                    <span className="font-bold text-slate-900">
+                      {transactionDetails?.method || 'Razorpay Secure Checkout'}
+                    </span>
+                  </div>
                 </div>
               </div>
 
