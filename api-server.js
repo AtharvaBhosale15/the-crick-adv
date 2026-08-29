@@ -280,14 +280,14 @@ app.get('/api/get-bookings', async (req, res) => {
   try {
     let bookings = getLocalBookings();
     
-    const { secret } = req.query;
+    const { secret, refresh } = req.query;
     const adminPassword = process.env.ADMIN_PASSWORD || 'cricket2026';
     const isAuthorized = secret === 'cricket2026' || secret === 'admin123' || secret === adminPassword;
 
-    // If local DB is empty and admin is authenticated, try fetching from production Vercel API
-    if (isAuthorized && bookings.length === 0) {
+    // If local DB is empty or refresh is forced, and admin is authenticated, try fetching from production Vercel API
+    if (isAuthorized && (bookings.length === 0 || refresh === 'true')) {
       try {
-        const prodUrl = process.env.PRODUCTION_URL || 'https://the-cricl-adv.vercel.app';
+        const prodUrl = process.env.PRODUCTION_URL || 'https://thecricketadvisor.com';
         const prodResp = await fetch(`${prodUrl}/api/get-bookings?secret=${encodeURIComponent(String(secret))}`);
         if (prodResp.ok) {
           const prodBookings = await prodResp.json();
@@ -693,7 +693,7 @@ app.post('/api/save-settings', (req, res) => {
 });
 
 app.get('/api/get-assessments', async (req, res) => {
-  const { secret } = req.query;
+  const { secret, refresh } = req.query;
   const adminPassword = process.env.ADMIN_PASSWORD || 'cricket2026';
   const isAuthorized = secret === 'cricket2026' || secret === 'admin123' || secret === adminPassword;
 
@@ -704,10 +704,10 @@ app.get('/api/get-assessments', async (req, res) => {
   try {
     let assessments = getLocalAssessments();
 
-    // If local DB is empty, try fetching from production Vercel API
-    if (assessments.length === 0) {
+    // If local DB is empty or refresh is forced, try fetching from production Vercel API
+    if (assessments.length === 0 || refresh === 'true') {
       try {
-        const prodUrl = process.env.PRODUCTION_URL || 'https://the-cricl-adv.vercel.app';
+        const prodUrl = process.env.PRODUCTION_URL || 'https://thecricketadvisor.com';
         const prodResp = await fetch(`${prodUrl}/api/get-assessments?secret=${encodeURIComponent(String(secret))}`);
         if (prodResp.ok) {
           const prodAssessments = await prodResp.json();

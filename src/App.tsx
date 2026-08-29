@@ -7745,7 +7745,7 @@ END:VCALENDAR`;
                           <button
                             onClick={async () => {
                               try {
-                                const resp = await fetch(`/api/get-assessments?secret=${encodeURIComponent(adminPassword)}`);
+                                const resp = await fetch(`/api/get-assessments?secret=${encodeURIComponent(adminPassword)}&refresh=true`);
                                 if (resp.ok) {
                                   const fresh = await resp.json();
                                   setAssessments(fresh);

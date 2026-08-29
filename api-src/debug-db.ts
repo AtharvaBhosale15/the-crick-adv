@@ -116,33 +116,47 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
   }
 
-  // Test REST client
-  const kv = getKVClient();
-  if (kv) {
-    try {
-      await kv.set('tcc_debug_test', 'working_rest');
-      const val = await kv.get('tcc_debug_test');
-      restConnectionStatus = val === 'working_rest' ? 'SUCCESS' : 'FAILED_VALUE_MISMATCH';
-    } catch (e: any) {
-      restConnectionStatus = 'ERROR';
-      restError = e.message || String(e);
-    }
+  // Test Postgres connection
+  let postgresStatus = 'Not Checked';
+  let postgresError = '';
+  let postgresColumns: any[] = [];
+  let postgresRowsCount = 0;
+  let sampleRows: any[] = [];
+
+  try {
+    const { sql } = require('@vercel/postgres');
+    postgresStatus = 'Checking...';
+    
+    // Check if table exists and describe columns
+    const columnsQuery = await sql`
+      SELECT column_name, data_type 
+      FROM information_schema.columns 
+      WHERE table_name = 'assessments';
+    `;
+    postgresColumns = columnsQuery.rows;
+    postgresStatus = 'Table found';
+
+    // Count rows
+    const countQuery = await sql`SELECT count(*) FROM assessments;`;
+    postgresRowsCount = parseInt(countQuery.rows[0].count, 10);
+
+    // Get sample rows (only name and email to avoid large output)
+    const sampleQuery = await sql`SELECT id, first_name, last_name, email, payment_status, created_at FROM assessments LIMIT 20;`;
+    sampleRows = sampleQuery.rows;
+  } catch (e: any) {
+    postgresStatus = 'ERROR';
+    postgresError = e.message || String(e);
   }
 
   return res.status(200).json({
-    message: 'Database Environment & Connection Diagnostics (REST-only Client)',
-    envStatus,
-    parserMetadata: {
-      hasTcpUrl: !!tcpUrl,
-      tcpUrlVal,
-      startsWithRedis,
-      parsedHost,
-      parsedSuccess
+    message: 'Postgres Database Diagnostics',
+    postgres: {
+      status: postgresStatus,
+      error: postgresError,
+      columns: postgresColumns,
+      rowsCount: postgresRowsCount,
+      sampleRows
     },
-    connectionTests: {
-      rest: { status: restConnectionStatus, error: restError }
-    },
-    nodeEnv: process.env.NODE_ENV,
-    processCwd: process.cwd()
+    nodeEnv: process.env.NODE_ENV
   });
 }
