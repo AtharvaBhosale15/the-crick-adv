@@ -132,10 +132,10 @@ export const CVPaginatedRenderer = ({
         const measured = {
           id,
           isHeading,
-          height: rect.height,
+          height: (el as HTMLElement).offsetHeight || rect.height,
           top: rect.top - parentRect.top
         };
-        console.log(`[DEBUG_MEASURE] Block: ${id}, Height: ${rect.height}`);
+        console.log(`[DEBUG_MEASURE] Block: ${id}, Height: ${measured.height}`);
 
         if (isLeftColumn) {
           leftBlocks.push(measured);
@@ -295,7 +295,7 @@ export const CVPaginatedRenderer = ({
               boxSizing: 'border-box'
             }}
           >
-            {isPreview && <Watermark />}
+            {isPreview && cv.paymentStatus !== 'Paid' && <Watermark />}
             
             <PageContext.Provider value={{ allowedIds, isPreview }}>
               <TemplateComponent cv={cv} accentColour={accentColour} font={font} isPreview={isPreview} />

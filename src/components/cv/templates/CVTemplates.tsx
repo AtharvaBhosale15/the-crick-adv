@@ -467,7 +467,7 @@ export function ExecutiveTemplate({ cv, accentColour, font, isPreview }: Templat
       className="w-full bg-white text-slate-800 p-8 shadow-inner relative flex flex-col justify-between overflow-hidden" 
       style={{ ...fontStyle, minHeight: '297mm' }}
     >
-      {isPreview && <Watermark />}
+      {isPreview && cv.paymentStatus !== 'Paid' && <Watermark />}
       
       <div>
         {/* Header Block */}
@@ -591,7 +591,7 @@ export function ProfessionalTemplate({ cv, accentColour, font, isPreview }: Temp
       className="w-full bg-white text-slate-800 p-8 shadow-inner relative flex flex-col justify-between overflow-hidden" 
       style={{ ...fontStyle, minHeight: '297mm' }}
     >
-      {isPreview && <Watermark />}
+      {isPreview && cv.paymentStatus !== 'Paid' && <Watermark />}
 
       <div>
         {/* Banner Header */}
@@ -743,7 +743,7 @@ export function InternationalTemplate({ cv, accentColour, font, isPreview }: Tem
       className="w-full bg-white text-slate-800 p-8 shadow-inner relative flex flex-col justify-between overflow-hidden" 
       style={{ ...fontStyle, minHeight: '297mm' }}
     >
-      {isPreview && <Watermark />}
+      {isPreview && cv.paymentStatus !== 'Paid' && <Watermark />}
 
       <div>
         {/* Top bar Accent */}
@@ -915,7 +915,7 @@ export function ClassicTemplate({ cv, accentColour, font, isPreview }: TemplateP
       className="w-full bg-white text-slate-800 p-8 shadow-inner relative flex flex-col justify-between overflow-hidden" 
       style={{ ...fontStyle, minHeight: '297mm' }}
     >
-      {isPreview && <Watermark />}
+      {isPreview && cv.paymentStatus !== 'Paid' && <Watermark />}
 
       <div>
         {/* Simple Centered Header */}
@@ -1021,7 +1021,7 @@ export function PerformanceTemplate({ cv, accentColour, font, isPreview }: Templ
       className="w-full bg-white text-slate-800 p-8 shadow-inner relative flex flex-col justify-between overflow-hidden" 
       style={{ ...fontStyle, minHeight: '297mm' }}
     >
-      {isPreview && <Watermark />}
+      {isPreview && cv.paymentStatus !== 'Paid' && <Watermark />}
 
       <div>
         {/* Left Bar Identity Block */}
