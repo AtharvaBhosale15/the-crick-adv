@@ -124,6 +124,75 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   let postgresRowsCount = 0;
   let sampleRows: any[] = [];
 
+  // Handle action parameter
+  let actionResult = '';
+  const action = req.query.action;
+  
+  if (action === 'insertSuraj') {
+    try {
+      const surajId = 'TCO-ASS-1787989614711';
+      const surajRef = 'TCA-UK-2026-000009';
+      
+      const surajData = {
+        id: surajId,
+        referenceNumber: surajRef,
+        firstName: 'Suraj',
+        lastName: 'Chauhan',
+        isAbove18: 'Yes',
+        age: '18',
+        applicantRelation: '',
+        nationality: 'India',
+        countryOfResidence: 'India',
+        mobileNumber: '7905790204',
+        mobileCountryCode: '+91',
+        email: 'chauhansuraj6571@gmail.com',
+        playerType: 'AMATEUR',
+        paymentStatus: 'Paid',
+        paymentAmount: 500,
+        paymentCurrency: 'INR',
+        status: 'UNDER REVIEW',
+        createdAt: '2026-08-29T07:45:04.090Z',
+        
+        firstClassPlayed: 'No',
+        firstClassLastYear: '',
+        firstClassMatches36Months: '',
+        listAPlayed: 'No',
+        listALastYear: '',
+        listAMatches36Months: '',
+        domesticT20Played: 'No',
+        domesticT20LastYear: '',
+        domesticT20Matches36Months: '',
+        ageGroupPlayed: 'Yes',
+        ageGroupLastYear: '2023',
+        iccT20Played: 'No',
+        iccT20LastYear: '',
+        universityPlayed: 'No',
+        universityLastYear: '',
+        clubDistrictLevel: 'Yes',
+        pendingCriminalCases: 'No',
+        deportationHistory: 'No',
+        criminalConviction: 'No'
+      };
+
+      await sql`
+        INSERT INTO assessments (
+          id, reference_number, first_name, last_name, email,
+          player_type, payment_status, status, assessment_data, created_at
+        ) VALUES (
+          ${surajId}, ${surajRef}, 'Suraj', 'Chauhan', 'chauhansuraj6571@gmail.com',
+          'AMATEUR', 'Paid', 'UNDER REVIEW', ${JSON.stringify(surajData)}, '2026-08-29 07:45:04'
+        )
+        ON CONFLICT (id) DO UPDATE SET 
+          reference_number = ${surajRef},
+          payment_status = 'Paid',
+          assessment_data = ${JSON.stringify(surajData)};
+      `;
+      actionResult = 'Successfully inserted/updated Suraj Chauhan eligibility assessment!';
+    } catch (err: any) {
+      actionResult = 'Failed to insert Suraj: ' + err.message;
+    }
+  }
+
   try {
     postgresStatus = 'Checking...';
     
@@ -150,6 +219,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   return res.status(200).json({
     message: 'Postgres Database Diagnostics',
+    actionResult,
     postgres: {
       status: postgresStatus,
       error: postgresError,
