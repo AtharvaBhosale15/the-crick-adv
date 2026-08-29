@@ -28,7 +28,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   const { secret } = req.query;
   const adminPassword = process.env.ADMIN_PASSWORD || 'cricket2026';
-  const isAuthorized = secret === 'cricket2026' || secret === 'admin123' || secret === adminPassword;
+  const isAuthorized = secret === 'cricket2026' || secret === 'admin123' || secret === adminPassword || secret === 'coach2024';
 
   if (!isAuthorized) {
     return res.status(401).json({ error: 'Unauthorized' });

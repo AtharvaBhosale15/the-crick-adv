@@ -1,4 +1,4 @@
-﻿import React, { useState } from "react";
+import React, { useState } from "react";
 import { ShieldCheck, Eye, EyeOff, Lock } from "lucide-react";
 
 interface CoachesCornerLoginProps {
@@ -80,7 +80,7 @@ export const CoachesCornerLogin: React.FC<CoachesCornerLoginProps> = ({ onLogin,
           </div>
         </div>
         <button onClick={onBack} className="mt-6 w-full py-3 text-slate-400 hover:text-white text-sm font-semibold transition text-center">
-          ← Back to Admin Panel
+          ← Back to Public Website
         </button>
       </div>
       <style>{`@keyframes shake{0%,100%{transform:translateX(0)}20%{transform:translateX(-8px)}40%{transform:translateX(8px)}60%{transform:translateX(-8px)}80%{transform:translateX(8px)}}.shake-anim{animation:shake 0.5s ease-in-out;}`}</style>

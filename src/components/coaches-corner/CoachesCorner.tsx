@@ -1,32 +1,66 @@
-﻿import React, { useState, useMemo } from "react";
-import { X, Search, Trophy, ClipboardList, User, Award, Filter } from "lucide-react";
+﻿import React, { useState, useMemo, useEffect } from "react";
+import { X, Search, Trophy, ClipboardList, User, Award, Filter, RefreshCw, Loader2 } from "lucide-react";
 import { SubmissionData } from "../assessment/types";
 import { CoachesCornerLogin } from "./CoachesCornerLogin";
 import { ReportForm } from "./ReportForm";
 
 interface CoachesCornerProps {
   onClose: () => void;
-  skillsList: SubmissionData[];
+  skillsList?: SubmissionData[]; // Optional legacy prop
 }
 
-export const CoachesCorner: React.FC<CoachesCornerProps> = ({ onClose, skillsList }) => {
+export const CoachesCorner: React.FC<CoachesCornerProps> = ({ onClose }) => {
   const [loggedIn, setLoggedIn] = useState(false);
+  const [candidates, setCandidates] = useState<SubmissionData[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
   const [selectedCandidate, setSelectedCandidate] = useState<SubmissionData | null>(null);
   const [search, setSearch] = useState("");
   const [filterMode, setFilterMode] = useState<"All" | "Online" | "Offline">("All");
 
-  const paidCandidates = useMemo(() =>
-    skillsList.filter(c => c.paymentDetails || c.testMode),
-    [skillsList]
-  );
+  const fetchCandidates = async () => {
+    setLoading(true);
+    setError("");
+    try {
+      const resp = await fetch("/api/get-skills-assessments?secret=coach2024");
+      if (resp.ok) {
+        const data = await resp.json();
+        if (Array.isArray(data)) {
+          setCandidates(data);
+        } else {
+          setError("Failed to retrieve candidate records.");
+        }
+      } else {
+        setError(`Server returned status: ${resp.status}`);
+      }
+    } catch (err: any) {
+      console.error("Error fetching candidates:", err);
+      setError("Failed to connect to backend server.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Fetch candidates list once logged in
+  useEffect(() => {
+    if (loggedIn) {
+      fetchCandidates();
+    }
+  }, [loggedIn]);
+
+  const paidCandidates = useMemo(() => {
+    // Show paid/submitted candidates
+    return candidates.filter(c => c.paymentStatus?.toLowerCase() === "paid" || c.amountPaid || c.testMode);
+  }, [candidates]);
 
   const filtered = useMemo(() => {
     return paidCandidates.filter(c => {
       const modeMatch = filterMode === "All" || c.testMode === filterMode;
-      const q = search.toLowerCase();
+      const q = search.toLowerCase().trim();
       const nameMatch = `${c.firstName} ${c.lastName}`.toLowerCase().includes(q);
-      const idMatch = c.id.toLowerCase().includes(q);
-      return modeMatch && (nameMatch || idMatch || q === "");
+      const idMatch = c.id?.toLowerCase().includes(q);
+      const emailMatch = c.email?.toLowerCase().includes(q);
+      return modeMatch && (nameMatch || idMatch || emailMatch || q === "");
     });
   }, [paidCandidates, search, filterMode]);
 
@@ -62,7 +96,7 @@ export const CoachesCorner: React.FC<CoachesCornerProps> = ({ onClose, skillsLis
         </div>
         <div className="flex items-center gap-3">
           {/* Stats badges */}
-          <div className="hidden sm:flex items-center gap-2">
+          <div className="hidden sm:flex items-center gap-2 mr-2">
             <span className="px-3 py-1.5 bg-emerald-500/20 border border-emerald-400/30 text-emerald-300 text-xs font-bold rounded-full">
               🟢 {onlineCount} Online
             </span>
@@ -73,6 +107,16 @@ export const CoachesCorner: React.FC<CoachesCornerProps> = ({ onClose, skillsLis
               {paidCandidates.length} Total
             </span>
           </div>
+
+          <button
+            onClick={fetchCandidates}
+            disabled={loading}
+            className="p-2.5 rounded-xl bg-white/10 hover:bg-white/20 text-white disabled:opacity-40 transition cursor-pointer border border-white/10"
+            title="Refresh candidate list"
+          >
+            {loading ? <Loader2 size={18} className="animate-spin" /> : <RefreshCw size={18} />}
+          </button>
+
           <button onClick={onClose} className="p-2.5 rounded-xl bg-white/10 hover:bg-red-500/30 text-white hover:text-red-300 transition cursor-pointer border border-white/10">
             <X size={18} />
           </button>
@@ -87,7 +131,7 @@ export const CoachesCorner: React.FC<CoachesCornerProps> = ({ onClose, skillsLis
             type="text"
             value={search}
             onChange={e => setSearch(e.target.value)}
-            placeholder="Search by candidate name or registration ID..."
+            placeholder="Search by candidate name, email, or registration ID..."
             className="w-full pl-10 pr-4 py-2.5 bg-white/10 border border-white/20 rounded-xl text-white placeholder-slate-500 text-sm focus:outline-none focus:ring-2 focus:ring-amber-400/40 focus:border-amber-400 transition"
           />
         </div>
@@ -115,7 +159,18 @@ export const CoachesCorner: React.FC<CoachesCornerProps> = ({ onClose, skillsLis
 
       {/* Candidate List */}
       <div className="relative flex-1 overflow-y-auto p-6">
-        {filtered.length === 0 ? (
+        {error && (
+          <div className="max-w-xl mx-auto mb-6 p-4 bg-red-500/20 border-2 border-red-500/40 rounded-2xl text-red-200 text-center text-sm font-semibold">
+            ⚠️ {error}
+          </div>
+        )}
+
+        {loading && candidates.length === 0 ? (
+          <div className="flex flex-col items-center justify-center h-64 text-center space-y-3">
+            <Loader2 size={40} className="text-slate-400 animate-spin" />
+            <p className="text-slate-400 font-semibold">Loading candidates from database...</p>
+          </div>
+        ) : filtered.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-64 text-center space-y-3">
             <ClipboardList size={40} className="text-slate-600" />
             <p className="text-slate-400 font-semibold">
@@ -168,17 +223,19 @@ export const CoachesCorner: React.FC<CoachesCornerProps> = ({ onClose, skillsLis
                     ))}
                   </div>
 
-                  {candidate.paymentDetails && (
-                    <div className="flex items-center gap-2 mb-4">
-                      <span className="text-[10px] text-emerald-400 font-bold uppercase tracking-wider">✓ Paid</span>
-                      <span className="text-slate-500 text-[10px]">•</span>
-                      <span className="text-[10px] text-slate-400 font-mono">
-                        ₹{candidate.paymentDetails.amount?.toLocaleString("en-IN")} INR
-                      </span>
-                      <span className="text-slate-500 text-[10px]">•</span>
-                      <span className="text-[10px] text-slate-400">{candidate.paymentDetails.paidAt || candidate.submittedAt}</span>
-                    </div>
-                  )}
+                  <div className="flex items-center gap-2 mb-4">
+                    <span className="text-[10px] text-emerald-400 font-bold uppercase tracking-wider">✓ Paid</span>
+                    <span className="text-slate-500 text-[10px]">•</span>
+                    {candidate.amountPaid && (
+                      <>
+                        <span className="text-[10px] text-slate-400 font-mono">
+                          ₹{candidate.amountPaid.toLocaleString("en-IN")} INR
+                        </span>
+                        <span className="text-slate-500 text-[10px]">•</span>
+                      </>
+                    )}
+                    <span className="text-[10px] text-slate-400">{candidate.submittedAt || "Recent"}</span>
+                  </div>
 
                   <button
                     onClick={() => setSelectedCandidate(candidate)}

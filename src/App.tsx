@@ -4539,7 +4539,8 @@ END:VCALENDAR`;
     <div className="min-h-screen flex flex-col font-sans">
 
       {/* --- STICKY NAVIGATION --- */}
-      <header id="header" className="sticky top-0 z-50 bg-white border-b border-slate-200 shadow-sm transition-all">
+      {activeTab !== 'coaches' && (
+        <header id="header" className="sticky top-0 z-50 bg-white border-b border-slate-200 shadow-sm transition-all">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 flex items-center justify-between">
           
           {/* Logo Brand area */}
@@ -4664,33 +4665,36 @@ END:VCALENDAR`;
           </div>
         )}
       </header>
+      )}
 
 
 
       {/* --- FLOATING CONTACT BUTTONS --- */}
-      <div className="fixed bottom-6 right-6 z-40 flex flex-col space-y-3">
+      {activeTab !== 'coaches' && (
+        <div className="fixed bottom-6 right-6 z-40 flex flex-col space-y-3">
 
 
-        {/* Email Floating */}
-        <a 
-          href="mailto:thecricketadvisor@gmail.com"
-          className="bg-navy-800 hover:bg-navy-900 text-white p-3.5 rounded-full shadow-2xl flex items-center justify-center transform hover:scale-110 transition duration-200 border-2 border-gold-500/30"
-          title="Send an Email"
-          id="floating-email"
-        >
-          <Mail className="h-6 w-6" />
-        </a>
+          {/* Email Floating */}
+          <a 
+            href="mailto:thecricketadvisor@gmail.com"
+            className="bg-navy-800 hover:bg-navy-900 text-white p-3.5 rounded-full shadow-2xl flex items-center justify-center transform hover:scale-110 transition duration-200 border-2 border-gold-500/30"
+            title="Send an Email"
+            id="floating-email"
+          >
+            <Mail className="h-6 w-6" />
+          </a>
 
-        {/* Book Floating */}
-        <button 
-          onClick={() => { setActiveTab('book'); setBookingStep(1); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
-          className="bg-gold-gradient text-navy-950 p-3.5 rounded-full shadow-2xl flex items-center justify-center transform hover:scale-110 transition duration-200 border-2 border-gold-400 animate-pulse"
-          title="Book Consultation Session"
-          id="floating-book"
-        >
-          <Calendar className="h-6 w-6" />
-        </button>
-      </div>
+          {/* Book Floating */}
+          <button 
+            onClick={() => { setActiveTab('book'); setBookingStep(1); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
+            className="bg-gold-gradient text-navy-950 p-3.5 rounded-full shadow-2xl flex items-center justify-center transform hover:scale-110 transition duration-200 border-2 border-gold-400 animate-pulse"
+            title="Book Consultation Session"
+            id="floating-book"
+          >
+            <Calendar className="h-6 w-6" />
+          </button>
+        </div>
+      )}
 
       {/* --- CONTENT WORKSPACE AREA --- */}
       <main className="flex-grow">
@@ -9360,7 +9364,8 @@ END:VCALENDAR`;
       </main>
 
       {/* --- FOOTER --- */}
-      <footer className="bg-navy-950 text-stone-300 pt-16 pb-8 border-t border-navy-900">
+      {activeTab !== 'coaches' && (
+        <footer className="bg-navy-950 text-stone-300 pt-16 pb-8 border-t border-navy-900">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 grid grid-cols-1 md:grid-cols-12 gap-8 mb-12">
           
           {/* Logo brand about (5 cols) */}
@@ -9445,6 +9450,7 @@ END:VCALENDAR`;
           </div>
         </div>
       </footer>
+      )}
 
       {/* Tax Invoice Modal */}
       {selectedInvoiceBooking && (
