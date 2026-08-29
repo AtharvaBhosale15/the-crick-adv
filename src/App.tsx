@@ -1087,7 +1087,7 @@ export default function App() {
       const orderResponse = await fetch('/api/create-order', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ amount: assessmentAmount * 100 })
+        body: JSON.stringify({ amount: assessmentAmount }) // amount in rupees; create-order API converts to paise
       });
 
       if (!orderResponse.ok) {
@@ -2279,11 +2279,10 @@ END:VCALENDAR`;
       }
 
       // 2. Call local backend to create Razorpay order
-      const orderAmount = selectedPackage.price * 100; // in paise
       const orderResponse = await fetch('/api/create-order', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ amount: orderAmount }),
+        body: JSON.stringify({ amount: selectedPackage.price }), // amount in rupees; create-order API converts to paise
       });
 
       if (!orderResponse.ok) {
@@ -4257,11 +4256,10 @@ END:VCALENDAR`;
               return;
             }
 
-            const amountInPaise = 249 * 100;
             const orderRes = await fetch('/api/create-order', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ amount: amountInPaise })
+              body: JSON.stringify({ amount: 249 }) // amount in rupees; create-order API converts to paise
             });
 
             if (!orderRes.ok) {

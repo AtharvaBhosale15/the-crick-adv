@@ -283,11 +283,10 @@ export default function CVDashboard({
         return;
       }
 
-      const amountInPaise = 249 * 100;
       const orderRes = await fetch('/api/create-order', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ amount: amountInPaise })
+        body: JSON.stringify({ amount: 249 }) // amount in rupees; create-order API converts to paise
       });
 
       if (!orderRes.ok) {
