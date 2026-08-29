@@ -16,6 +16,8 @@ import {
   Check,
 } from 'lucide-react';
 import { SubmissionData, TestMode } from './types';
+import html2canvas from 'html2canvas-pro';
+import { jsPDF } from 'jspdf';
 
 interface PaymentCheckoutProps {
   submission: SubmissionData;
@@ -42,6 +44,70 @@ export const PaymentCheckout: React.FC<PaymentCheckoutProps> = ({
     method: string;
     paidAt: string;
   } | null>(null);
+
+  const [isDownloadingReceipt, setIsDownloadingReceipt] = useState(false);
+
+  const handleDownloadReceipt = async () => {
+    const receiptElement = document.getElementById('skills-assessment-receipt-card');
+    if (!receiptElement) {
+      alert("Receipt element not found.");
+      return;
+    }
+    
+    setIsDownloadingReceipt(true);
+    try {
+      const canvas = await html2canvas(receiptElement, {
+        scale: 2,
+        useCORS: true,
+        allowTaint: true,
+        backgroundColor: '#ffffff'
+      });
+      
+      const imgData = canvas.toDataURL('image/jpeg', 0.95);
+      const pdf = new jsPDF('p', 'mm', 'a4');
+      
+      const pdfWidth = 210;
+      const pdfHeight = 297;
+      const imgWidth = pdfWidth - 30; // 15mm margins
+      const imgHeight = (canvas.height * imgWidth) / canvas.width;
+      
+      pdf.setFillColor(248, 250, 252);
+      pdf.rect(0, 0, pdfWidth, pdfHeight, 'F');
+      
+      pdf.setFont("helvetica", "bold");
+      pdf.setFontSize(16);
+      pdf.setTextColor(11, 26, 48);
+      pdf.text("THE CRICKET ADVISOR", 15, 20);
+      
+      pdf.setFont("helvetica", "normal");
+      pdf.setFontSize(9);
+      pdf.setTextColor(100, 116, 139);
+      pdf.text("Official Skills Certification Receipt", 15, 25);
+      
+      const todayStr = new Date().toLocaleDateString('en-GB', {
+        day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit'
+      });
+      pdf.text(`Printed On: ${todayStr}`, pdfWidth - 15 - 55, 25);
+      
+      pdf.setDrawColor(226, 232, 240);
+      pdf.setLineWidth(0.5);
+      pdf.line(15, 28, pdfWidth - 15, 28);
+      
+      pdf.addImage(imgData, 'JPEG', 15, 35, imgWidth, imgHeight);
+      
+      pdf.setFontSize(8);
+      pdf.setTextColor(148, 163, 184);
+      pdf.text("Thank you for registering for the Skills Certification Assessment.", 15, 35 + imgHeight + 15);
+      pdf.text("Please keep this document safe for scheduling.", 15, 35 + imgHeight + 19);
+      
+      pdf.save(`Receipt_Skills_Assessment_${submission.id}.pdf`);
+    } catch (err) {
+      console.error('Error generating receipt PDF:', err);
+      alert('Failed to generate receipt PDF. Please screenshot this page instead.');
+    } finally {
+      setIsDownloadingReceipt(false);
+    }
+  };
 
   const amount = checkoutMode === 'Online' ? 10000 : 14999;
 
@@ -557,7 +623,7 @@ export const PaymentCheckout: React.FC<PaymentCheckoutProps> = ({
               </h2>
 
               <div className="bg-blue-950/90 border-2 border-amber-400/50 rounded-2xl p-5 max-w-xl mx-auto my-4 text-amber-300 text-base md:text-lg font-black leading-relaxed shadow-lg">
-                The Cricket Advisor team will connect with him in the next 3 to 5 working days
+                The Cricket Advisor Team Will Connect With You In The Next 3 To 5 Working Days
               </div>
 
               <p className="text-xs text-slate-300 mt-2 font-mono font-semibold">
@@ -567,7 +633,7 @@ export const PaymentCheckout: React.FC<PaymentCheckoutProps> = ({
 
             {/* Receipt Details with 2px borders */}
             <div className="p-6 md:p-8 space-y-6 bg-slate-50/50">
-              <div className="bg-white border-2 border-slate-300 rounded-2xl p-6 space-y-4 shadow-sm">
+              <div id="skills-assessment-receipt-card" className="bg-white border-2 border-slate-300 rounded-2xl p-6 space-y-4 shadow-sm">
                 <div className="flex items-center justify-between border-b-2 border-slate-200 pb-3">
                   <span className="text-xs font-black uppercase tracking-wider text-slate-700 flex items-center gap-2">
                     <Receipt size={18} className="text-blue-600" /> Official Test Receipt
@@ -624,6 +690,27 @@ export const PaymentCheckout: React.FC<PaymentCheckoutProps> = ({
                     Our senior certified Cricket Advisors will review your registered specialty and schedule your personalized video assessment slot or ground academy location. Please keep your phone and email active.
                   </p>
                 </div>
+              </div>
+
+              {/* Action Buttons Row */}
+              <div className="flex flex-col sm:flex-row gap-3 pt-2">
+                <button
+                  onClick={handleDownloadReceipt}
+                  disabled={isDownloadingReceipt}
+                  className="flex-1 py-3.5 px-6 bg-[#0B1A30] hover:bg-slate-900 disabled:opacity-50 text-white font-extrabold rounded-xl shadow-md transition-all flex items-center justify-center gap-2 text-xs md:text-sm cursor-pointer border-2 border-[#0B1A30]"
+                >
+                  {isDownloadingReceipt ? (
+                    <>
+                      <Loader2 size={16} className="animate-spin" />
+                      <span>Generating PDF Receipt...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Receipt size={16} />
+                      <span>Download & Print Receipt</span>
+                    </>
+                  )}
+                </button>
               </div>
             </div>
           </motion.div>
