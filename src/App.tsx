@@ -677,7 +677,7 @@ const isSlotPastInIST = (slot: string, selectedDate: string) => {
 export default function App() {
   // --- CORE STATE ---
   // Restore from sessionStorage so React remounts (e.g., from an error boundary reset) don't lose navigation state
-  const [activeTab, setActiveTab] = useState<'main' | 'book' | 'admin' | 'placements' | 'eligibility' | 'cricket-cv' | 'cricket-assessment'>(() => {
+  const [activeTab, setActiveTab] = useState<'main' | 'book' | 'admin' | 'placements' | 'eligibility' | 'cricket-cv' | 'cricket-assessment' | 'coaches'>(() => {
     const hash = window.location.hash;
     if (hash === '#eligibility') return 'eligibility';
     if (hash === '#book') return 'book';
@@ -685,6 +685,7 @@ export default function App() {
     if (hash === '#placements') return 'placements';
     if (hash === '#cricket-cv') return 'cricket-cv';
     if (hash === '#cricket-assessment') return 'cricket-assessment';
+    if (hash === '#coaches') return 'coaches';
     try { return (sessionStorage.getItem('tcc_active_tab') as any) || 'main'; } catch { return 'main'; }
   });
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -1491,7 +1492,7 @@ END:VCALENDAR`;
       } else if (hash === '#cricket-assessment') {
         setActiveTab('cricket-assessment');
       } else if (hash === '#coaches') {
-        setShowCoachesCorner(true);
+        setActiveTab('coaches');
       } else if (!hash || hash === '#home') {
         setActiveTab('main');
       }
@@ -1514,7 +1515,7 @@ END:VCALENDAR`;
     if (window.location.hash !== targetHash) {
       if (activeTab === 'main') {
         const currentHash = window.location.hash;
-        if (['#eligibility', '#book', '#admin', '#placements', '#cricket-cv', '#cricket-assessment'].includes(currentHash)) {
+        if (['#eligibility', '#book', '#admin', '#placements', '#cricket-cv', '#cricket-assessment', '#coaches'].includes(currentHash)) {
           window.history.replaceState(null, '', window.location.pathname + window.location.search);
         }
       } else {
@@ -7210,14 +7211,6 @@ END:VCALENDAR`;
                       <h2 className="text-2xl sm:text-3xl font-extrabold text-white font-display">TCC Management Console</h2>
                     </div>
                     <div className="flex space-x-3">
-                      <button
-                        onClick={() => setShowCoachesCorner(true)}
-                        className="px-4 py-2 bg-amber-500 hover:bg-amber-400 text-[#0B1A30] text-xs font-extrabold uppercase tracking-wider rounded border border-amber-400 flex items-center space-x-2 shadow-lg"
-                        title="Open Coaches Corner – Assessment Report Generator"
-                      >
-                        <span>🏏</span>
-                        <span>Coaches Corner</span>
-                      </button>
                       <button 
                         onClick={handleExportCSV}
                         className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-white text-xs font-bold uppercase tracking-wider rounded border border-slate-700 flex items-center space-x-2"
@@ -10028,14 +10021,11 @@ END:VCALENDAR`;
         </div>
       )}
 
-      {/* ============== COACHES CORNER OVERLAY ============== */}
-      {showCoachesCorner && (
+      {/* ============== COACHES CORNER PAGE ============== */}
+      {activeTab === 'coaches' && (
         <CoachesCorner
           onClose={() => {
-            setShowCoachesCorner(false);
-            if (window.location.hash === '#coaches') {
-              window.history.replaceState(null, '', window.location.pathname + window.location.search);
-            }
+            setActiveTab('main');
           }}
           skillsList={skillsList}
         />
