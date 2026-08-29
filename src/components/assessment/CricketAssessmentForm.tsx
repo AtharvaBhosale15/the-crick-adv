@@ -295,7 +295,7 @@ export const CricketAssessmentForm: React.FC<CricketAssessmentFormProps> = ({
               initial={{ opacity: 0, x: 20 }}
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: -20 }}
-              className="bg-white rounded-2xl p-6 border-2 border-slate-300 shadow-sm space-y-6"
+              className="bg-white rounded-2xl p-6 border-2 border-blue-300 shadow-sm space-y-6"
             >
               <div className="border-b-2 border-slate-200 pb-3 flex items-center justify-between">
                 <div className="flex items-center gap-2 text-[#0B192C] font-black text-lg">
@@ -319,7 +319,7 @@ export const CricketAssessmentForm: React.FC<CricketAssessmentFormProps> = ({
                     onChange={(e) => handleFirstNameChange(e.target.value)}
                     placeholder="First name (Alphabets only)"
                     className={`w-full px-4 py-3 rounded-xl border-2 ${
-                      errors.firstName ? 'border-red-500 bg-red-50/50' : 'border-slate-300 focus:border-blue-600'
+                      errors.firstName ? 'border-red-500 bg-red-50/50' : 'border-blue-200 focus:border-blue-600'
                     } focus:outline-none focus:ring-2 focus:ring-blue-500/20 text-slate-900 font-semibold text-sm bg-white shadow-xs`}
                   />
                   <p className="text-[11px] text-slate-500">Only alphabetic characters permitted</p>
@@ -341,7 +341,7 @@ export const CricketAssessmentForm: React.FC<CricketAssessmentFormProps> = ({
                     onChange={(e) => handleLastNameChange(e.target.value)}
                     placeholder="Last name (Alphabets only)"
                     className={`w-full px-4 py-3 rounded-xl border-2 ${
-                      errors.lastName ? 'border-red-500 bg-red-50/50' : 'border-slate-300 focus:border-blue-600'
+                      errors.lastName ? 'border-red-500 bg-red-50/50' : 'border-blue-200 focus:border-blue-600'
                     } focus:outline-none focus:ring-2 focus:ring-blue-500/20 text-slate-900 font-semibold text-sm bg-white shadow-xs`}
                   />
                   <p className="text-[11px] text-slate-500">Only alphabetic characters permitted</p>
@@ -365,7 +365,7 @@ export const CricketAssessmentForm: React.FC<CricketAssessmentFormProps> = ({
                     className={`py-3.5 px-4 rounded-xl border-2 font-bold text-sm transition flex items-center justify-center gap-2 cursor-pointer ${
                       formData.isAbove18 === 'Yes'
                         ? 'bg-[#0B192C] text-amber-400 border-[#0B192C] shadow-md ring-2 ring-blue-600/30'
-                        : 'bg-white text-slate-700 border-slate-300 hover:border-slate-400 hover:bg-slate-50'
+                        : 'bg-white text-slate-700 border-blue-200 hover:border-blue-300 hover:bg-blue-50/30'
                     }`}
                   >
                     <CheckCircle size={18} className={formData.isAbove18 === 'Yes' ? 'text-amber-400' : 'text-slate-400'} />
@@ -378,7 +378,7 @@ export const CricketAssessmentForm: React.FC<CricketAssessmentFormProps> = ({
                     className={`py-3.5 px-4 rounded-xl border-2 font-bold text-sm transition flex items-center justify-center gap-2 cursor-pointer ${
                       formData.isAbove18 === 'No'
                         ? 'bg-[#0B192C] text-amber-400 border-[#0B192C] shadow-md ring-2 ring-blue-600/30'
-                        : 'bg-white text-slate-700 border-slate-300 hover:border-slate-400 hover:bg-slate-50'
+                        : 'bg-white text-slate-700 border-blue-200 hover:border-blue-300 hover:bg-blue-50/30'
                     }`}
                   >
                     <CheckCircle size={18} className={formData.isAbove18 === 'No' ? 'text-amber-400' : 'text-slate-400'} />
@@ -411,7 +411,7 @@ export const CricketAssessmentForm: React.FC<CricketAssessmentFormProps> = ({
                         if (errors.age) setErrors({ ...errors, age: undefined });
                       }}
                       className={`w-full px-4 py-3 rounded-xl border-2 ${
-                        errors.age ? 'border-red-500 bg-red-50/50' : 'border-slate-300 focus:border-blue-600'
+                        errors.age ? 'border-red-500 bg-red-50/50' : 'border-blue-200 focus:border-blue-600'
                       } focus:outline-none focus:ring-2 focus:ring-blue-500/20 text-slate-900 font-semibold text-sm bg-white shadow-xs cursor-pointer`}
                     >
                       <option value="">{formData.isAbove18 === 'Yes' ? 'Please Select Your Age' : 'Please Select Candidate Age'}</option>
@@ -444,7 +444,7 @@ export const CricketAssessmentForm: React.FC<CricketAssessmentFormProps> = ({
                           if (errors.applicantRelation) setErrors({ ...errors, applicantRelation: undefined });
                         }}
                         className={`w-full px-4 py-2.5 rounded-xl border-2 ${
-                          errors.applicantRelation ? 'border-red-500 bg-red-50/50' : 'border-amber-400 focus:border-blue-600'
+                          errors.applicantRelation ? 'border-red-500 bg-red-50/50' : 'border-blue-200 focus:border-blue-600'
                         } focus:outline-none text-slate-900 font-semibold text-sm bg-white cursor-pointer`}
                       >
                         <option value="">Select Your Relationship</option>
@@ -473,7 +473,7 @@ export const CricketAssessmentForm: React.FC<CricketAssessmentFormProps> = ({
               initial={{ opacity: 0, x: 20 }}
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: -20 }}
-              className="bg-white rounded-2xl p-6 border-2 border-slate-300 shadow-sm space-y-6"
+              className="bg-white rounded-2xl p-6 border-2 border-blue-300 shadow-sm space-y-6"
             >
               <div className="border-b-2 border-slate-200 pb-3 flex items-center justify-between">
                 <div className="flex items-center gap-2 text-[#0B192C] font-black text-lg">
@@ -498,7 +498,7 @@ export const CricketAssessmentForm: React.FC<CricketAssessmentFormProps> = ({
                       if (errors.nationality) setErrors({ ...errors, nationality: undefined });
                     }}
                     className={`w-full px-4 py-3 rounded-xl border-2 ${
-                      errors.nationality ? 'border-red-500 bg-red-50/50' : 'border-slate-300 focus:border-blue-600'
+                      errors.nationality ? 'border-red-500 bg-red-50/50' : 'border-blue-200 focus:border-blue-600'
                     } focus:outline-none focus:ring-2 focus:ring-blue-500/20 text-slate-900 font-semibold text-sm bg-white shadow-xs cursor-pointer`}
                   >
                     <option value="">-- Select Nationality --</option>
@@ -524,7 +524,7 @@ export const CricketAssessmentForm: React.FC<CricketAssessmentFormProps> = ({
                     value={formData.countryOfResidence}
                     onChange={(e) => handleCountryOfResidenceChange(e.target.value as Country)}
                     className={`w-full px-4 py-3 rounded-xl border-2 ${
-                      errors.countryOfResidence ? 'border-red-500 bg-red-50/50' : 'border-slate-300 focus:border-blue-600'
+                      errors.countryOfResidence ? 'border-red-500 bg-red-50/50' : 'border-blue-200 focus:border-blue-600'
                     } focus:outline-none focus:ring-2 focus:ring-blue-500/20 text-slate-900 font-semibold text-sm bg-white shadow-xs cursor-pointer`}
                   >
                     <option value="">-- Select Residence --</option>
@@ -555,7 +555,7 @@ export const CricketAssessmentForm: React.FC<CricketAssessmentFormProps> = ({
                         type="text"
                         readOnly
                         value={formData.mobileCountryCode}
-                        className="w-full pl-2.5 pr-1 pt-4 pb-1 rounded-xl border-2 border-slate-300 bg-slate-100 font-mono font-bold text-slate-900 text-sm focus:outline-none"
+                        className="w-full pl-2.5 pr-1 pt-4 pb-1 rounded-xl border-2 border-blue-200 bg-slate-100 font-mono font-bold text-slate-900 text-sm focus:outline-none"
                       />
                     </div>
                     <div className="flex-1">
@@ -566,7 +566,7 @@ export const CricketAssessmentForm: React.FC<CricketAssessmentFormProps> = ({
                         onChange={(e) => handleMobileNumberChange(e.target.value)}
                         placeholder="Digits only (e.g. 9876543210)"
                         className={`w-full px-3.5 py-3 rounded-xl border-2 ${
-                          errors.mobileNumber ? 'border-red-500 bg-red-50/50' : 'border-slate-300 focus:border-blue-600'
+                          errors.mobileNumber ? 'border-red-500 bg-red-50/50' : 'border-blue-200 focus:border-blue-600'
                         } focus:outline-none focus:ring-2 focus:ring-blue-500/20 text-slate-900 font-mono font-semibold text-sm bg-white shadow-xs`}
                       />
                     </div>
@@ -595,7 +595,7 @@ export const CricketAssessmentForm: React.FC<CricketAssessmentFormProps> = ({
                       }}
                       placeholder="candidate@example.com"
                       className={`w-full pl-10 pr-4 py-3 rounded-xl border-2 ${
-                        errors.email ? 'border-red-500 bg-red-50/50' : 'border-slate-300 focus:border-blue-600'
+                        errors.email ? 'border-red-500 bg-red-50/50' : 'border-blue-200 focus:border-blue-600'
                       } focus:outline-none focus:ring-2 focus:ring-blue-500/20 text-slate-900 font-semibold text-sm bg-white shadow-xs`}
                     />
                   </div>
@@ -757,7 +757,7 @@ export const CricketAssessmentForm: React.FC<CricketAssessmentFormProps> = ({
                 </span>
               </div>
 
-              <p className="text-xs text-slate-600">
+              <p className="text-sm font-semibold text-slate-700 leading-relaxed">
                 You have successfully completed your registration details. Please select your preferred assessment format package below to proceed with payment:
               </p>
 
@@ -820,7 +820,7 @@ export const CricketAssessmentForm: React.FC<CricketAssessmentFormProps> = ({
                         }}
                         className="w-full px-6 py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold rounded-xl transition shadow-md hover:scale-105 cursor-pointer text-center text-sm border border-emerald-400"
                       >
-                        Pay ₹10,000 INR
+                        Pay ₹11,999 INR
                       </button>
                     </div>
                   </div>
@@ -886,7 +886,7 @@ export const CricketAssessmentForm: React.FC<CricketAssessmentFormProps> = ({
                         }}
                         className="w-full px-6 py-3 bg-gradient-to-r from-amber-500 to-yellow-600 hover:from-amber-600 hover:to-yellow-500 text-white font-extrabold rounded-xl transition shadow-md hover:scale-105 cursor-pointer text-center text-sm border border-amber-400"
                       >
-                        Pay ₹14,999 INR
+                        Pay ₹17,999 INR
                       </button>
                     </div>
                   </div>

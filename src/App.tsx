@@ -7704,7 +7704,7 @@ END:VCALENDAR`;
                                 </div>
                                 {skillAss.paymentDetails && (
                                   <div className="flex flex-col items-end gap-1">
-                                    <span className="font-bold text-navy-900 font-display text-sm">₹{skillAss.paymentDetails.amount?.toLocaleString('en-IN') || (skillAss.testMode === 'Online' ? 10000 : 14999)}</span>
+                                    <span className="font-bold text-navy-900 font-display text-sm">₹{skillAss.paymentDetails.amount?.toLocaleString('en-IN') || (skillAss.testMode === 'Online' ? 11999 : 17999)}</span>
                                     <span className="text-[10px] text-slate-400 font-mono">Tx ID: {skillAss.paymentDetails.transactionId}</span>
                                   </div>
                                 )}

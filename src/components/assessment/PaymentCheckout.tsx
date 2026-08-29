@@ -109,7 +109,7 @@ export const PaymentCheckout: React.FC<PaymentCheckoutProps> = ({
     }
   };
 
-  const amount = checkoutMode === 'Online' ? 10000 : 14999;
+  const amount = checkoutMode === 'Online' ? 11999 : 17999;
 
   const loadRazorpayScript = (): Promise<boolean> => {
     return new Promise((resolve) => {
@@ -414,7 +414,7 @@ export const PaymentCheckout: React.FC<PaymentCheckoutProps> = ({
                             onClick={() => setCheckoutMode('Online')}
                             className="w-full px-6 py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold rounded-xl transition shadow-md hover:scale-105 cursor-pointer text-center text-sm border border-emerald-400"
                           >
-                            Pay ₹10,000 INR
+                            Pay ₹11,999 INR
                           </button>
                         </div>
                       </div>
@@ -470,7 +470,7 @@ export const PaymentCheckout: React.FC<PaymentCheckoutProps> = ({
                             onClick={() => setCheckoutMode('Offline')}
                             className="w-full px-6 py-3 bg-gradient-to-r from-amber-500 to-yellow-600 hover:from-amber-600 hover:to-yellow-500 text-white font-extrabold rounded-xl transition shadow-md hover:scale-105 cursor-pointer text-center text-sm border border-amber-400"
                           >
-                            Pay ₹14,999 INR
+                            Pay ₹17,999 INR
                           </button>
                         </div>
                       </div>
@@ -693,18 +693,7 @@ export const PaymentCheckout: React.FC<PaymentCheckoutProps> = ({
                 </div>
               </div>
 
-              {/* Advisory Note */}
-              <div className="bg-amber-50 border-2 border-amber-300 rounded-2xl p-5 flex items-start gap-4">
-                <PhoneCall size={24} className="text-amber-700 shrink-0 mt-0.5" />
-                <div className="text-xs text-amber-950 space-y-1">
-                  <p className="font-black text-sm">Next Steps for Candidate:</p>
-                  <p className="font-medium text-slate-800 leading-relaxed">
-                    Our senior certified Cricket Advisors will review your registered specialty and schedule your personalized video assessment slot or ground academy location. Please keep your phone and email active.
-                  </p>
-                </div>
-              </div>
-
-              {/* Action Buttons Row */}
+               {/* Action Buttons Row */}
               <div className="flex flex-col sm:flex-row gap-3 pt-2">
                 <button
                   onClick={handleDownloadReceipt}
@@ -723,6 +712,17 @@ export const PaymentCheckout: React.FC<PaymentCheckoutProps> = ({
                     </>
                   )}
                 </button>
+              </div>
+
+              {/* Advisory Note */}
+              <div className="bg-amber-50 border-2 border-amber-300 rounded-2xl p-5 flex items-start gap-4">
+                <PhoneCall size={26} className="text-amber-700 shrink-0 mt-0.5" />
+                <div className="text-sm text-amber-950 space-y-1.5">
+                  <p className="font-black text-base md:text-lg">Next Steps for Candidate:</p>
+                  <p className="font-semibold text-slate-800 leading-relaxed">
+                    Our senior certified Cricket Advisors will review your registered specialty and schedule your personalized video assessment slot or ground academy location. Please keep your phone and email active.
+                  </p>
+                </div>
               </div>
             </div>
           </motion.div>
