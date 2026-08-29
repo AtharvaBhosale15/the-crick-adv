@@ -682,6 +682,7 @@ export default function App() {
     if (hash === '#admin') return 'admin';
     if (hash === '#placements') return 'placements';
     if (hash === '#cricket-cv') return 'cricket-cv';
+    if (hash === '#cricket-assessment') return 'cricket-assessment';
     try { return (sessionStorage.getItem('tcc_active_tab') as any) || 'main'; } catch { return 'main'; }
   });
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -1484,6 +1485,8 @@ END:VCALENDAR`;
         setActiveTab('placements');
       } else if (hash === '#cricket-cv') {
         setActiveTab('cricket-cv');
+      } else if (hash === '#cricket-assessment') {
+        setActiveTab('cricket-assessment');
       } else if (!hash || hash === '#home') {
         setActiveTab('main');
       }
@@ -1506,7 +1509,7 @@ END:VCALENDAR`;
     if (window.location.hash !== targetHash) {
       if (activeTab === 'main') {
         const currentHash = window.location.hash;
-        if (['#eligibility', '#book', '#admin', '#placements', '#cricket-cv'].includes(currentHash)) {
+        if (['#eligibility', '#book', '#admin', '#placements', '#cricket-cv', '#cricket-assessment'].includes(currentHash)) {
           window.history.replaceState(null, '', window.location.pathname + window.location.search);
         }
       } else {
@@ -3886,12 +3889,38 @@ END:VCALENDAR`;
 
       setIsTransitioning(true);
 
-      // Add a 400ms wait to allow React state updates and the 150ms pagination debounce timeouts
-      // in CVPaginatedRenderer to fully commit the fresh DOM structure.
-      await new Promise(resolve => setTimeout(resolve, 400));
+      // Temporarily bring the hidden capture wrapper into the visible viewport
+      // behind the full-screen transition overlay (z-index: 50) to force the browser
+      // to calculate layouts and render content cleanly.
+      const captureWrapper = document.getElementById('cv-capture-wrapper');
+      if (captureWrapper) {
+        captureWrapper.style.setProperty('position', 'fixed', 'important');
+        captureWrapper.style.setProperty('left', '0', 'important');
+        captureWrapper.style.setProperty('top', '0', 'important');
+        captureWrapper.style.setProperty('z-index', '40', 'important');
+      }
+
+      // Hide the live preview wrapper to prevent html2canvas transforms conflict
+      const previewEl = document.getElementById('cv-live-preview-wrapper');
+      if (previewEl) {
+        previewEl.style.setProperty('display', 'none', 'important');
+      }
+
+      // Add a 500ms wait to allow layout reflow, React state updates, and the 150ms pagination
+      // debounce timeouts in CVPaginatedRenderer to fully commit the fresh DOM structure.
+      await new Promise(resolve => setTimeout(resolve, 500));
 
       const element = document.getElementById('cv-download-print-capture');
       if (!element) {
+        if (captureWrapper) {
+          captureWrapper.style.removeProperty('position');
+          captureWrapper.style.removeProperty('left');
+          captureWrapper.style.removeProperty('top');
+          captureWrapper.style.removeProperty('z-index');
+        }
+        if (previewEl) {
+          previewEl.style.removeProperty('display');
+        }
         setIsTransitioning(false);
         if (downloadBtn) {
           downloadBtn.disabled = false;
@@ -3902,11 +3931,6 @@ END:VCALENDAR`;
       }
 
       try {
-        const previewEl = document.getElementById('cv-live-preview-wrapper');
-        if (previewEl) {
-          previewEl.style.setProperty('display', 'none', 'important');
-        }
-
         const pages = element.getElementsByClassName('cv-page-container');
         if (pages.length === 0) {
           throw new Error('No CV pages found to render.');
@@ -4089,6 +4113,13 @@ END:VCALENDAR`;
         console.error('Error rendering high-fidelity PDF download:', error);
         alert(`Failed to download PDF: ${error.message || error}`);
       } finally {
+        const captureWrapper = document.getElementById('cv-capture-wrapper');
+        if (captureWrapper) {
+          captureWrapper.style.removeProperty('position');
+          captureWrapper.style.removeProperty('left');
+          captureWrapper.style.removeProperty('top');
+          captureWrapper.style.removeProperty('z-index');
+        }
         const previewEl = document.getElementById('cv-live-preview-wrapper');
         if (previewEl) {
           previewEl.style.removeProperty('display');
@@ -9948,7 +9979,7 @@ END:VCALENDAR`;
 
       {/* Hidden print capture container for high-fidelity PDF downloads */}
       {cvToken && cvForm && (
-        <div style={{ position: 'absolute', left: '-9999px', top: '-9999px', pointerEvents: 'none' }} aria-hidden="true">
+        <div id="cv-capture-wrapper" style={{ position: 'absolute', left: '-9999px', top: '-9999px', pointerEvents: 'none' }} aria-hidden="true">
           <div id="cv-download-print-capture" style={{ width: '794px', position: 'relative', backgroundColor: '#ffffff' }}>
             <CVTemplateRenderer cv={cvForm} accentColour={cvForm.accentColour} font={cvForm.font} isPreview={false} />
           </div>

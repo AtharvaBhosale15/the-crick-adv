@@ -320,6 +320,38 @@ export default function CVBuilderForm({
   const validateStep9 = (): string => {
     if (!cv.email || !cv.email.trim()) return "Email address is required.";
     if (!cv.phone || !cv.phone.trim()) return "Phone number is required.";
+
+    // Validate references setting selection
+    if (!cv.showReferences || (cv.showReferences !== 'show' && cv.showReferences !== 'request')) {
+      return "Please select a References Display Setting option (Display directly on CV or Available upon request).";
+    }
+
+    if (cv.showReferences === 'show') {
+      if (!cv.references || cv.references.length === 0) {
+        return "At least one reference is required when 'Display directly on CV' is selected. Please click 'Add Reference' or choose 'Available upon request'.";
+      }
+      for (let i = 0; i < cv.references.length; i++) {
+        const ref = cv.references[i];
+        if (!ref.name || !ref.name.trim()) {
+          return `Name is required for reference entry #${i + 1}.`;
+        }
+        if (!ref.organisation || !ref.organisation.trim()) {
+          return `Organisation is required for reference entry #${i + 1}.`;
+        }
+        
+        let phoneRest = ref.phone || '';
+        for (const code of ['+91', '+44', '+61', '+971', '+1', '+27', '+64', '+94', '+968', '+263']) {
+          if (phoneRest.startsWith(code)) {
+            phoneRest = phoneRest.substring(code.length).trim();
+            break;
+          }
+        }
+        if (!phoneRest || !phoneRest.trim()) {
+          return `Mobile Number is required for reference entry #${i + 1}.`;
+        }
+      }
+    }
+
     return '';
   };
 
@@ -2544,7 +2576,7 @@ export default function CVBuilderForm({
               </div>
 
               <div className="mb-4">
-                <label className="block text-xs text-slate-400 mb-1.5 font-bold">References Display Setting</label>
+                <label className="block text-xs text-slate-400 mb-1.5 font-bold">References Display Setting <span className="text-red-500">*</span></label>
                 <div className="flex gap-4">
                   <label className="inline-flex items-center gap-1.5 text-xs text-slate-300">
                     <input 
@@ -2587,7 +2619,7 @@ export default function CVBuilderForm({
 
                         <div className="grid grid-cols-2 gap-2 pr-6">
                           <div>
-                            <label className="block text-[9px] text-slate-500 mb-1">Name</label>
+                            <label className="block text-[9px] text-slate-500 mb-1">Name <span className="text-red-500">*</span></label>
                             <input 
                               type="text" 
                               value={ref.name}
@@ -2596,7 +2628,7 @@ export default function CVBuilderForm({
                             />
                           </div>
                           <div>
-                            <label className="block text-[9px] text-slate-500 mb-1">Organisation</label>
+                            <label className="block text-[9px] text-slate-500 mb-1">Organisation <span className="text-red-500">*</span></label>
                             <input 
                               type="text" 
                               value={ref.organisation}
@@ -2608,7 +2640,7 @@ export default function CVBuilderForm({
 
                         {/* Mobile Number Row */}
                         <div className="mt-1.5 pr-6">
-                          <label className="block text-[9px] text-slate-500 mb-1">Mobile Number</label>
+                          <label className="block text-[9px] text-slate-500 mb-1">Mobile Number <span className="text-red-500">*</span></label>
                           {(() => {
                             const phoneCodes = ['+91', '+44', '+61', '+971', '+1', '+27', '+64', '+94', '+968', '+263'];
                             let selectedCode = '+91';

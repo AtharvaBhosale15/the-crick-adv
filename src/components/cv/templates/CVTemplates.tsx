@@ -1665,7 +1665,7 @@ export function PrestigeTemplate({ cv, accentColour, font, isPreview }: Template
             <h1>{cv.firstName} <span style={{ color: 'var(--gold)' }}>{cv.lastName}</span></h1>
             {renderPlayerRoles()}
             <div className="meta-row">
-              {cv.dateOfBirth && <span><span className="ico">&#128197;</span>Age: {calculateAge(cv.dateOfBirth)}</span>}
+              {cv.dateOfBirth && <span><span className="ico">&#127874;</span>Age: {calculateAge(cv.dateOfBirth)}</span>}
               {cv.battingStyle && cv.battingStyle.toLowerCase() !== 'none' && !cv.playingRoleDetail?.toLowerCase().replace(/-/g, ' ').includes(cv.battingStyle.toLowerCase().replace(/-/g, ' ').replace('handed', '').replace('handed', '').trim()) && (
                 <span><span className="ico">&#127951;</span>{cv.battingStyle} Bat</span>
               )}
