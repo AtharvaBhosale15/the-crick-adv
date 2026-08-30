@@ -492,17 +492,17 @@ export const ReportForm: React.FC<ReportFormProps> = ({ candidate, onClose }) =>
           {/* Header & Candidate Information Block */}
           <div id="pdf-header-block" style={{ width: "794px", backgroundColor: "#fff", padding: "40px 40px 10px 40px", boxSizing: "border-box" }}>
             {/* Report Header */}
-            <div style={{ textAlign: "center", borderBottom: "3px solid #0B1A30", paddingBottom: "20px", marginBottom: "24px" }}>
-              <img src={logoImg} alt="TCA Logo" style={{ height: "64px", marginBottom: "10px", display: "block", marginLeft: "auto", marginRight: "auto" }} />
-              <h1 style={{ fontSize: "20px", fontWeight: 900, color: "#0B1A30", margin: "0 0 4px 0" }}>{candidate.testMode} Cricket Skills Certification Report</h1>
-              <p style={{ fontSize: "11px", color: "#64748b", margin: 0 }}>Issued by The Cricket Advisor – Certified Assessment Division</p>
-              <p style={{ fontSize: "10px", color: "#94a3b8", marginTop: "6px" }}>Assessment Date: {today}</p>
+            <div style={{ textAlign: "center", border: "2px solid #000000", background: "#FDF8E7", borderRadius: "12px", padding: "24px 20px", marginBottom: "24px" }}>
+              <img src={logoImg} alt="TCA Logo" style={{ height: "64px", marginBottom: "15px", display: "block", marginLeft: "auto", marginRight: "auto" }} />
+              <h1 style={{ fontSize: "20px", fontWeight: 900, color: "#0B1A30", margin: "0 0 8px 0" }}>{candidate.testMode} Cricket Skills Certification Report</h1>
+              <p style={{ fontSize: "14px", fontWeight: "bold", color: "#000000", margin: "0 0 6px 0" }}>Issued by The Cricket Advisor – Certified Assessment Division</p>
+              <p style={{ fontSize: "12px", fontWeight: "bold", color: "#000000", margin: 0 }}>Assessment Date: {today}</p>
             </div>
 
             {/* Candidate Details */}
             <div style={{ background: "#f8fafc", border: "2px solid #000000", borderRadius: "8px", padding: "16px" }}>
               <h2 style={{ fontSize: "11px", fontWeight: 700, color: "#000000", textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: "12px", marginTop: 0 }}>Candidate Information</h2>
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "12px" }}>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "10px" }}>
                 {[
                   ["Full Name", `${candidate.firstName} ${candidate.lastName}`],
                   ["Registration ID", candidate.id],
@@ -514,9 +514,9 @@ export const ReportForm: React.FC<ReportFormProps> = ({ candidate, onClose }) =>
                   ["Country of Residence", candidate.countryOfResidence],
                   ["Email", candidate.email],
                 ].map(([l, v]) => (
-                  <div key={l}>
-                    <div style={{ fontSize: "9px", color: "#64748b", fontWeight: 700, textTransform: "uppercase" }}>{l}</div>
-                    <div style={{ fontSize: "11px", color: "#000000", fontWeight: 600 }}>{v || "–"}</div>
+                  <div key={l} style={{ border: "2px solid #000000", borderRadius: "6px", padding: "8px 12px", background: "#ffffff" }}>
+                    <div style={{ fontSize: "9px", color: "#64748b", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.05em" }}>{l}</div>
+                    <div style={{ fontSize: "11.5px", color: "#000000", fontWeight: 900, marginTop: "2px", wordBreak: "break-word" }}>{v || "–"}</div>
                   </div>
                 ))}
               </div>
@@ -527,12 +527,24 @@ export const ReportForm: React.FC<ReportFormProps> = ({ candidate, onClose }) =>
               <h3 style={{ fontSize: "11px", fontWeight: 700, color: "#000000", textTransform: "uppercase", letterSpacing: "0.08em", margin: "0 0 10px 0" }}>
                 Assessment Validity – 12 Months
               </h3>
-              <ul style={{ margin: 0, paddingLeft: "18px", fontSize: "10.5px", color: "#000000", lineHeight: "1.7" }}>
+              <ul style={{ margin: 0, paddingLeft: "20px", listStyleType: "disc", fontSize: "10.5px", color: "#000000", lineHeight: "1.7" }}>
                 <li style={{ marginBottom: "4px" }}>This report is valid for 12 months from the date of assessment.</li>
                 <li style={{ marginBottom: "4px" }}>Cricket skills and playing methods can change and improve over time.</li>
                 <li style={{ marginBottom: "4px" }}>Player performance may vary with practice, coaching, fitness, and match experience.</li>
                 <li style={{ marginBottom: "4px" }}>The player&apos;s technique and playing style may develop during this period.</li>
                 <li style={{ margin: 0 }}>A new assessment is recommended after 12 months to review the player&apos;s current skills and progress.</li>
+              </ul>
+            </div>
+
+            {/* Assessment Guidelines Block */}
+            <div style={{ background: "#fafafa", border: "2px solid #000000", borderRadius: "8px", padding: "16px", marginTop: "16px" }}>
+              <h3 style={{ fontSize: "11px", fontWeight: 700, textTransform: "uppercase", color: "#000000", margin: "0 0 10px 0" }}>Assessment Guidelines</h3>
+              <ul style={{ margin: 0, paddingLeft: "20px", listStyleType: "disc", fontSize: "10.5px", color: "#000000", lineHeight: "1.7" }}>
+                <li style={{ marginBottom: "4px" }}>Assessment completed Online or Offline, as applicable.</li>
+                <li style={{ marginBottom: "4px" }}>Results are based on the player&apos;s performance during the test.</li>
+                <li style={{ marginBottom: "4px" }}>Scores are for guidance and development purposes.</li>
+                <li style={{ marginBottom: "4px" }}>Results may change based on conditions, equipment, and player performance on the day.</li>
+                <li style={{ margin: 0 }}>The report is not a guarantee of future performance or selection.</li>
               </ul>
             </div>
           </div>
@@ -605,18 +617,6 @@ export const ReportForm: React.FC<ReportFormProps> = ({ candidate, onClose }) =>
                 <p style={{ fontSize: "12px", color: "#000000", lineHeight: 1.7, margin: 0 }}>{overallRemarks}</p>
               </div>
             )}
-
-            {/* Assessment Guidelines Block */}
-            <div style={{ border: "2px solid #000000", borderRadius: "8px", padding: "16px", marginBottom: "20px", background: "#fafafa" }}>
-              <h3 style={{ fontSize: "11px", fontWeight: 700, textTransform: "uppercase", color: "#000000", marginBottom: "10px", marginTop: 0 }}>Assessment Guidelines</h3>
-              <ul style={{ margin: 0, paddingLeft: "18px", fontSize: "10.5px", color: "#000000", lineHeight: "1.7" }}>
-                <li style={{ marginBottom: "4px" }}>Assessment completed Online or Offline, as applicable.</li>
-                <li style={{ marginBottom: "4px" }}>Results are based on the player&apos;s performance during the test.</li>
-                <li style={{ marginBottom: "4px" }}>Scores are for guidance and development purposes.</li>
-                <li style={{ marginBottom: "4px" }}>Results may change based on conditions, equipment, and player performance on the day.</li>
-                <li style={{ margin: 0 }}>The report is not a guarantee of future performance or selection.</li>
-              </ul>
-            </div>
 
             {/* Signature & Verification Block */}
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginTop: "24px", paddingTop: "16px", borderTop: "2px solid #000000" }}>
