@@ -4588,12 +4588,12 @@ END:VCALENDAR`;
               Create My Cricket CV
             </button>
 
-            {/* <button 
+            <button 
               onClick={() => { setActiveTab('cricket-assessment'); setAssessmentView('landing'); }}
               className="hidden lg:inline-block px-2 sm:px-2.5 py-2 text-[10px] xl:text-[11px] font-extrabold bg-[#F5C451] hover:bg-[#E2AF3C] text-[#0B1A30] rounded-lg shadow-sm hover:scale-105 hover:shadow transition transform duration-150 uppercase tracking-widest cursor-pointer font-sans whitespace-nowrap"
             >
               Cricket Skills Certification
-            </button> */}
+            </button>
 
             <button 
               onClick={() => { setActiveTab('book'); setBookingStep(1); }}
@@ -4649,12 +4649,12 @@ END:VCALENDAR`;
               >
                 Create My Cricket CV
               </button>
-              {/* <button 
+              <button 
                 onClick={() => { setActiveTab('cricket-assessment'); setAssessmentView('landing'); setMobileMenuOpen(false); }} 
                 className="text-left py-2 border-b border-navy-800/60 hover:text-gold-400 text-gold-400 font-bold transition"
               >
                 Cricket Skills Certification
-              </button> */}
+              </button>
               <button 
                 onClick={() => { setActiveTab('book'); setBookingStep(1); setMobileMenuOpen(false); }} 
                 className="text-left py-2 hover:text-gold-400 transition"
@@ -4798,13 +4798,13 @@ END:VCALENDAR`;
                       <ChevronRight className="h-4 w-4" />
                     </button>
 
-                    {/* <button 
+                    <button 
                       onClick={() => { setActiveTab('cricket-assessment'); setAssessmentView('landing'); }}
                       className="w-full sm:w-auto px-6 py-3.5 bg-[#F5C451] hover:bg-[#E2AF3C] text-[#0B1A30] font-extrabold rounded-lg shadow-md hover:scale-105 transform transition duration-150 uppercase tracking-wider text-xs flex items-center justify-center space-x-1.5 cursor-pointer font-sans"
                     >
                       <span>Cricket Skills Certification</span>
                       <ChevronRight className="h-4 w-4" />
-                    </button> */}
+                    </button>
 
                     <button 
                       onClick={() => { setActiveTab('book'); setBookingStep(1); }}

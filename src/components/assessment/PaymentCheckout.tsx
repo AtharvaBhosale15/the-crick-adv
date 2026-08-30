@@ -408,7 +408,8 @@ export const PaymentCheckout: React.FC<PaymentCheckoutProps> = ({
                             Online Video Assessment
                           </div>
                           <p className="text-xs mb-6 leading-relaxed font-bold text-center text-blue-900 bg-blue-50/60 px-3 py-2.5 rounded-xl border border-blue-100">
-                            Showcase Your Cricket Skills Through Videos And Get Professionally Assessed
+                            Showcase Your Cricket Through Videos. Get Expertly Assessed. Unlock Your Potential.<br />
+                            Professional evaluation by a BCCI Level 3 & ECB Level 1 Qualified Coach
                           </p>
 
                           <div className="text-left space-y-2 mb-6 text-sm font-medium text-slate-700 pt-2 border-t border-slate-100">
@@ -462,7 +463,8 @@ export const PaymentCheckout: React.FC<PaymentCheckoutProps> = ({
                             Offline On-Ground Assessment
                           </div>
                           <p className="text-xs mb-6 leading-relaxed font-bold text-center text-amber-900 bg-amber-50/50 px-3 py-2.5 rounded-xl border border-amber-200">
-                            Demonstrate Your Cricket Skills Infront Of Expert And Qualified Coaches
+                            Showcase Your Cricket Skills Live. Get Assessed by Expert Coaches.<br />
+                            On-ground performance evaluation by BCCI Level 3 & ECB Level 1 Qualified Coaches.
                           </p>
 
                           <div className="text-left space-y-2 mb-6 text-sm font-medium text-slate-700 pt-2 border-t border-slate-100">
@@ -590,12 +592,12 @@ export const PaymentCheckout: React.FC<PaymentCheckoutProps> = ({
                   </div>
 
                   {/* Payment Gateway Actions */}
-                  <div className="pt-4 flex flex-col sm:flex-row items-center gap-4">
+                  <div className="pt-4 flex flex-col items-center gap-4">
                     <button
                       type="button"
                       onClick={() => handlePayMode(checkoutMode!, amount)}
                       disabled={isProcessing || !disclaimers.confirmDetails || !disclaimers.agreeRules || !disclaimers.acceptTerms}
-                      className="w-full sm:w-1/2 py-3.5 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 disabled:from-slate-400 disabled:to-slate-500 text-white font-black text-base rounded-xl transition flex items-center justify-center gap-2 shadow-md cursor-pointer border border-emerald-500"
+                      className="w-full py-3.5 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 disabled:from-slate-400 disabled:to-slate-500 text-white font-black text-base rounded-xl transition flex items-center justify-center gap-2 shadow-md cursor-pointer border border-emerald-500"
                     >
                       {isProcessing ? (
                         <>
@@ -606,25 +608,6 @@ export const PaymentCheckout: React.FC<PaymentCheckoutProps> = ({
                         <>
                           <CreditCard size={20} />
                           <span>Pay ₹{amount.toLocaleString('en-IN')} with Razorpay</span>
-                        </>
-                      )}
-                    </button>
-
-                    <button
-                      type="button"
-                      onClick={() => handleSimulateSuccessMode(checkoutMode!, amount)}
-                      disabled={isProcessing || !disclaimers.confirmDetails || !disclaimers.agreeRules || !disclaimers.acceptTerms}
-                      className="w-full sm:w-1/2 py-3.5 bg-slate-900 hover:bg-slate-950 disabled:bg-slate-400 text-amber-300 font-black text-base rounded-xl transition flex items-center justify-center gap-2 shadow-md cursor-pointer border-2 border-slate-800"
-                    >
-                      {isProcessing ? (
-                        <>
-                          <Loader2 size={20} className="animate-spin text-amber-300" />
-                          <span>Simulating Success...</span>
-                        </>
-                      ) : (
-                        <>
-                          <CheckCircle2 size={20} className="text-amber-400" />
-                          <span>Simulate Successful Payment</span>
                         </>
                       )}
                     </button>

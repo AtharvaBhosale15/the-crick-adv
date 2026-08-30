@@ -773,7 +773,8 @@ export const CricketAssessmentForm: React.FC<CricketAssessmentFormProps> = ({
                         Online Video Assessment
                       </div>
                       <p className="text-xs mb-6 leading-relaxed font-bold text-center text-blue-900 bg-blue-50/60 px-3 py-2.5 rounded-xl border border-blue-100">
-                        Showcase Your Cricket Skills Through Videos And Get Professionally Assessed
+                        Showcase Your Cricket Through Videos. Get Expertly Assessed. Unlock Your Potential.<br />
+                        Professional evaluation by a BCCI Level 3 & ECB Level 1 Qualified Coach
                       </p>
 
                       <div className="text-left space-y-2 mb-6 text-sm font-medium text-slate-700 pt-2 border-t border-slate-100">
@@ -837,7 +838,8 @@ export const CricketAssessmentForm: React.FC<CricketAssessmentFormProps> = ({
                         Offline On-Ground Assessment
                       </div>
                       <p className="text-xs mb-6 leading-relaxed font-bold text-center text-amber-900 bg-amber-50/50 px-3 py-2.5 rounded-xl border border-amber-200">
-                        Demonstrate Your Cricket Skills Infront Of Expert And Qualified Coaches
+                        Showcase Your Cricket Skills Live. Get Assessed by Expert Coaches.<br />
+                        On-ground performance evaluation by BCCI Level 3 & ECB Level 1 Qualified Coaches.
                       </p>
 
                       <div className="text-left space-y-2 mb-6 text-sm font-medium text-slate-700 pt-2 border-t border-slate-100">
