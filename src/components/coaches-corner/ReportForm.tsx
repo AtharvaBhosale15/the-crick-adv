@@ -493,15 +493,15 @@ export const ReportForm: React.FC<ReportFormProps> = ({ candidate, onClose }) =>
           <div id="pdf-header-block" style={{ width: "794px", backgroundColor: "#fff", padding: "40px 40px 10px 40px", boxSizing: "border-box" }}>
             {/* Report Header */}
             <div style={{ textAlign: "center", borderBottom: "3px solid #0B1A30", paddingBottom: "20px", marginBottom: "24px" }}>
-              <img src={logoImg} alt="TCA Logo" style={{ height: "64px", marginBottom: "10px" }} />
+              <img src={logoImg} alt="TCA Logo" style={{ height: "64px", marginBottom: "10px", display: "block", marginLeft: "auto", marginRight: "auto" }} />
               <h1 style={{ fontSize: "20px", fontWeight: 900, color: "#0B1A30", margin: "0 0 4px 0" }}>{candidate.testMode} Cricket Skills Certification Report</h1>
               <p style={{ fontSize: "11px", color: "#64748b", margin: 0 }}>Issued by The Cricket Advisor – Certified Assessment Division</p>
               <p style={{ fontSize: "10px", color: "#94a3b8", marginTop: "6px" }}>Assessment Date: {today}</p>
             </div>
 
             {/* Candidate Details */}
-            <div style={{ background: "#f8fafc", border: "1px solid #e2e8f0", borderRadius: "8px", padding: "16px" }}>
-              <h2 style={{ fontSize: "11px", fontWeight: 700, color: "#94a3b8", textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: "12px", marginTop: 0 }}>Candidate Information</h2>
+            <div style={{ background: "#f8fafc", border: "2px solid #000000", borderRadius: "8px", padding: "16px" }}>
+              <h2 style={{ fontSize: "11px", fontWeight: 700, color: "#000000", textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: "12px", marginTop: 0 }}>Candidate Information</h2>
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "12px" }}>
                 {[
                   ["Full Name", `${candidate.firstName} ${candidate.lastName}`],
@@ -515,21 +515,25 @@ export const ReportForm: React.FC<ReportFormProps> = ({ candidate, onClose }) =>
                   ["Email", candidate.email],
                 ].map(([l, v]) => (
                   <div key={l}>
-                    <div style={{ fontSize: "9px", color: "#94a3b8", fontWeight: 700, textTransform: "uppercase" }}>{l}</div>
-                    <div style={{ fontSize: "11px", color: "#1e293b", fontWeight: 600 }}>{v || "–"}</div>
+                    <div style={{ fontSize: "9px", color: "#64748b", fontWeight: 700, textTransform: "uppercase" }}>{l}</div>
+                    <div style={{ fontSize: "11px", color: "#000000", fontWeight: 600 }}>{v || "–"}</div>
                   </div>
                 ))}
               </div>
             </div>
 
             {/* Assessment Validity Block */}
-            <div style={{ background: "#f8fafc", borderLeft: "4px solid #0B1A30", borderRadius: "4px", padding: "12px 16px", marginTop: "16px" }}>
-              <h3 style={{ fontSize: "11px", fontWeight: 700, color: "#0B1A30", textTransform: "uppercase", letterSpacing: "0.08em", margin: "0 0 6px 0" }}>
+            <div style={{ background: "#f8fafc", border: "2px solid #000000", borderRadius: "8px", padding: "16px", marginTop: "16px" }}>
+              <h3 style={{ fontSize: "11px", fontWeight: 700, color: "#000000", textTransform: "uppercase", letterSpacing: "0.08em", margin: "0 0 10px 0" }}>
                 Assessment Validity – 12 Months
               </h3>
-              <p style={{ fontSize: "10.5px", color: "#475569", lineHeight: "1.6", margin: 0 }}>
-                This report is valid for 12 months from the date of assessment. Cricket skills and playing methods can change and improve over time. Player performance may vary with practice, coaching, fitness, and match experience. The player&apos;s technique and playing style may develop during this period. A new assessment is recommended after 12 months to review the player&apos;s current skills and progress.
-              </p>
+              <ul style={{ margin: 0, paddingLeft: "18px", fontSize: "10.5px", color: "#000000", lineHeight: "1.7" }}>
+                <li style={{ marginBottom: "4px" }}>This report is valid for 12 months from the date of assessment.</li>
+                <li style={{ marginBottom: "4px" }}>Cricket skills and playing methods can change and improve over time.</li>
+                <li style={{ marginBottom: "4px" }}>Player performance may vary with practice, coaching, fitness, and match experience.</li>
+                <li style={{ marginBottom: "4px" }}>The player&apos;s technique and playing style may develop during this period.</li>
+                <li style={{ margin: 0 }}>A new assessment is recommended after 12 months to review the player&apos;s current skills and progress.</li>
+              </ul>
             </div>
           </div>
 
@@ -545,7 +549,7 @@ export const ReportForm: React.FC<ReportFormProps> = ({ candidate, onClose }) =>
 
             return (
               <div key={group.key} className="pdf-section-block" style={{ width: "794px", backgroundColor: "#fff", padding: "10px 40px", boxSizing: "border-box" }}>
-                <div style={{ borderRadius: "8px", overflow: "hidden", border: "1px solid #e2e8f0" }}>
+                <div style={{ borderRadius: "8px", overflow: "hidden", border: "2px solid #000000" }}>
                   <div style={{ background: "#0B1A30", color: "#fff", padding: "8px 16px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                     <span style={{ fontWeight: 900, fontSize: "13px", textTransform: "uppercase" }}>{displayLabel}</span>
                     {avg > 0 && <span style={{ fontSize: "11px", color: "#fbbf24" }}>Section Average: {avg} / 10</span>}
@@ -563,8 +567,8 @@ export const ReportForm: React.FC<ReportFormProps> = ({ candidate, onClose }) =>
                         const v = scores[sub.key] || 0;
                         const barColor = v === 0 ? "#e2e8f0" : v <= 4 ? "#f87171" : v <= 7 ? "#fbbf24" : "#34d399";
                         return (
-                          <tr key={sub.key} style={{ background: i % 2 === 0 ? "#fff" : "#f8fafc", borderTop: "1px solid #f1f5f9" }}>
-                            <td style={{ padding: "7px 12px", fontSize: "11px", color: "#334155" }}>{sub.label}</td>
+                          <tr key={sub.key} style={{ background: i % 2 === 0 ? "#fff" : "#f8fafc", borderTop: "1px solid #000000" }}>
+                            <td style={{ padding: "7px 12px", fontSize: "11px", color: "#000000", fontWeight: 550 }}>{sub.label}</td>
                             <td style={{ padding: "7px 12px", textAlign: "center", fontSize: "13px", fontWeight: 900, color: v <= 4 ? "#ef4444" : v <= 7 ? "#d97706" : "#10b981" }}>{v > 0 ? `${v} / 10` : "—"}</td>
                             <td style={{ padding: "7px 12px" }}>
                               <div style={{ background: "#e2e8f0", borderRadius: "4px", height: "8px", overflow: "hidden" }}>
@@ -577,7 +581,7 @@ export const ReportForm: React.FC<ReportFormProps> = ({ candidate, onClose }) =>
                     </tbody>
                   </table>
                   {sectionComments[group.key] && (
-                    <div style={{ background: "#fffbeb", padding: "8px 16px", borderTop: "1px solid #fde68a", fontSize: "10px", color: "#78350f" }}>
+                    <div style={{ background: "#fffbeb", padding: "8px 16px", borderTop: "1px solid #000000", fontSize: "10px", color: "#000000" }}>
                       <strong>Coach Notes:</strong> {sectionComments[group.key]}
                     </div>
                   )}
@@ -589,23 +593,23 @@ export const ReportForm: React.FC<ReportFormProps> = ({ candidate, onClose }) =>
           {/* Remarks & Grand Score Block */}
           <div id="pdf-remarks-block" style={{ width: "794px", backgroundColor: "#fff", padding: "10px 40px 20px 40px", boxSizing: "border-box" }}>
             {/* Grand Score */}
-            <div style={{ background: "#0B1A30", borderRadius: "12px", padding: "20px", textAlign: "center", marginBottom: "20px" }}>
+            <div style={{ background: "#0B1A30", border: "2px solid #000000", borderRadius: "12px", padding: "20px", textAlign: "center", marginBottom: "20px" }}>
               <p style={{ color: "#fbbf24", fontSize: "11px", textTransform: "uppercase", letterSpacing: "0.1em", margin: "0 0 6px 0" }}>Grand Overall Score</p>
               <p style={{ color: grand >= 8 ? "#34d399" : grand >= 5 ? "#fbbf24" : "#f87171", fontSize: "48px", fontWeight: 900, margin: 0 }}>{grand > 0 ? `${grand} / 10` : "—"}</p>
             </div>
 
             {/* Overall Remarks */}
             {overallRemarks && (
-              <div style={{ border: "1px solid #e2e8f0", borderRadius: "8px", padding: "16px", marginBottom: "20px" }}>
-                <h3 style={{ fontSize: "11px", fontWeight: 700, textTransform: "uppercase", color: "#64748b", marginBottom: "8px", marginTop: 0 }}>Overall Coach Remarks</h3>
-                <p style={{ fontSize: "12px", color: "#334155", lineHeight: 1.7, margin: 0 }}>{overallRemarks}</p>
+              <div style={{ border: "2px solid #000000", borderRadius: "8px", padding: "16px", marginBottom: "20px" }}>
+                <h3 style={{ fontSize: "11px", fontWeight: 700, textTransform: "uppercase", color: "#000000", marginBottom: "8px", marginTop: 0 }}>Overall Coach Remarks</h3>
+                <p style={{ fontSize: "12px", color: "#000000", lineHeight: 1.7, margin: 0 }}>{overallRemarks}</p>
               </div>
             )}
 
             {/* Assessment Guidelines Block */}
-            <div style={{ border: "1px solid #e2e8f0", borderRadius: "8px", padding: "16px", marginBottom: "20px", background: "#fafafa" }}>
-              <h3 style={{ fontSize: "11px", fontWeight: 700, textTransform: "uppercase", color: "#64748b", marginBottom: "10px", marginTop: 0 }}>Assessment Guidelines</h3>
-              <ul style={{ margin: 0, paddingLeft: "18px", fontSize: "10.5px", color: "#475569", lineHeight: "1.7" }}>
+            <div style={{ border: "2px solid #000000", borderRadius: "8px", padding: "16px", marginBottom: "20px", background: "#fafafa" }}>
+              <h3 style={{ fontSize: "11px", fontWeight: 700, textTransform: "uppercase", color: "#000000", marginBottom: "10px", marginTop: 0 }}>Assessment Guidelines</h3>
+              <ul style={{ margin: 0, paddingLeft: "18px", fontSize: "10.5px", color: "#000000", lineHeight: "1.7" }}>
                 <li style={{ marginBottom: "4px" }}>Assessment completed Online or Offline, as applicable.</li>
                 <li style={{ marginBottom: "4px" }}>Results are based on the player&apos;s performance during the test.</li>
                 <li style={{ marginBottom: "4px" }}>Scores are for guidance and development purposes.</li>
@@ -615,14 +619,14 @@ export const ReportForm: React.FC<ReportFormProps> = ({ candidate, onClose }) =>
             </div>
 
             {/* Signature & Verification Block */}
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginTop: "24px", paddingTop: "16px", borderTop: "1px solid #e2e8f0" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginTop: "24px", paddingTop: "16px", borderTop: "2px solid #000000" }}>
               <div style={{ maxWidth: "420px" }}>
-                <p style={{ fontSize: "10.5px", color: "#475569", lineHeight: "1.6", margin: 0 }}>
-                  To validate a certification or submit a query regarding this report, authorized organizations are invited to contact our verification team at <a href="mailto:thecricketadvisor@gmail.com" style={{ color: "#0B1A30", textDecoration: "underline", fontWeight: "bold" }}>thecricketadvisor@gmail.com</a>.
+                <p style={{ fontSize: "10.5px", color: "#000000", lineHeight: "1.6", margin: 0 }}>
+                  To validate a certification or submit a query regarding this report, authorized organizations are invited to contact our verification team at <a href="mailto:thecricketadvisor@gmail.com" style={{ color: "#0b1a30", textDecoration: "underline", fontWeight: "bold" }}>thecricketadvisor@gmail.com</a>.
                 </p>
               </div>
               <div style={{ textAlign: "right" }}>
-                <span style={{ display: "block", fontSize: "9px", color: "#94a3b8", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: "4px" }}>Authorized Signatory</span>
+                <span style={{ display: "block", fontSize: "9px", color: "#000000", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: "4px" }}>Authorized Signatory</span>
                 <img src={signatureImg} alt="Head Coach Signature" style={{ height: "65px", width: "auto", display: "inline-block" }} />
               </div>
             </div>
@@ -630,11 +634,11 @@ export const ReportForm: React.FC<ReportFormProps> = ({ candidate, onClose }) =>
 
           {/* Footer Block */}
           <div id="pdf-footer-block" style={{ width: "794px", backgroundColor: "#fff", padding: "10px 40px 20px 40px", boxSizing: "border-box" }}>
-            <div style={{ borderTop: "2px solid #e2e8f0", paddingTop: "16px", textAlign: "center" }}>
-              <p style={{ fontSize: "10px", color: "#94a3b8", marginBottom: "4px", marginTop: 0 }}>
+            <div style={{ borderTop: "2px solid #000000", paddingTop: "16px", textAlign: "center" }}>
+              <p style={{ fontSize: "12px", color: "#0B1A30", fontWeight: "bold", marginBottom: "6px", marginTop: 0 }}>
                 This report has been generated based on assessment conducted by BCCI Level 3 & ECB Level 1 certified coaches of The Cricket Advisor.
               </p>
-              <p style={{ fontSize: "10px", color: "#94a3b8", margin: 0 }}>
+              <p style={{ fontSize: "12px", color: "#0B1A30", fontWeight: "bold", margin: 0 }}>
                 © The Cricket Advisor | www.thecricketadvisor.com | Confidential Assessment Report | {today}
               </p>
             </div>
