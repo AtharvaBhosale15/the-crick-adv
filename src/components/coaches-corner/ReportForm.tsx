@@ -35,6 +35,7 @@ function ScoreBar({ value }: { value: number }) {
 }
 
 interface SectionCardProps {
+  key?: string;
   group: CategoryGroup;
   scores: ScoresMap;
   comments: Record<string, string>;
@@ -47,21 +48,21 @@ function SectionCard({ group, scores, comments, onChange, onComment }: SectionCa
   const avg = categoryAverage(group, scores);
 
   return (
-    <div className={`rounded-2xl border-2 ${group.color} overflow-hidden shadow-sm`}>
+    <div className={`rounded-2xl border-2 border-black overflow-hidden shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]`}>
       <button
         type="button"
         onClick={() => setOpen(!open)}
-        className={`w-full flex items-center justify-between px-5 py-4 ${group.bgColor} cursor-pointer`}
+        className={`w-full flex items-center justify-between px-5 py-4 ${group.bgColor} border-b-2 border-black cursor-pointer`}
       >
         <div className="flex items-center gap-3">
           <span className={`text-base font-black uppercase tracking-wider ${group.textColor}`}>{group.label}</span>
           {avg > 0 && (
-            <span className={`text-xs font-bold px-2.5 py-0.5 rounded-full border ${group.textColor} border-current bg-white/60`}>
+            <span className={`text-xs font-bold px-2.5 py-0.5 rounded-full border border-black ${group.textColor} bg-white/70 shadow-sm`}>
               Avg: {avg} / 10
             </span>
           )}
         </div>
-        {open ? <ChevronUp size={18} className="text-slate-500" /> : <ChevronDown size={18} className="text-slate-500" />}
+        {open ? <ChevronUp size={18} className="text-black" /> : <ChevronDown size={18} className="text-black" />}
       </button>
 
       {open && (
@@ -75,7 +76,7 @@ function SectionCard({ group, scores, comments, onChange, onComment }: SectionCa
                   <select
                     value={v}
                     onChange={e => onChange(sub.key, Number(e.target.value))}
-                    className={`text-xs font-bold px-3 py-2 rounded-xl border-2 border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-400/30 cursor-pointer min-w-[170px] ${scoreColor(v)}`}
+                    className={`text-xs font-bold px-3 py-2 rounded-xl border-2 border-black focus:outline-none focus:ring-2 focus:ring-[#F5C451]/30 cursor-pointer min-w-[170px] ${scoreColor(v)}`}
                   >
                     <option value={0}>-- Select Score --</option>
                     {Array.from({ length: 10 }, (_, i) => i + 1).map(n => (
@@ -97,7 +98,7 @@ function SectionCard({ group, scores, comments, onChange, onComment }: SectionCa
               value={comments[group.key] || ""}
               onChange={e => onComment(group.key, e.target.value)}
               placeholder={`Optional coach notes for ${group.label}...`}
-              className="w-full px-3 py-2 text-xs text-slate-700 border-2 border-slate-200 rounded-xl focus:outline-none focus:border-blue-300 resize-none bg-slate-50 placeholder-slate-400"
+              className="w-full px-3 py-2 text-xs text-[#0B1A30] border-2 border-black rounded-xl focus:outline-none focus:border-[#F5C451] resize-none bg-[#FAF9F5] placeholder-slate-400"
             />
           </div>
         </div>
@@ -128,7 +129,7 @@ export const ReportForm: React.FC<ReportFormProps> = ({ candidate, onClose }) =>
     if (isWkKey && !isWKRequired) {
       return true;
     }
-    return v > 0;
+    return (v as number) > 0;
   });
 
   // Load draft from localStorage on mount
@@ -225,11 +226,11 @@ export const ReportForm: React.FC<ReportFormProps> = ({ candidate, onClose }) =>
   const today = new Date().toLocaleDateString("en-IN", { day: "2-digit", month: "long", year: "numeric" });
 
   return (
-    <div className="fixed inset-0 z-[9999] bg-black/60 backdrop-blur-sm flex flex-col overflow-hidden">
+    <div className="fixed inset-0 z-[9999] bg-black/60 backdrop-blur-sm flex flex-col overflow-hidden font-coaches">
       {/* Sticky top bar */}
-      <div className="bg-[#0B1A30] text-white px-6 py-4 flex items-center justify-between shadow-2xl flex-shrink-0">
+      <div className="bg-[#0B1A30] text-white px-6 py-4 flex items-center justify-between border-b-4 border-black flex-shrink-0 shadow-md">
         <div className="flex items-center gap-4">
-          <button onClick={onClose} className="p-2 rounded-xl bg-white/10 hover:bg-white/20 transition cursor-pointer">
+          <button onClick={onClose} className="p-2 rounded-xl bg-white/10 hover:bg-white/20 transition cursor-pointer border border-white/10">
             <X size={18} />
           </button>
           <div>
@@ -252,12 +253,12 @@ export const ReportForm: React.FC<ReportFormProps> = ({ candidate, onClose }) =>
           
           <button
             onClick={handleSaveDraft}
-            className="flex items-center gap-2 px-4 py-3 bg-slate-800 hover:bg-slate-700 border border-slate-700 text-white font-extrabold rounded-xl transition text-sm shadow-md cursor-pointer relative"
+            className="flex items-center gap-2 px-4 py-3 bg-slate-850 hover:bg-slate-800 border-2 border-black text-white font-extrabold rounded-xl transition text-sm shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] active:translate-y-[1px] active:shadow-none cursor-pointer relative"
           >
             <Save size={16} />
             <span>Save Draft</span>
             {draftSavedMessage && (
-              <span className="absolute -bottom-8 left-1/2 transform -translate-x-1/2 bg-emerald-500 text-white text-[10px] py-1 px-2.5 rounded shadow-lg whitespace-nowrap z-50 animate-bounce">
+              <span className="absolute -bottom-8 left-1/2 transform -translate-x-1/2 bg-emerald-650 border border-black text-white text-[10px] py-1 px-2.5 rounded shadow-lg whitespace-nowrap z-50 animate-bounce">
                 {draftSavedMessage}
               </span>
             )}
@@ -266,7 +267,7 @@ export const ReportForm: React.FC<ReportFormProps> = ({ candidate, onClose }) =>
           <button
             onClick={handleDownloadPDF}
             disabled={!allFilled || generating}
-            className="flex items-center gap-2 px-5 py-3 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 disabled:opacity-40 disabled:cursor-not-allowed text-[#0B1A30] font-extrabold rounded-xl transition text-sm shadow-lg cursor-pointer"
+            className="flex items-center gap-2 px-5 py-3 bg-[#F5C451] hover:bg-[#E2AF3C] disabled:opacity-45 disabled:cursor-not-allowed text-[#0B1A30] border-2 border-black font-extrabold rounded-xl transition text-sm shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] active:translate-y-[1px] active:shadow-none cursor-pointer"
           >
             {generating ? <Loader2 size={16} className="animate-spin" /> : <Download size={16} />}
             {generating ? "Generating..." : "Download Report PDF"}
@@ -275,7 +276,7 @@ export const ReportForm: React.FC<ReportFormProps> = ({ candidate, onClose }) =>
       </div>
 
       {/* Scrollable content */}
-      <div className="flex-1 overflow-y-auto bg-slate-100 p-6">
+      <div className="flex-1 overflow-y-auto bg-[#FAF9F5] p-6">
         {draftLoadedAlert && (
           <div className="max-w-3xl mx-auto mb-4 bg-emerald-50 border-2 border-emerald-300 rounded-xl px-4 py-3 text-emerald-800 text-sm font-semibold flex items-center gap-2 animate-pulse">
             <CheckCircle size={16} className="text-emerald-500" />
@@ -292,8 +293,8 @@ export const ReportForm: React.FC<ReportFormProps> = ({ candidate, onClose }) =>
 
         <div className="max-w-3xl mx-auto space-y-5">
           {/* Candidate Info Card */}
-          <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-5">
-            <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-4">Candidate Information</h3>
+          <div className="bg-white rounded-2xl p-5 border-2 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
+            <h3 className="text-xs font-black text-[#0B1A30] uppercase tracking-widest mb-4 pb-1 border-b-2 border-black inline-block">Candidate Information</h3>
             <div className="grid grid-cols-2 md:grid-cols-3 gap-x-6 gap-y-3 text-sm">
               {[
                 ["Full Name", `${candidate.firstName} ${candidate.lastName}`],
@@ -338,27 +339,27 @@ export const ReportForm: React.FC<ReportFormProps> = ({ candidate, onClose }) =>
           })}
 
           {/* Overall Remarks */}
-          <div className="bg-white rounded-2xl shadow-sm border-2 border-[#0B1A30] p-5 space-y-3">
+          <div className="bg-white rounded-2xl p-5 space-y-3 border-2 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
             <label className="flex items-center gap-2 text-sm font-black text-[#0B1A30] uppercase tracking-wider">
-              <Trophy size={16} className="text-amber-500" /> Overall Coach Remarks
+              <Trophy size={16} className="text-[#F5C451]" /> <span className="pb-0.5 border-b-2 border-black">Overall Coach Remarks</span>
             </label>
             <textarea
               rows={4}
               value={overallRemarks}
               onChange={e => setOverallRemarks(e.target.value)}
               placeholder="Write your overall assessment remarks and recommendations for the candidate..."
-              className="w-full px-4 py-3 text-sm text-slate-700 border-2 border-slate-200 rounded-xl focus:outline-none focus:border-blue-400 resize-none bg-slate-50 placeholder-slate-400"
+              className="w-full px-4 py-3 text-sm text-[#0B1A30] border-2 border-black rounded-xl focus:outline-none focus:border-[#F5C451] resize-none bg-[#FAF9F5] placeholder-slate-400"
             />
           </div>
 
           {/* Grand score summary */}
           {grand > 0 && (
-            <div className="bg-gradient-to-br from-[#0B1A30] to-[#0f2a48] rounded-2xl p-6 text-center shadow-xl">
-              <p className="text-amber-400 text-xs uppercase tracking-widest font-bold mb-2">Grand Overall Score</p>
+            <div className="bg-[#0B1A30] border-2 border-black rounded-2xl p-6 text-center shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
+              <p className="text-[#F5C451] text-xs uppercase tracking-widest font-black mb-2">Grand Overall Score</p>
               <p className={`text-6xl font-black ${grand >= 8 ? "text-emerald-400" : grand >= 5 ? "text-amber-400" : "text-red-400"}`}>
                 {grand}
               </p>
-              <p className="text-slate-400 text-sm font-semibold mt-1">out of 10</p>
+              <p className="text-slate-300 text-sm font-bold mt-1">out of 10</p>
             </div>
           )}
         </div>

@@ -1,4 +1,4 @@
-﻿import React, { useState, useMemo, useEffect } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import { X, Search, Trophy, ClipboardList, User, Award, Filter, RefreshCw, Loader2 } from "lucide-react";
 import { SubmissionData } from "../assessment/types";
 import { CoachesCornerLogin } from "./CoachesCornerLogin";
@@ -76,34 +76,34 @@ export const CoachesCorner: React.FC<CoachesCornerProps> = ({ onClose }) => {
   }
 
   return (
-    <div className="fixed inset-0 z-[9990] bg-gradient-to-br from-[#0B1A30] via-[#0f2440] to-[#0B1A30] flex flex-col overflow-hidden">
+    <div className="fixed inset-0 z-[9990] bg-[#FAF9F5] flex flex-col overflow-hidden font-coaches">
       {/* Background pattern */}
-      <div className="absolute inset-0 opacity-5 pointer-events-none"
-        style={{ backgroundImage: "repeating-linear-gradient(0deg,#fff 0,#fff 1px,transparent 0,transparent 40px),repeating-linear-gradient(90deg,#fff 0,#fff 1px,transparent 0,transparent 40px)", backgroundSize: "40px 40px" }}
+      <div className="absolute inset-0 opacity-10 pointer-events-none"
+        style={{ backgroundImage: "repeating-linear-gradient(0deg,rgba(11,26,48,0.04) 0,rgba(11,26,48,0.04) 1px,transparent 0,transparent 40px),repeating-linear-gradient(90deg,rgba(11,26,48,0.04) 0,rgba(11,26,48,0.04) 1px,transparent 0,transparent 40px)", backgroundSize: "40px 40px" }}
       />
 
       {/* Header */}
-      <div className="relative flex-shrink-0 bg-black/30 backdrop-blur-sm border-b border-white/10 px-6 py-5 flex items-center justify-between">
+      <div className="relative flex-shrink-0 bg-[#0B1A30] text-white border-b-4 border-black px-6 py-5 flex items-center justify-between shadow-md">
         <div className="flex items-center gap-4">
-          <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-amber-400 to-amber-600 flex items-center justify-center shadow-lg text-2xl flex-shrink-0">
+          <div className="w-12 h-12 rounded-xl bg-[#FDF8E7] border-2 border-black flex items-center justify-center shadow-sm text-2xl flex-shrink-0">
             🏏
           </div>
           <div>
-            <p className="text-amber-400 text-[10px] uppercase tracking-[0.2em] font-bold">The Cricket Advisor</p>
+            <p className="text-[#F5C451] text-[10px] uppercase tracking-[0.2em] font-bold">The Cricket Advisor</p>
             <h1 className="text-xl font-black text-white">Coaches Corner</h1>
-            <p className="text-slate-400 text-xs">Assessment Report Generator</p>
+            <p className="text-slate-300 text-xs">Assessment Report Generator</p>
           </div>
         </div>
         <div className="flex items-center gap-3">
           {/* Stats badges */}
           <div className="hidden sm:flex items-center gap-2 mr-2">
-            <span className="px-3 py-1.5 bg-emerald-500/20 border border-emerald-400/30 text-emerald-300 text-xs font-bold rounded-full">
+            <span className="px-3 py-1.5 bg-emerald-50 border border-emerald-400 text-emerald-800 text-xs font-bold rounded-full">
               🟢 {onlineCount} Online
             </span>
-            <span className="px-3 py-1.5 bg-amber-500/20 border border-amber-400/30 text-amber-300 text-xs font-bold rounded-full">
+            <span className="px-3 py-1.5 bg-amber-50 border border-amber-400 text-amber-800 text-xs font-bold rounded-full">
               🟠 {offlineCount} Offline
             </span>
-            <span className="px-3 py-1.5 bg-white/10 border border-white/20 text-white text-xs font-bold rounded-full">
+            <span className="px-3 py-1.5 bg-[#FDF8E7] border-2 border-black text-[#0B1A30] text-xs font-extrabold rounded-full">
               {paidCandidates.length} Total
             </span>
           </div>
@@ -111,44 +111,44 @@ export const CoachesCorner: React.FC<CoachesCornerProps> = ({ onClose }) => {
           <button
             onClick={fetchCandidates}
             disabled={loading}
-            className="p-2.5 rounded-xl bg-white/10 hover:bg-white/20 text-white disabled:opacity-40 transition cursor-pointer border border-white/10"
+            className="p-2.5 rounded-xl bg-white/10 hover:bg-white/20 text-white disabled:opacity-40 transition cursor-pointer border border-white/20 hover:scale-105"
             title="Refresh candidate list"
           >
             {loading ? <Loader2 size={18} className="animate-spin" /> : <RefreshCw size={18} />}
           </button>
 
-          <button onClick={onClose} className="p-2.5 rounded-xl bg-white/10 hover:bg-red-500/30 text-white hover:text-red-300 transition cursor-pointer border border-white/10">
+          <button onClick={onClose} className="p-2.5 rounded-xl bg-white/10 hover:bg-red-500/40 hover:text-red-250 text-white transition cursor-pointer border border-white/20 hover:scale-105">
             <X size={18} />
           </button>
         </div>
       </div>
 
       {/* Sub-header: search + filter */}
-      <div className="relative flex-shrink-0 px-6 py-4 bg-black/20 border-b border-white/10 flex flex-col sm:flex-row gap-3">
+      <div className="relative flex-shrink-0 px-6 py-4 bg-[#FDF8E7]/50 border-b-2 border-black flex flex-col sm:flex-row gap-3">
         <div className="relative flex-1">
-          <Search size={16} className="absolute left-3.5 top-3 text-slate-400" />
+          <Search size={16} className="absolute left-3.5 top-3.5 text-slate-500" />
           <input
             type="text"
             value={search}
             onChange={e => setSearch(e.target.value)}
             placeholder="Search by candidate name, email, or registration ID..."
-            className="w-full pl-10 pr-4 py-2.5 bg-white/10 border border-white/20 rounded-xl text-white placeholder-slate-500 text-sm focus:outline-none focus:ring-2 focus:ring-amber-400/40 focus:border-amber-400 transition"
+            className="w-full pl-10 pr-4 py-2.5 bg-white border-2 border-black rounded-xl text-[#0B1A30] placeholder-slate-400 text-sm focus:outline-none focus:ring-2 focus:ring-[#F5C451]/40 focus:border-[#F5C451] transition"
           />
         </div>
         <div className="flex items-center gap-2 flex-shrink-0">
-          <Filter size={14} className="text-slate-400" />
+          <Filter size={14} className="text-slate-650" />
           {(["All", "Online", "Offline"] as const).map(mode => (
             <button
               key={mode}
               onClick={() => setFilterMode(mode)}
-              className={`px-3.5 py-2 rounded-xl text-xs font-bold transition cursor-pointer border ${
+              className={`px-4 py-2 rounded-xl text-xs font-extrabold transition cursor-pointer border-2 border-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:translate-y-[-1px] hover:shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] active:translate-y-[1px] active:shadow-none ${
                 filterMode === mode
                   ? mode === "Online"
-                    ? "bg-emerald-500 border-emerald-400 text-white"
+                    ? "bg-emerald-500 text-white border-black"
                     : mode === "Offline"
-                    ? "bg-amber-500 border-amber-400 text-white"
-                    : "bg-white border-white text-[#0B1A30]"
-                  : "bg-white/10 border-white/20 text-slate-300 hover:bg-white/20"
+                    ? "bg-amber-500 text-white border-black"
+                    : "bg-[#F5C451] text-[#0B1A30] border-black"
+                  : "bg-white text-[#0B1A30] hover:bg-[#FDF8E7]"
               }`}
             >
               {mode}
@@ -160,20 +160,20 @@ export const CoachesCorner: React.FC<CoachesCornerProps> = ({ onClose }) => {
       {/* Candidate List */}
       <div className="relative flex-1 overflow-y-auto p-6">
         {error && (
-          <div className="max-w-xl mx-auto mb-6 p-4 bg-red-500/20 border-2 border-red-500/40 rounded-2xl text-red-200 text-center text-sm font-semibold">
+          <div className="max-w-xl mx-auto mb-6 p-4 bg-red-50 border-2 border-red-400 rounded-2xl text-red-800 text-center text-sm font-semibold">
             ⚠️ {error}
           </div>
         )}
 
         {loading && candidates.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-64 text-center space-y-3">
-            <Loader2 size={40} className="text-slate-400 animate-spin" />
-            <p className="text-slate-400 font-semibold">Loading candidates from database...</p>
+            <Loader2 size={40} className="text-[#0B1A30] animate-spin" />
+            <p className="text-[#0B1A30] font-semibold">Loading candidates from database...</p>
           </div>
         ) : filtered.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-64 text-center space-y-3">
             <ClipboardList size={40} className="text-slate-600" />
-            <p className="text-slate-400 font-semibold">
+            <p className="text-slate-600 font-semibold">
               {paidCandidates.length === 0
                 ? "No paid candidates found. Candidates who complete payment will appear here."
                 : "No candidates match your search."}
@@ -186,22 +186,22 @@ export const CoachesCorner: React.FC<CoachesCornerProps> = ({ onClose }) => {
               return (
                 <div
                   key={candidate.id}
-                  className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl p-5 hover:bg-white/10 hover:border-amber-400/30 transition group"
+                  className="bg-white border-2 border-black rounded-2xl p-5 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] transition-all duration-155 hover:translate-y-[-2px] group"
                 >
                   <div className="flex items-start justify-between gap-3 mb-4">
                     <div className="flex items-center gap-3 min-w-0">
-                      <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 shadow-md ${isOnline ? "bg-emerald-500/20" : "bg-amber-500/20"}`}>
-                        <User size={18} className={isOnline ? "text-emerald-400" : "text-amber-400"} />
+                      <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 border border-black shadow-sm ${isOnline ? "bg-emerald-50" : "bg-amber-50"}`}>
+                        <User size={18} className={isOnline ? "text-emerald-700" : "text-amber-700"} />
                       </div>
                       <div className="min-w-0">
-                        <h3 className="text-white font-black text-sm truncate">
+                        <h3 className="text-[#0B1A30] font-black text-sm truncate group-hover:underline underline-offset-4 decoration-2 decoration-[#F5C451]">
                           {candidate.firstName} {candidate.lastName}
                         </h3>
-                        <p className="text-slate-400 text-[11px] font-mono">{candidate.id}</p>
+                        <p className="text-slate-500 text-[11px] font-mono">{candidate.id}</p>
                       </div>
                     </div>
-                    <span className={`flex-shrink-0 px-2.5 py-1 rounded-full text-[10px] font-black uppercase border ${
-                      isOnline ? "bg-emerald-500/20 border-emerald-400/40 text-emerald-300" : "bg-amber-500/20 border-amber-400/40 text-amber-300"
+                    <span className={`flex-shrink-0 px-2.5 py-1 rounded-full text-[10px] font-black uppercase border-2 border-black ${
+                      isOnline ? "bg-emerald-50 text-emerald-800" : "bg-amber-50 text-amber-800"
                     }`}>
                       {isOnline ? "🟢" : "🟠"} {candidate.testMode}
                     </span>
@@ -216,30 +216,30 @@ export const CoachesCorner: React.FC<CoachesCornerProps> = ({ onClose }) => {
                       ["Email", candidate.email],
                       ["Mobile", `${candidate.mobileCountryCode} ${candidate.mobileNumber}`],
                     ].map(([label, val]) => (
-                      <div key={label} className="bg-white/5 rounded-lg px-3 py-2">
+                      <div key={label} className="bg-[#FDF8E7]/40 border border-black rounded-xl px-3 py-2">
                         <span className="block text-slate-500 text-[9px] uppercase tracking-wider font-bold">{label}</span>
-                        <span className="block text-slate-200 font-semibold truncate mt-0.5">{val || "—"}</span>
+                        <span className="block text-[#0B1A30] font-bold truncate mt-0.5">{val || "—"}</span>
                       </div>
                     ))}
                   </div>
 
                   <div className="flex items-center gap-2 mb-4">
-                    <span className="text-[10px] text-emerald-400 font-bold uppercase tracking-wider">✓ Paid</span>
-                    <span className="text-slate-500 text-[10px]">•</span>
+                    <span className="text-[10px] text-emerald-700 font-bold uppercase tracking-wider">✓ Paid</span>
+                    <span className="text-slate-400 text-[10px]">•</span>
                     {candidate.amountPaid && (
                       <>
-                        <span className="text-[10px] text-slate-400 font-mono">
+                        <span className="text-[10px] text-slate-600 font-mono">
                           ₹{candidate.amountPaid.toLocaleString("en-IN")} INR
                         </span>
-                        <span className="text-slate-500 text-[10px]">•</span>
+                        <span className="text-slate-400 text-[10px]">•</span>
                       </>
                     )}
-                    <span className="text-[10px] text-slate-400">{candidate.submittedAt || "Recent"}</span>
+                    <span className="text-[10px] text-slate-500">{candidate.submittedAt || "Recent"}</span>
                   </div>
 
                   <button
                     onClick={() => setSelectedCandidate(candidate)}
-                    className="w-full py-3 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-[#0B1A30] font-extrabold rounded-xl transition text-xs uppercase tracking-wider shadow-lg cursor-pointer flex items-center justify-center gap-2"
+                    className="w-full py-3 bg-[#F5C451] hover:bg-[#E2AF3C] text-[#0B1A30] border-2 border-black font-extrabold rounded-xl transition text-xs uppercase tracking-wider shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] hover:shadow-[1px_1px_0px_0px_rgba(0,0,0,1)] hover:translate-y-[2px] cursor-pointer flex items-center justify-center gap-2"
                   >
                     <Award size={14} />
                     📋 Create Report
@@ -252,7 +252,7 @@ export const CoachesCorner: React.FC<CoachesCornerProps> = ({ onClose }) => {
       </div>
 
       {/* Footer */}
-      <div className="relative flex-shrink-0 bg-black/30 border-t border-white/10 px-6 py-3 text-center">
+      <div className="relative flex-shrink-0 bg-[#0B1A30] border-t-2 border-black text-slate-400 px-6 py-4 text-center">
         <p className="text-slate-500 text-[10px]">
           © The Cricket Advisor – Coaches Corner | Showing {filtered.length} of {paidCandidates.length} paid candidates
         </p>

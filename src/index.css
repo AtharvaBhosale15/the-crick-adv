@@ -1,10 +1,40 @@
 @import "tailwindcss";
 
+@font-face {
+  font-display: swap;
+  font-family: 'Almaden Sans';
+  font-style: normal;
+  font-weight: 400;
+  src: url(https://st1.zoom.us/homepage/20260825-1235/primary/dist/assets/fonts/almaden-sans/AlmadenSans-Regular-WebXL.woff2) format("woff2");
+}
+@font-face {
+  font-display: swap;
+  font-family: 'Almaden Sans';
+  font-style: normal;
+  font-weight: 500;
+  src: url(https://st1.zoom.us/homepage/20260825-1235/primary/dist/assets/fonts/almaden-sans/AlmadenSans-Medium-WebXL.woff2) format("woff2");
+}
+@font-face {
+  font-display: swap;
+  font-family: 'Almaden Sans';
+  font-style: normal;
+  font-weight: 600;
+  src: url(https://st1.zoom.us/homepage/20260825-1235/primary/dist/assets/fonts/almaden-sans/AlmadenSans-SemiBold-WebXL.woff2) format("woff2");
+}
+@font-face {
+  font-display: swap;
+  font-family: 'Almaden Sans';
+  font-style: normal;
+  font-weight: 700;
+  src: url(https://st1.zoom.us/homepage/20260825-1235/primary/dist/assets/fonts/almaden-sans/AlmadenSans-Bold-WebXL.woff2) format("woff2");
+}
+
 @theme {
   --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
   --font-display: 'Inter', system-ui, -apple-system, sans-serif;
   --font-sharp: 'Inter', system-ui, -apple-system, sans-serif;
   --font-arial: 'Inter', Arial, Helvetica, sans-serif;
+  --font-coaches: 'Almaden Sans', 'Inter', system-ui, -apple-system, sans-serif;
   
   --color-gold-50: #FFFDF5;
   --color-gold-100: #FFF6D6;

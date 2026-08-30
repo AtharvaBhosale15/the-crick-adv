@@ -1,4 +1,4 @@
-﻿// Cricket Skills Certification - Assessment Categories
+// Cricket Skills Certification - Assessment Categories
 
 export interface SubCategory {
   key: string;
@@ -78,6 +78,31 @@ export const ONLINE_CATEGORIES: CategoryGroup[] = [
       { key: "catching_wk", label: "Catching" },
       { key: "stumping_technique", label: "Stumping Technique" },
       { key: "reaction_speed_wk", label: "Reaction Speed" },
+    ],
+  },
+  {
+    key: "powerplay_death_batting",
+    label: "Power Play & Death Overs Skills Assessment - Batting",
+    color: "border-rose-500",
+    bgColor: "bg-rose-50",
+    textColor: "text-rose-800",
+    subCategories: [
+      { key: "pp_batting_powerplay", label: "Skill in Power play Batting" },
+      { key: "pp_batting_middle", label: "Skill in Middle Overs batting" },
+      { key: "pp_batting_death", label: "Skill in Death Overs Batting" },
+      { key: "pp_batting_overall", label: "Over all Power Play Batting Skills" },
+    ],
+  },
+  {
+    key: "powerplay_death_bowling",
+    label: "Power Play & Death Overs Skills Assessment - Bowling",
+    color: "border-cyan-500",
+    bgColor: "bg-cyan-50",
+    textColor: "text-cyan-800",
+    subCategories: [
+      { key: "pp_bowling_powerplay", label: "Skill With Power Play overs" },
+      { key: "pp_bowling_death", label: "Skill with Death Overs" },
+      { key: "pp_bowling_overall", label: "Overall Bowling Skills" },
     ],
   },
   {
@@ -163,6 +188,31 @@ export const OFFLINE_CATEGORIES: CategoryGroup[] = [
       { key: "off_catching_wk", label: "Catching" },
       { key: "off_stumping", label: "Stumping" },
       { key: "off_reaction_speed_wk", label: "Reaction Speed" },
+    ],
+  },
+  {
+    key: "powerplay_death_batting",
+    label: "Power Play & Death Overs Skills Assessment - Batting",
+    color: "border-rose-500",
+    bgColor: "bg-rose-50",
+    textColor: "text-rose-800",
+    subCategories: [
+      { key: "off_pp_batting_powerplay", label: "Skill in Power play Batting" },
+      { key: "off_pp_batting_middle", label: "Skill in Middle Overs batting" },
+      { key: "off_pp_batting_death", label: "Skill in Death Overs Batting" },
+      { key: "off_pp_batting_overall", label: "Over all Power Play Batting Skills" },
+    ],
+  },
+  {
+    key: "powerplay_death_bowling",
+    label: "Power Play & Death Overs Skills Assessment - Bowling",
+    color: "border-cyan-500",
+    bgColor: "bg-cyan-50",
+    textColor: "text-cyan-800",
+    subCategories: [
+      { key: "off_pp_bowling_powerplay", label: "Skill With Power Play overs" },
+      { key: "off_pp_bowling_death", label: "Skill with Death Overs" },
+      { key: "off_pp_bowling_overall", label: "Overall Bowling Skills" },
     ],
   },
   {
