@@ -5,6 +5,7 @@ import { SubmissionData } from "../assessment/types";
 import html2canvas from "html2canvas-pro";
 import { jsPDF } from "jspdf";
 import logoImg from "../../assets/images/the_cricket_advisor_logo.png";
+import signatureImg from "../../assets/images/coach_signature.png";
 
 interface ReportFormProps {
   candidate: SubmissionData;
@@ -142,7 +143,7 @@ function SectionCard({
             <button
               type="button"
               onClick={onSaveDraft}
-              className="flex items-center gap-1.5 px-3 py-2 bg-slate-850 hover:bg-slate-800 border-2 border-black text-white font-extrabold text-xs rounded-xl transition shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] active:translate-y-[1px] active:shadow-none cursor-pointer"
+              className="flex items-center gap-1.5 px-3 py-2 bg-slate-800 hover:bg-slate-900 border-2 border-black text-white font-extrabold text-xs rounded-xl transition shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] active:translate-y-[1px] active:shadow-none cursor-pointer"
             >
               <Save size={12} />
               <span>Save Section Draft</span>
@@ -374,7 +375,7 @@ export const ReportForm: React.FC<ReportFormProps> = ({ candidate, onClose }) =>
           <div className="flex items-center gap-2 sm:gap-3 flex-1 sm:flex-initial justify-end">
             <button
               onClick={handleSaveDraft}
-              className="flex items-center justify-center gap-2 px-3 py-2 sm:px-4 sm:py-3 bg-slate-850 hover:bg-slate-800 border-2 border-black text-white font-extrabold rounded-xl transition text-xs sm:text-sm shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] active:translate-y-[1px] active:shadow-none cursor-pointer relative flex-1 sm:flex-none"
+              className="flex items-center justify-center gap-2 px-3 py-2 sm:px-4 sm:py-3 bg-slate-800 hover:bg-slate-900 border-2 border-black text-white font-extrabold rounded-xl transition text-xs sm:text-sm shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] active:translate-y-[1px] active:shadow-none cursor-pointer relative flex-1 sm:flex-none"
             >
               <Save size={14} className="sm:w-[16px] sm:h-[16px]" />
               <span className="whitespace-nowrap">Save Draft</span>
@@ -585,11 +586,24 @@ export const ReportForm: React.FC<ReportFormProps> = ({ candidate, onClose }) =>
 
             {/* Overall Remarks */}
             {overallRemarks && (
-              <div style={{ border: "1px solid #e2e8f0", borderRadius: "8px", padding: "16px" }}>
+              <div style={{ border: "1px solid #e2e8f0", borderRadius: "8px", padding: "16px", marginBottom: "20px" }}>
                 <h3 style={{ fontSize: "11px", fontWeight: 700, textTransform: "uppercase", color: "#64748b", marginBottom: "8px", marginTop: 0 }}>Overall Coach Remarks</h3>
                 <p style={{ fontSize: "12px", color: "#334155", lineHeight: 1.7, margin: 0 }}>{overallRemarks}</p>
               </div>
             )}
+
+            {/* Signature & Verification Block */}
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginTop: "24px", paddingTop: "16px", borderTop: "1px solid #e2e8f0" }}>
+              <div style={{ maxWidth: "420px" }}>
+                <p style={{ fontSize: "10.5px", color: "#475569", lineHeight: "1.6", margin: 0 }}>
+                  To validate a certification or submit a query regarding this report, authorized organizations are invited to contact our verification team at <a href="mailto:thecricketadvisor@gmail.com" style={{ color: "#0B1A30", textDecoration: "underline", fontWeight: "bold" }}>thecricketadvisor@gmail.com</a>.
+                </p>
+              </div>
+              <div style={{ textAlign: "right" }}>
+                <span style={{ display: "block", fontSize: "9px", color: "#94a3b8", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: "4px" }}>Authorized Signatory</span>
+                <img src={signatureImg} alt="Head Coach Signature" style={{ height: "65px", width: "auto", display: "inline-block" }} />
+              </div>
+            </div>
           </div>
 
           {/* Footer Block */}
