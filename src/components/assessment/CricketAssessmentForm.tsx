@@ -222,44 +222,44 @@ export const CricketAssessmentForm: React.FC<CricketAssessmentFormProps> = ({
       className="w-full max-w-5xl mx-auto bg-white rounded-2xl shadow-2xl border-2 border-slate-300 overflow-hidden my-4 md:my-6"
     >
       {/* Clean Modal Header with Progress Indicator (Hidden earlier requested promotional header text) */}
-      <div className="bg-[#0B192C] text-white p-6 md:p-8 relative border-b-4 border-amber-500">
+      <div className="bg-[#0B192C] text-white p-4 sm:p-6 md:p-8 relative border-b-4 border-amber-500">
         <button
           onClick={onClose}
-          className="absolute top-6 right-6 p-2 rounded-full bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white transition cursor-pointer border border-slate-600"
+          className="absolute top-4 right-4 sm:top-6 sm:right-6 p-2 rounded-full bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white transition cursor-pointer border border-slate-600 z-10"
           title="Close form"
         >
           <X size={20} />
         </button>
 
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pr-12">
-          <div className="flex items-center gap-3">
-            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-amber-400 via-amber-500 to-yellow-600 flex items-center justify-center text-[#0B192C] shadow-lg font-black shrink-0 border-2 border-amber-300">
-              <Award size={26} />
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pr-10 md:pr-12">
+          <div className="flex items-center gap-2 sm:gap-3">
+            <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-gradient-to-br from-amber-400 via-amber-500 to-yellow-600 flex items-center justify-center text-[#0B192C] shadow-lg font-black shrink-0 border-2 border-amber-300">
+              <Award size={22} className="sm:w-[26px] sm:h-[26px]" />
             </div>
             <div>
-              <h3 className="text-xl md:text-2xl font-black text-white">
+              <h3 className="text-lg sm:text-xl md:text-2xl font-black text-white">
                 Registration Form
               </h3>
-              <p className="text-xs text-amber-300 font-extrabold uppercase tracking-wider mt-0.5">
+              <p className="text-[10px] sm:text-xs text-amber-300 font-extrabold uppercase tracking-wider mt-0.5">
                 Step {currentStep} of 4: {stepTitles[currentStep - 1]}
               </p>
             </div>
           </div>
 
           {/* Step Progress Indicators */}
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5 sm:gap-2">
             {[1, 2, 3, 4].map((step) => (
               <div
                 key={step}
-                className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-black border-2 transition-all ${
+                className={`w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center text-[10px] sm:text-xs font-black border-2 transition-all ${
                   currentStep === step
-                    ? 'bg-amber-400 text-[#0B192C] border-amber-300 scale-110 shadow-md'
+                    ? 'bg-amber-400 text-[#0B192C] border-amber-300 scale-105 sm:scale-110 shadow-md'
                     : currentStep > step
                     ? 'bg-blue-800 text-amber-300 border-blue-600'
                     : 'bg-slate-800 text-slate-400 border-slate-700'
                 }`}
               >
-                {currentStep > step ? <CheckCircle size={16} /> : step}
+                {currentStep > step ? <CheckCircle size={14} /> : step}
               </div>
             ))}
           </div>
@@ -285,7 +285,7 @@ export const CricketAssessmentForm: React.FC<CricketAssessmentFormProps> = ({
       )}
 
       {/* FORM CONTENT DISPLAYING ONE SECTION AT A TIME */}
-      <form onSubmit={handleSubmit} className="p-6 md:p-8 bg-slate-50/50">
+      <form onSubmit={handleSubmit} className="p-4 sm:p-6 md:p-8 bg-slate-50/50">
         <AnimatePresence mode="wait">
 
           {/* ================= STEP 1: PERSONAL DETAILS & AGE VERIFICATION ================= */}
@@ -295,14 +295,14 @@ export const CricketAssessmentForm: React.FC<CricketAssessmentFormProps> = ({
               initial={{ opacity: 0, x: 20 }}
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: -20 }}
-              className="bg-white rounded-2xl p-6 border-2 border-blue-300 shadow-sm space-y-6"
+              className="bg-white rounded-2xl p-4 sm:p-6 border-2 border-blue-300 shadow-sm space-y-6"
             >
-              <div className="border-b-2 border-slate-200 pb-3 flex items-center justify-between">
-                <div className="flex items-center gap-2 text-[#0B192C] font-black text-lg">
-                  <User size={22} className="text-blue-600" />
-                  <h3>1. Personal Information & Candidate Age Verification</h3>
+              <div className="border-b-2 border-slate-200 pb-3 flex items-center justify-between gap-2">
+                <div className="flex items-center gap-2 text-[#0B192C] font-black text-base sm:text-lg">
+                  <User size={20} className="text-blue-600 shrink-0" />
+                  <h3 className="truncate">1. Personal Information & Candidate Age</h3>
                 </div>
-                <span className="text-xs font-bold text-slate-500 bg-slate-100 px-3 py-1 rounded-full border border-slate-300 uppercase tracking-wider">
+                <span className="text-[10px] sm:text-xs font-bold text-slate-500 bg-slate-100 px-2.5 py-0.5 sm:px-3 sm:py-1 rounded-full border border-slate-300 uppercase tracking-wider shrink-0">
                   Step 1 of 4
                 </span>
               </div>
@@ -473,14 +473,14 @@ export const CricketAssessmentForm: React.FC<CricketAssessmentFormProps> = ({
               initial={{ opacity: 0, x: 20 }}
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: -20 }}
-              className="bg-white rounded-2xl p-6 border-2 border-blue-300 shadow-sm space-y-6"
+              className="bg-white rounded-2xl p-4 sm:p-6 border-2 border-blue-300 shadow-sm space-y-6"
             >
-              <div className="border-b-2 border-slate-200 pb-3 flex items-center justify-between">
-                <div className="flex items-center gap-2 text-[#0B192C] font-black text-lg">
-                  <Globe size={22} className="text-blue-600" />
-                  <h3>2. Location & Communication Contact Details</h3>
+              <div className="border-b-2 border-slate-200 pb-3 flex items-center justify-between gap-2">
+                <div className="flex items-center gap-2 text-[#0B192C] font-black text-base sm:text-lg">
+                  <Globe size={20} className="text-blue-600 shrink-0" />
+                  <h3 className="truncate">2. Location & Contact Details</h3>
                 </div>
-                <span className="text-xs font-bold text-slate-500 bg-slate-100 px-3 py-1 rounded-full border border-slate-300 uppercase tracking-wider">
+                <span className="text-[10px] sm:text-xs font-bold text-slate-500 bg-slate-100 px-2.5 py-0.5 sm:px-3 sm:py-1 rounded-full border border-slate-300 uppercase tracking-wider shrink-0">
                   Step 2 of 4
                 </span>
               </div>
@@ -617,14 +617,14 @@ export const CricketAssessmentForm: React.FC<CricketAssessmentFormProps> = ({
               initial={{ opacity: 0, x: 20 }}
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: -20 }}
-              className="bg-white rounded-2xl p-6 border-2 border-slate-300 shadow-sm space-y-6"
+              className="bg-white rounded-2xl p-4 sm:p-6 border-2 border-slate-300 shadow-sm space-y-6"
             >
-              <div className="border-b-2 border-slate-200 pb-3 flex items-center justify-between">
-                <div className="flex items-center gap-2 text-[#0B192C] font-black text-lg">
-                  <ShieldCheck size={22} className="text-blue-600" />
-                  <h3>3. Cricket Playing Role & Technical Specialty Selection</h3>
+              <div className="border-b-2 border-slate-200 pb-3 flex items-center justify-between gap-2">
+                <div className="flex items-center gap-2 text-[#0B192C] font-black text-base sm:text-lg">
+                  <ShieldCheck size={20} className="text-blue-600 shrink-0" />
+                  <h3 className="truncate">3. Playing Role & Technical Specialty</h3>
                 </div>
-                <span className="text-xs font-bold text-slate-500 bg-slate-100 px-3 py-1 rounded-full border border-slate-300 uppercase tracking-wider">
+                <span className="text-[10px] sm:text-xs font-bold text-slate-500 bg-slate-100 px-2.5 py-0.5 sm:px-3 sm:py-1 rounded-full border border-slate-300 uppercase tracking-wider shrink-0">
                   Step 3 of 4
                 </span>
               </div>
@@ -635,7 +635,7 @@ export const CricketAssessmentForm: React.FC<CricketAssessmentFormProps> = ({
                   Select Primary Playing Role (Click one option) <span className="text-red-500">*</span>
                 </label>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
+                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2 sm:gap-3">
                   {PLAYING_ROLES.map((role) => {
                     const isSelected = formData.playingRole === role;
                     return (
@@ -643,7 +643,7 @@ export const CricketAssessmentForm: React.FC<CricketAssessmentFormProps> = ({
                         key={role}
                         type="button"
                         onClick={() => handlePlayingRoleChange(role)}
-                        className={`p-4 rounded-xl border border-black text-left flex flex-col justify-between transition cursor-pointer min-h-[96px] ${
+                        className={`p-3 sm:p-4 rounded-xl border border-black text-left flex flex-col justify-between transition cursor-pointer min-h-[84px] sm:min-h-[96px] ${
                           isSelected
                             ? 'bg-[#0B192C] text-amber-300 shadow-lg ring-2 ring-blue-600/40'
                             : 'bg-white text-slate-800 hover:bg-slate-50'
@@ -652,14 +652,14 @@ export const CricketAssessmentForm: React.FC<CricketAssessmentFormProps> = ({
                       >
                         <div className="flex items-center justify-end mb-1">
                           <div
-                            className={`w-4 h-4 rounded-full border-2 flex items-center justify-center ${
+                            className={`w-3.5 h-3.5 sm:w-4 sm:h-4 rounded-full border-2 flex items-center justify-center ${
                               isSelected ? 'border-amber-400 bg-amber-400' : 'border-slate-400'
                             }`}
                           >
                             {isSelected && <div className="w-1.5 h-1.5 rounded-full bg-[#0B1A30]" />}
                           </div>
                         </div>
-                        <span className="font-extrabold text-sm leading-tight">{role}</span>
+                        <span className="font-extrabold text-xs sm:text-sm leading-tight">{role}</span>
                       </button>
                     );
                   })}
@@ -676,9 +676,9 @@ export const CricketAssessmentForm: React.FC<CricketAssessmentFormProps> = ({
                 <motion.div
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
-                  className="bg-slate-50 p-5 rounded-2xl border border-black space-y-4"
+                  className="bg-slate-50 p-4 sm:p-5 rounded-2xl border border-black space-y-4"
                 >
-                  <div className="flex items-center justify-between">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                     <div>
                       <h4 className="text-sm font-black text-[#0B192C]">
                         Specialty / Sub-Role Options for <span className="text-blue-700 underline">{formData.playingRole}</span>
@@ -687,7 +687,7 @@ export const CricketAssessmentForm: React.FC<CricketAssessmentFormProps> = ({
                         Select your exact technique specialization ({currentSubRoles.length} options available):
                       </p>
                     </div>
-                    <span className="text-xs font-mono font-bold text-blue-900 bg-blue-100 px-3 py-1 rounded-full border border-blue-300">
+                    <span className="text-xs font-mono font-bold text-blue-900 bg-blue-100 px-3 py-1 rounded-full border border-blue-300 self-start sm:self-center shrink-0">
                       {formData.subRole ? '1 Selected' : '0 Selected'}
                     </span>
                   </div>
@@ -703,7 +703,7 @@ export const CricketAssessmentForm: React.FC<CricketAssessmentFormProps> = ({
                             setFormData({ ...formData, subRole: option });
                             if (errors.subRole) setErrors({ ...errors, subRole: undefined });
                           }}
-                          className={`p-3.5 rounded-xl border border-black transition cursor-pointer flex items-start gap-3 ${
+                          className={`p-2.5 sm:p-3.5 rounded-xl border border-black transition cursor-pointer flex items-start gap-2 sm:gap-3 ${
                             isOptionSelected
                               ? 'bg-blue-900 text-white shadow-md ring-2 ring-amber-400/50'
                               : 'bg-white text-slate-800 hover:bg-slate-100'
@@ -716,7 +716,7 @@ export const CricketAssessmentForm: React.FC<CricketAssessmentFormProps> = ({
                             onChange={() => {}}
                             className="mt-1 text-blue-600 focus:ring-blue-500 h-4 w-4 shrink-0 cursor-pointer"
                           />
-                          <span className={`text-xs font-bold leading-relaxed ${isOptionSelected ? 'text-white' : 'text-slate-800'}`}>
+                          <span className={`text-[11px] sm:text-xs font-bold leading-relaxed ${isOptionSelected ? 'text-white' : 'text-slate-800'}`}>
                             {option}
                           </span>
                         </label>
@@ -745,26 +745,26 @@ export const CricketAssessmentForm: React.FC<CricketAssessmentFormProps> = ({
               initial={{ opacity: 0, x: 20 }}
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: -20 }}
-              className="bg-white rounded-2xl p-6 border-2 border-slate-300 shadow-sm space-y-6"
+              className="bg-white rounded-2xl p-4 sm:p-6 border-2 border-slate-300 shadow-sm space-y-6"
             >
-              <div className="border-b-2 border-slate-200 pb-3 flex items-center justify-between">
-                <div className="flex items-center gap-2 text-[#0B192C] font-black text-lg">
-                  <Award size={22} className="text-blue-600" />
-                  <h3>4. Select Assessment Test Format & Fee Structure</h3>
+              <div className="border-b-2 border-slate-200 pb-3 flex items-center justify-between gap-2">
+                <div className="flex items-center gap-2 text-[#0B192C] font-black text-base sm:text-lg">
+                  <Award size={20} className="text-blue-600 shrink-0" />
+                  <h3 className="truncate">4. Select Assessment Format & Fee</h3>
                 </div>
-                <span className="text-xs font-bold text-amber-700 bg-amber-100 px-3 py-1 rounded-full border border-amber-300 uppercase tracking-wider">
+                <span className="text-[10px] sm:text-xs font-bold text-amber-700 bg-amber-100 px-2.5 py-0.5 sm:px-3 sm:py-1 rounded-full border border-amber-300 uppercase tracking-wider shrink-0">
                   Step 4 of 4
                 </span>
               </div>
 
-              <p className="text-sm font-semibold text-slate-700 leading-relaxed">
+              <p className="text-xs sm:text-sm font-semibold text-slate-700 leading-relaxed">
                 You have successfully completed your registration details. Please select your preferred assessment format package below to proceed with payment:
               </p>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                 {/* Online Test Option Box */}
                 <div
-                  className={`p-6 rounded-2xl border-2 transition relative flex flex-col justify-between bg-white border-slate-350`}
+                  className={`p-4 sm:p-6 rounded-2xl border-2 transition relative flex flex-col justify-between bg-white border-slate-355`}
                 >
                   <div className="flex flex-col h-full justify-between">
                     <div>
@@ -828,7 +828,7 @@ export const CricketAssessmentForm: React.FC<CricketAssessmentFormProps> = ({
 
                 {/* Offline Test Option Box */}
                 <div
-                  className={`p-6 rounded-2xl border-2 transition relative flex flex-col justify-between bg-white border-slate-350`}
+                  className={`p-4 sm:p-6 rounded-2xl border-2 transition relative flex flex-col justify-between bg-white border-slate-355`}
                 >
                   <div className="flex flex-col h-full justify-between">
                     <div>
@@ -898,21 +898,22 @@ export const CricketAssessmentForm: React.FC<CricketAssessmentFormProps> = ({
         </AnimatePresence>
 
         {/* STEP NAVIGATION CONTROLS AT THE BOTTOM */}
-        <div className="mt-8 pt-6 border-t-2 border-slate-300 flex items-center justify-between gap-4">
+        <div className="mt-6 pt-6 border-t-2 border-slate-300 flex items-center justify-between gap-3">
           {currentStep > 1 ? (
             <button
               type="button"
               onClick={handlePrevStep}
-              className="px-5 py-3 rounded-xl border-2 border-slate-300 bg-white text-slate-800 font-bold hover:bg-slate-100 transition cursor-pointer text-xs uppercase tracking-wider flex items-center gap-1"
+              className="px-4 py-3 sm:px-5 sm:py-3 rounded-xl border-2 border-slate-300 bg-white text-slate-800 font-bold hover:bg-slate-100 transition cursor-pointer text-xs uppercase tracking-wider flex items-center justify-center gap-1 flex-1 sm:flex-initial"
             >
-              <ChevronLeft size={18} />
-              <span>Previous Step</span>
+              <ChevronLeft size={16} />
+              <span>Back</span>
+              <span className="hidden sm:inline"> to Step {currentStep - 1}</span>
             </button>
           ) : (
             <button
               type="button"
               onClick={onClose}
-              className="px-5 py-3 rounded-xl border-2 border-slate-300 bg-white text-slate-600 font-bold hover:bg-slate-100 transition cursor-pointer text-xs uppercase tracking-wider"
+              className="px-4 py-3 sm:px-5 sm:py-3 rounded-xl border-2 border-slate-300 bg-white text-slate-600 font-bold hover:bg-slate-100 transition cursor-pointer text-xs uppercase tracking-wider flex-1 sm:flex-initial text-center"
             >
               Cancel
             </button>
@@ -922,10 +923,10 @@ export const CricketAssessmentForm: React.FC<CricketAssessmentFormProps> = ({
             <button
               type="button"
               onClick={handleNextStep}
-              className="px-8 py-3.5 bg-[#0B192C] hover:bg-blue-950 text-amber-300 font-black text-sm rounded-xl transition shadow-lg cursor-pointer border-2 border-[#0B192C] flex items-center gap-2"
+              className="px-6 py-3.5 sm:px-8 sm:py-3.5 bg-[#0B192C] hover:bg-blue-950 text-amber-300 font-black text-sm rounded-xl transition shadow-lg cursor-pointer border-2 border-[#0B192C] flex items-center justify-center gap-2 flex-1 sm:flex-initial"
             >
               <span>Next Step</span>
-              <ChevronRight size={18} className="text-amber-400" />
+              <ChevronRight size={16} className="text-amber-400" />
             </button>
           )}
         </div>

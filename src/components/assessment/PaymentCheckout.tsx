@@ -55,8 +55,35 @@ export const PaymentCheckout: React.FC<PaymentCheckoutProps> = ({
     }
     
     setIsDownloadingReceipt(true);
+    let clone: HTMLElement | null = null;
     try {
-      const canvas = await html2canvas(receiptElement, {
+      // Clone the receipt element to render a standard desktop layout offscreen
+      clone = receiptElement.cloneNode(true) as HTMLElement;
+      clone.style.width = '650px';
+      clone.style.position = 'absolute';
+      clone.style.left = '-9999px';
+      clone.style.top = '-9999px';
+      clone.style.backgroundColor = '#ffffff';
+      
+      // Force 2 columns grid layout for a clean layout inside PDF
+      const gridContainer = clone.querySelector('.grid');
+      if (gridContainer) {
+        gridContainer.classList.remove('grid-cols-1', 'md:grid-cols-2');
+        gridContainer.classList.add('grid-cols-2');
+      }
+      
+      // Force specialization element to span across columns
+      const colSpans = clone.querySelectorAll('.md\\:col-span-2, .col-span-1');
+      colSpans.forEach(el => {
+        if (el.classList.contains('md:col-span-2')) {
+          el.classList.remove('md:col-span-2');
+          el.classList.add('col-span-2');
+        }
+      });
+
+      document.body.appendChild(clone);
+      
+      const canvas = await html2canvas(clone, {
         scale: 2,
         useCORS: true,
         allowTaint: true,
@@ -105,6 +132,9 @@ export const PaymentCheckout: React.FC<PaymentCheckoutProps> = ({
       console.error('Error generating receipt PDF:', err);
       alert('Failed to generate receipt PDF. Please screenshot this page instead.');
     } finally {
+      if (clone && clone.parentNode) {
+        clone.parentNode.removeChild(clone);
+      }
       setIsDownloadingReceipt(false);
     }
   };

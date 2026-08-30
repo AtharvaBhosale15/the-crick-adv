@@ -228,50 +228,52 @@ export const ReportForm: React.FC<ReportFormProps> = ({ candidate, onClose }) =>
   return (
     <div className="fixed inset-0 z-[9999] bg-black/60 backdrop-blur-sm flex flex-col overflow-hidden font-coaches">
       {/* Sticky top bar */}
-      <div className="bg-[#0B1A30] text-white px-6 py-4 flex items-center justify-between border-b-4 border-black flex-shrink-0 shadow-md">
-        <div className="flex items-center gap-4">
+      <div className="bg-[#0B1A30] text-white px-4 py-3 sm:px-6 sm:py-4 flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between border-b-4 border-black flex-shrink-0 shadow-md">
+        <div className="flex items-center gap-3 sm:gap-4 flex-wrap">
           <button onClick={onClose} className="p-2 rounded-xl bg-white/10 hover:bg-white/20 transition cursor-pointer border border-white/10">
             <X size={18} />
           </button>
           <div>
-            <p className="text-xs text-amber-400 uppercase tracking-widest font-semibold">Creating Assessment Report</p>
-            <h2 className="text-lg font-black">{candidate.firstName} {candidate.lastName}</h2>
+            <p className="text-[10px] sm:text-xs text-amber-400 uppercase tracking-widest font-semibold">Creating Assessment Report</p>
+            <h2 className="text-base sm:text-lg font-black text-white">{candidate.firstName} {candidate.lastName}</h2>
           </div>
-          <span className={`px-3 py-1 rounded-full text-xs font-black uppercase border ${candidate.testMode === "Online" ? "bg-emerald-500/20 border-emerald-400 text-emerald-300" : "bg-teal-500/20 border-teal-400 text-teal-300"}`}>
+          <span className={`px-2.5 py-0.5 sm:px-3 sm:py-1 rounded-full text-[10px] sm:text-xs font-black uppercase border ${candidate.testMode === "Online" ? "bg-emerald-500/20 border-emerald-400 text-emerald-300" : "bg-teal-500/20 border-teal-400 text-teal-300"}`}>
             {candidate.testMode} Package
           </span>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="w-full sm:w-auto flex flex-row items-center justify-between sm:justify-end gap-3">
           {grand > 0 && (
-            <div className="text-right mr-4">
-              <p className="text-xs text-slate-400">Grand Score</p>
-              <p className={`text-2xl font-black ${grand >= 8 ? "text-emerald-400" : grand >= 5 ? "text-amber-400" : "text-red-400"}`}>
-                {grand} <span className="text-sm font-semibold text-slate-400">/ 10</span>
+            <div className="text-left sm:text-right sm:mr-4">
+              <p className="text-[10px] sm:text-xs text-slate-400">Grand Score</p>
+              <p className={`text-xl sm:text-2xl font-black ${grand >= 8 ? "text-emerald-400" : grand >= 5 ? "text-amber-400" : "text-red-400"}`}>
+                {grand} <span className="text-[10px] sm:text-sm font-semibold text-slate-400">/ 10</span>
               </p>
             </div>
           )}
           
-          <button
-            onClick={handleSaveDraft}
-            className="flex items-center gap-2 px-4 py-3 bg-slate-850 hover:bg-slate-800 border-2 border-black text-white font-extrabold rounded-xl transition text-sm shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] active:translate-y-[1px] active:shadow-none cursor-pointer relative"
-          >
-            <Save size={16} />
-            <span>Save Draft</span>
-            {draftSavedMessage && (
-              <span className="absolute -bottom-8 left-1/2 transform -translate-x-1/2 bg-emerald-650 border border-black text-white text-[10px] py-1 px-2.5 rounded shadow-lg whitespace-nowrap z-50 animate-bounce">
-                {draftSavedMessage}
-              </span>
-            )}
-          </button>
+          <div className="flex items-center gap-2 sm:gap-3 flex-1 sm:flex-initial justify-end">
+            <button
+              onClick={handleSaveDraft}
+              className="flex items-center justify-center gap-2 px-3 py-2 sm:px-4 sm:py-3 bg-slate-850 hover:bg-slate-800 border-2 border-black text-white font-extrabold rounded-xl transition text-xs sm:text-sm shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] active:translate-y-[1px] active:shadow-none cursor-pointer relative flex-1 sm:flex-none"
+            >
+              <Save size={14} className="sm:w-[16px] sm:h-[16px]" />
+              <span className="whitespace-nowrap">Save Draft</span>
+              {draftSavedMessage && (
+                <span className="absolute -bottom-8 left-1/2 transform -translate-x-1/2 bg-emerald-650 border border-black text-white text-[10px] py-1 px-2.5 rounded shadow-lg whitespace-nowrap z-50 animate-bounce">
+                  {draftSavedMessage}
+                </span>
+              )}
+            </button>
 
-          <button
-            onClick={handleDownloadPDF}
-            disabled={!allFilled || generating}
-            className="flex items-center gap-2 px-5 py-3 bg-[#F5C451] hover:bg-[#E2AF3C] disabled:opacity-45 disabled:cursor-not-allowed text-[#0B1A30] border-2 border-black font-extrabold rounded-xl transition text-sm shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] active:translate-y-[1px] active:shadow-none cursor-pointer"
-          >
-            {generating ? <Loader2 size={16} className="animate-spin" /> : <Download size={16} />}
-            {generating ? "Generating..." : "Download Report PDF"}
-          </button>
+            <button
+              onClick={handleDownloadPDF}
+              disabled={!allFilled || generating}
+              className="flex items-center justify-center gap-2 px-3 py-2 sm:px-5 sm:py-3 bg-[#F5C451] hover:bg-[#E2AF3C] disabled:opacity-45 disabled:cursor-not-allowed text-[#0B1A30] border-2 border-black font-extrabold rounded-xl transition text-xs sm:text-sm shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] active:translate-y-[1px] active:shadow-none cursor-pointer flex-1 sm:flex-none"
+            >
+              {generating ? <Loader2 size={14} className="animate-spin sm:w-[16px] sm:h-[16px]" /> : <Download size={14} className="sm:w-[16px] sm:h-[16px]" />}
+              <span className="whitespace-nowrap">{generating ? "Generating..." : "Download Report PDF"}</span>
+            </button>
+          </div>
         </div>
       </div>
 
