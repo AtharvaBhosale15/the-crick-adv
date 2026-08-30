@@ -521,6 +521,16 @@ export const ReportForm: React.FC<ReportFormProps> = ({ candidate, onClose }) =>
                 ))}
               </div>
             </div>
+
+            {/* Assessment Validity Block */}
+            <div style={{ background: "#f8fafc", borderLeft: "4px solid #0B1A30", borderRadius: "4px", padding: "12px 16px", marginTop: "16px" }}>
+              <h3 style={{ fontSize: "11px", fontWeight: 700, color: "#0B1A30", textTransform: "uppercase", letterSpacing: "0.08em", margin: "0 0 6px 0" }}>
+                Assessment Validity – 12 Months
+              </h3>
+              <p style={{ fontSize: "10.5px", color: "#475569", lineHeight: "1.6", margin: 0 }}>
+                This report is valid for 12 months from the date of assessment. Cricket skills and playing methods can change and improve over time. Player performance may vary with practice, coaching, fitness, and match experience. The player&apos;s technique and playing style may develop during this period. A new assessment is recommended after 12 months to review the player&apos;s current skills and progress.
+              </p>
+            </div>
           </div>
 
           {/* Score Tables per active category group */}
@@ -591,6 +601,18 @@ export const ReportForm: React.FC<ReportFormProps> = ({ candidate, onClose }) =>
                 <p style={{ fontSize: "12px", color: "#334155", lineHeight: 1.7, margin: 0 }}>{overallRemarks}</p>
               </div>
             )}
+
+            {/* Assessment Guidelines Block */}
+            <div style={{ border: "1px solid #e2e8f0", borderRadius: "8px", padding: "16px", marginBottom: "20px", background: "#fafafa" }}>
+              <h3 style={{ fontSize: "11px", fontWeight: 700, textTransform: "uppercase", color: "#64748b", marginBottom: "10px", marginTop: 0 }}>Assessment Guidelines</h3>
+              <ul style={{ margin: 0, paddingLeft: "18px", fontSize: "10.5px", color: "#475569", lineHeight: "1.7" }}>
+                <li style={{ marginBottom: "4px" }}>Assessment completed Online or Offline, as applicable.</li>
+                <li style={{ marginBottom: "4px" }}>Results are based on the player&apos;s performance during the test.</li>
+                <li style={{ marginBottom: "4px" }}>Scores are for guidance and development purposes.</li>
+                <li style={{ marginBottom: "4px" }}>Results may change based on conditions, equipment, and player performance on the day.</li>
+                <li style={{ margin: 0 }}>The report is not a guarantee of future performance or selection.</li>
+              </ul>
+            </div>
 
             {/* Signature & Verification Block */}
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginTop: "24px", paddingTop: "16px", borderTop: "1px solid #e2e8f0" }}>
