@@ -39,33 +39,68 @@ interface SectionCardProps {
   group: CategoryGroup;
   scores: ScoresMap;
   comments: Record<string, string>;
+  isToggled: boolean;
+  onToggle: () => void;
   onChange: (key: string, val: number) => void;
   onComment: (groupKey: string, val: string) => void;
+  onSaveDraft: () => void;
 }
 
-function SectionCard({ group, scores, comments, onChange, onComment }: SectionCardProps) {
+function SectionCard({
+  group,
+  scores,
+  comments,
+  isToggled,
+  onToggle,
+  onChange,
+  onComment,
+  onSaveDraft,
+}: SectionCardProps) {
   const [open, setOpen] = useState(true);
   const avg = categoryAverage(group, scores);
 
   return (
-    <div className={`rounded-2xl border-2 border-black overflow-hidden shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]`}>
-      <button
-        type="button"
-        onClick={() => setOpen(!open)}
-        className={`w-full flex items-center justify-between px-5 py-4 ${group.bgColor} border-b-2 border-black cursor-pointer`}
-      >
-        <div className="flex items-center gap-3">
-          <span className={`text-base font-black uppercase tracking-wider ${group.textColor}`}>{group.label}</span>
-          {avg > 0 && (
+    <div className={`rounded-2xl border-2 border-black overflow-hidden shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] transition-all ${!isToggled ? "opacity-75 bg-slate-50" : ""}`}>
+      {/* Header Container */}
+      <div className={`w-full flex items-center justify-between px-5 py-4 ${isToggled ? group.bgColor : "bg-red-50"} border-b-2 border-black`}>
+        <div className="flex items-center gap-3 cursor-pointer flex-1" onClick={() => isToggled && setOpen(!open)}>
+          <span className={`text-base font-black uppercase tracking-wider ${isToggled ? group.textColor : "text-red-800"}`}>
+            {group.key === "wicketkeeping" ? "Wicketkeeping" : group.label}
+          </span>
+          {isToggled && avg > 0 && (
             <span className={`text-xs font-bold px-2.5 py-0.5 rounded-full border border-black ${group.textColor} bg-white/70 shadow-sm`}>
               Avg: {avg} / 10
             </span>
           )}
         </div>
-        {open ? <ChevronUp size={18} className="text-black" /> : <ChevronDown size={18} className="text-black" />}
-      </button>
+        <div className="flex items-center gap-4">
+          {/* Toggle Button */}
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              onToggle();
+            }}
+            className={`px-3 py-1.5 rounded-xl border-2 border-black font-extrabold text-xs transition cursor-pointer shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] active:translate-y-[1px] active:shadow-none ${
+              isToggled
+                ? "bg-emerald-500 hover:bg-emerald-600 text-white"
+                : "bg-red-500 hover:bg-red-600 text-white"
+            }`}
+          >
+            {isToggled ? "Included in Report" : "Excluded from Report"}
+          </button>
+          
+          <button
+            type="button"
+            onClick={() => isToggled && setOpen(!open)}
+            className="p-1 cursor-pointer"
+          >
+            {open && isToggled ? <ChevronUp size={18} className="text-black" /> : <ChevronDown size={18} className="text-black" />}
+          </button>
+        </div>
+      </div>
 
-      {open && (
+      {open && isToggled && (
         <div className="bg-white p-5 space-y-4">
           {group.subCategories.map(sub => {
             const v = scores[sub.key] || 0;
@@ -101,6 +136,18 @@ function SectionCard({ group, scores, comments, onChange, onComment }: SectionCa
               className="w-full px-3 py-2 text-xs text-[#0B1A30] border-2 border-black rounded-xl focus:outline-none focus:border-[#F5C451] resize-none bg-[#FAF9F5] placeholder-slate-400"
             />
           </div>
+
+          {/* Section Save Draft Button */}
+          <div className="flex justify-end pt-3 border-t border-slate-100">
+            <button
+              type="button"
+              onClick={onSaveDraft}
+              className="flex items-center gap-1.5 px-3 py-2 bg-slate-850 hover:bg-slate-800 border-2 border-black text-white font-extrabold text-xs rounded-xl transition shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] active:translate-y-[1px] active:shadow-none cursor-pointer"
+            >
+              <Save size={12} />
+              <span>Save Section Draft</span>
+            </button>
+          </div>
         </div>
       )}
     </div>
@@ -109,7 +156,8 @@ function SectionCard({ group, scores, comments, onChange, onComment }: SectionCa
 
 export const ReportForm: React.FC<ReportFormProps> = ({ candidate, onClose }) => {
   const categoriesList = getCategories(candidate.testMode);
-  
+  const isWKRequired = candidate.playingRole?.toLowerCase().includes("wicket") || candidate.subRole?.toLowerCase().includes("keeper");
+
   const [scores, setScores] = useState<ScoresMap>(() => initialScores(candidate.testMode));
   const [sectionComments, setSectionComments] = useState<Record<string, string>>({});
   const [overallRemarks, setOverallRemarks] = useState("");
@@ -118,17 +166,41 @@ export const ReportForm: React.FC<ReportFormProps> = ({ candidate, onClose }) =>
   const [draftLoadedAlert, setDraftLoadedAlert] = useState(false);
   const printRef = useRef<HTMLDivElement>(null);
 
-  const grand = grandAverage(candidate.testMode, scores);
-  
-  // Wicketkeeping is optional (only required if isWicketkeeper is true or playing role includes Wicket Keeper)
-  const isWKRequired = candidate.playingRole?.toLowerCase().includes("wicket") || candidate.subRole?.toLowerCase().includes("keeper");
-  
+  // Initialize toggle states for all sections. Wicketkeeping defaults to isWKRequired.
+  const [activeSections, setActiveSections] = useState<Record<string, boolean>>(() => {
+    const initial: Record<string, boolean> = {};
+    categoriesList.forEach(group => {
+      if (group.key === "wicketkeeping") {
+        initial[group.key] = isWKRequired;
+      } else {
+        initial[group.key] = true;
+      }
+    });
+    return initial;
+  });
+
+  // Calculate dynamic grand average based only on toggled-on sections
+  const grand = (() => {
+    const activeKeys = categoriesList
+      .filter(group => activeSections[group.key])
+      .flatMap(group => group.subCategories.map(s => s.key));
+      
+    const filled = activeKeys.filter(k => (scores[k] || 0) > 0);
+    if (filled.length === 0) return 0;
+    const total = filled.reduce((acc, k) => acc + (scores[k] || 0), 0);
+    return Math.round((total / filled.length) * 10) / 10;
+  })();
+
   const allFilled = Object.entries(scores).every(([k, v]) => {
-    // Skip wicketkeeping questions if they are optional and not filled
-    const isWkKey = k.includes("wk") || k.includes("stumping") || k.includes("glovework") || k === "off_catching_wk";
-    if (isWkKey && !isWKRequired) {
+    // Find which category group this subcategory key belongs to
+    const group = categoriesList.find(g => g.subCategories.some(s => s.key === k));
+    if (!group) return true;
+    
+    // If the group is toggled OFF, we don't require its scores to be filled!
+    if (!activeSections[group.key]) {
       return true;
     }
+    
     return (v as number) > 0;
   });
 
@@ -148,6 +220,9 @@ export const ReportForm: React.FC<ReportFormProps> = ({ candidate, onClose }) =>
         if (parsed.overallRemarks) {
           setOverallRemarks(parsed.overallRemarks);
         }
+        if (parsed.activeSections) {
+          setActiveSections(prev => ({ ...prev, ...parsed.activeSections }));
+        }
         setDraftLoadedAlert(true);
         setTimeout(() => setDraftLoadedAlert(false), 5000);
       }
@@ -162,6 +237,7 @@ export const ReportForm: React.FC<ReportFormProps> = ({ candidate, onClose }) =>
         scores,
         sectionComments,
         overallRemarks,
+        activeSections,
         updatedAt: new Date().toISOString()
       };
       localStorage.setItem(`tcc_coach_draft_${candidate.id}`, JSON.stringify(draftData));
@@ -181,38 +257,82 @@ export const ReportForm: React.FC<ReportFormProps> = ({ candidate, onClose }) =>
     setSectionComments(prev => ({ ...prev, [groupKey]: val }));
   };
 
+  const handleToggleSection = (groupKey: string) => {
+    setActiveSections(prev => ({ ...prev, [groupKey]: !prev[groupKey] }));
+  };
+
   const handleDownloadPDF = async () => {
     if (!printRef.current) return;
     setGenerating(true);
     try {
-      const canvas = await html2canvas(printRef.current, {
-        scale: 2,
-        useCORS: true,
-        backgroundColor: "#ffffff",
-        logging: false,
-      });
-      const imgData = canvas.toDataURL("image/png");
+      const headerBlock = document.getElementById("pdf-header-block");
+      const sectionBlocks = document.querySelectorAll(".pdf-section-block");
+      const remarksBlock = document.getElementById("pdf-remarks-block");
+      const footerBlock = document.getElementById("pdf-footer-block");
+
       const pdf = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
       const pdfWidth = pdf.internal.pageSize.getWidth();
       const pdfHeight = pdf.internal.pageSize.getHeight();
-      const margin = 10;
-      const imgWidth = pdfWidth - (margin * 2);
-      const imgHeight = (canvas.height * imgWidth) / canvas.width;
+      
+      const margin = 12;
+      const imgWidth = pdfWidth - (margin * 2); // 186mm
+      const pageHeightLimit = 245; // Safe height boundary before breaking to next page
+      
+      let currentY = margin;
 
-      const pageHeightLimit = pdfHeight - (margin * 2);
-      let heightLeft = imgHeight;
-      let position = margin;
-      let isFirstPage = true;
-
-      while (heightLeft > 0) {
-        if (!isFirstPage) {
-          pdf.addPage();
+      const drawFooter = async () => {
+        if (footerBlock) {
+          const canvas = await html2canvas(footerBlock, {
+            scale: 2,
+            useCORS: true,
+            backgroundColor: "#ffffff",
+            logging: false
+          });
+          const imgData = canvas.toDataURL("image/png");
+          const footerHeightMM = (canvas.height * imgWidth) / canvas.width;
+          pdf.addImage(imgData, "PNG", margin, pdfHeight - footerHeightMM - 8, imgWidth, footerHeightMM, undefined, "FAST");
         }
-        pdf.addImage(imgData, "PNG", margin, position, imgWidth, imgHeight, undefined, "FAST");
-        heightLeft -= pageHeightLimit;
-        position -= pageHeightLimit;
-        isFirstPage = false;
+      };
+
+      const addBlockToPDF = async (el: HTMLElement) => {
+        const canvas = await html2canvas(el, {
+          scale: 2,
+          useCORS: true,
+          backgroundColor: "#ffffff",
+          logging: false
+        });
+        const imgData = canvas.toDataURL("image/png");
+        const blockHeightMM = (canvas.height * imgWidth) / canvas.width;
+
+        // If rendering this block exceeds page boundary, trigger page break
+        if (currentY + blockHeightMM > pageHeightLimit) {
+          await drawFooter();
+          pdf.addPage();
+          currentY = margin;
+        }
+
+        pdf.addImage(imgData, "PNG", margin, currentY, imgWidth, blockHeightMM, undefined, "FAST");
+        currentY += blockHeightMM + 5; // 5mm spacing between blocks
+      };
+
+      // 1. Capture and add Header Block
+      if (headerBlock) {
+        await addBlockToPDF(headerBlock);
       }
+
+      // 2. Capture and add each active Section Block
+      const sectionsArray = Array.from(sectionBlocks);
+      for (const section of sectionsArray) {
+        await addBlockToPDF(section as HTMLElement);
+      }
+
+      // 3. Capture and add Coach Remarks / Grand Score Block
+      if (remarksBlock) {
+        await addBlockToPDF(remarksBlock);
+      }
+
+      // 4. Draw Footer on the final page
+      await drawFooter();
 
       pdf.save(`CoachReport_${candidate.firstName}_${candidate.lastName}_${candidate.id}.pdf`);
     } catch (err) {
@@ -322,20 +442,17 @@ export const ReportForm: React.FC<ReportFormProps> = ({ candidate, onClose }) =>
 
           {/* Scoring Sections */}
           {categoriesList.map(group => {
-            // Hide Wicketkeeping section if it is not required for the candidate
-            const isWkSection = group.key === "wicketkeeping";
-            if (isWkSection && !isWKRequired) {
-              return null;
-            }
-
             return (
               <SectionCard
                 key={group.key}
                 group={group}
                 scores={scores}
                 comments={sectionComments}
+                isToggled={!!activeSections[group.key]}
+                onToggle={() => handleToggleSection(group.key)}
                 onChange={handleScore}
                 onComment={handleComment}
+                onSaveDraft={handleSaveDraft}
               />
             );
           })}
@@ -369,110 +486,124 @@ export const ReportForm: React.FC<ReportFormProps> = ({ candidate, onClose }) =>
 
       {/* Hidden Print Template for PDF */}
       <div className="absolute -top-[9999px] -left-[9999px] pointer-events-none">
-        <div ref={printRef} style={{ width: "794px", backgroundColor: "#fff", padding: "40px", fontFamily: "Georgia, serif" }}>
-          {/* Report Header */}
-          <div style={{ textAlign: "center", borderBottom: "3px solid #0B1A30", paddingBottom: "20px", marginBottom: "24px" }}>
-            <img src={logoImg} alt="TCA Logo" style={{ height: "64px", marginBottom: "10px" }} />
-            <h1 style={{ fontSize: "20px", fontWeight: 900, color: "#0B1A30", margin: "0 0 4px 0" }}>{candidate.testMode} Cricket Skills Certification Report</h1>
-            <p style={{ fontSize: "11px", color: "#64748b", margin: 0 }}>Issued by The Cricket Advisor – Certified Assessment Division</p>
-            <p style={{ fontSize: "10px", color: "#94a3b8", marginTop: "6px" }}>Assessment Date: {today}</p>
-          </div>
+        <div ref={printRef} style={{ width: "794px", backgroundColor: "#fff", fontFamily: "Georgia, serif" }}>
+          
+          {/* Header & Candidate Information Block */}
+          <div id="pdf-header-block" style={{ width: "794px", backgroundColor: "#fff", padding: "40px 40px 10px 40px", boxSizing: "border-box" }}>
+            {/* Report Header */}
+            <div style={{ textAlign: "center", borderBottom: "3px solid #0B1A30", paddingBottom: "20px", marginBottom: "24px" }}>
+              <img src={logoImg} alt="TCA Logo" style={{ height: "64px", marginBottom: "10px" }} />
+              <h1 style={{ fontSize: "20px", fontWeight: 900, color: "#0B1A30", margin: "0 0 4px 0" }}>{candidate.testMode} Cricket Skills Certification Report</h1>
+              <p style={{ fontSize: "11px", color: "#64748b", margin: 0 }}>Issued by The Cricket Advisor – Certified Assessment Division</p>
+              <p style={{ fontSize: "10px", color: "#94a3b8", marginTop: "6px" }}>Assessment Date: {today}</p>
+            </div>
 
-          {/* Candidate Details */}
-          <div style={{ background: "#f8fafc", border: "1px solid #e2e8f0", borderRadius: "8px", padding: "16px", marginBottom: "24px" }}>
-            <h2 style={{ fontSize: "11px", fontWeight: 700, color: "#94a3b8", textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: "12px" }}>Candidate Information</h2>
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "12px" }}>
-              {[
-                ["Full Name", `${candidate.firstName} ${candidate.lastName}`],
-                ["Registration ID", candidate.id],
-                ["Package Type", candidate.testMode],
-                ["Playing Role", candidate.playingRole],
-                ["Specialty", candidate.subRole],
-                ["Age", candidate.age],
-                ["Nationality", candidate.nationality],
-                ["Country of Residence", candidate.countryOfResidence],
-                ["Email", candidate.email],
-              ].map(([l, v]) => (
-                <div key={l}>
-                  <div style={{ fontSize: "9px", color: "#94a3b8", fontWeight: 700, textTransform: "uppercase" }}>{l}</div>
-                  <div style={{ fontSize: "11px", color: "#1e293b", fontWeight: 600 }}>{v || "–"}</div>
-                </div>
-              ))}
+            {/* Candidate Details */}
+            <div style={{ background: "#f8fafc", border: "1px solid #e2e8f0", borderRadius: "8px", padding: "16px" }}>
+              <h2 style={{ fontSize: "11px", fontWeight: 700, color: "#94a3b8", textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: "12px", marginTop: 0 }}>Candidate Information</h2>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "12px" }}>
+                {[
+                  ["Full Name", `${candidate.firstName} ${candidate.lastName}`],
+                  ["Registration ID", candidate.id],
+                  ["Package Type", candidate.testMode],
+                  ["Playing Role", candidate.playingRole],
+                  ["Specialty", candidate.subRole],
+                  ["Age", candidate.age],
+                  ["Nationality", candidate.nationality],
+                  ["Country of Residence", candidate.countryOfResidence],
+                  ["Email", candidate.email],
+                ].map(([l, v]) => (
+                  <div key={l}>
+                    <div style={{ fontSize: "9px", color: "#94a3b8", fontWeight: 700, textTransform: "uppercase" }}>{l}</div>
+                    <div style={{ fontSize: "11px", color: "#1e293b", fontWeight: 600 }}>{v || "–"}</div>
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
 
-          {/* Score Tables per category */}
+          {/* Score Tables per active category group */}
           {categoriesList.map(group => {
             const isWkSection = group.key === "wicketkeeping";
-            if (isWkSection && !isWKRequired) {
+            if ((isWkSection && !isWKRequired) || !activeSections[group.key]) {
               return null;
             }
 
             const avg = categoryAverage(group, scores);
+            const displayLabel = group.key === "wicketkeeping" ? "Wicketkeeping" : group.label;
+
             return (
-              <div key={group.key} style={{ marginBottom: "20px", borderRadius: "8px", overflow: "hidden", border: "1px solid #e2e8f0" }}>
-                <div style={{ background: "#0B1A30", color: "#fff", padding: "8px 16px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                  <span style={{ fontWeight: 900, fontSize: "13px", textTransform: "uppercase" }}>{group.label}</span>
-                  {avg > 0 && <span style={{ fontSize: "11px", color: "#fbbf24" }}>Section Average: {avg} / 10</span>}
-                </div>
-                <table style={{ width: "100%", borderCollapse: "collapse" }}>
-                  <thead>
-                    <tr style={{ background: "#f8fafc" }}>
-                      <th style={{ padding: "6px 12px", fontSize: "10px", textAlign: "left", color: "#64748b", fontWeight: 700 }}>Category</th>
-                      <th style={{ padding: "6px 12px", fontSize: "10px", textAlign: "center", color: "#64748b", fontWeight: 700, width: "100px" }}>Score</th>
-                      <th style={{ padding: "6px 12px", fontSize: "10px", textAlign: "left", color: "#64748b", fontWeight: 700 }}>Rating Bar</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {group.subCategories.map((sub, i) => {
-                      const v = scores[sub.key] || 0;
-                      const barColor = v === 0 ? "#e2e8f0" : v <= 4 ? "#f87171" : v <= 7 ? "#fbbf24" : "#34d399";
-                      return (
-                        <tr key={sub.key} style={{ background: i % 2 === 0 ? "#fff" : "#f8fafc", borderTop: "1px solid #f1f5f9" }}>
-                          <td style={{ padding: "7px 12px", fontSize: "11px", color: "#334155" }}>{sub.label}</td>
-                          <td style={{ padding: "7px 12px", textAlign: "center", fontSize: "13px", fontWeight: 900, color: v <= 4 ? "#ef4444" : v <= 7 ? "#d97706" : "#10b981" }}>{v > 0 ? `${v} / 10` : "—"}</td>
-                          <td style={{ padding: "7px 12px" }}>
-                            <div style={{ background: "#e2e8f0", borderRadius: "4px", height: "8px", overflow: "hidden" }}>
-                              <div style={{ width: `${v * 10}%`, height: "8px", background: barColor, borderRadius: "4px" }} />
-                            </div>
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
-                {sectionComments[group.key] && (
-                  <div style={{ background: "#fffbeb", padding: "8px 16px", borderTop: "1px solid #fde68a", fontSize: "10px", color: "#78350f" }}>
-                    <strong>Coach Notes:</strong> {sectionComments[group.key]}
+              <div key={group.key} className="pdf-section-block" style={{ width: "794px", backgroundColor: "#fff", padding: "10px 40px", boxSizing: "border-box" }}>
+                <div style={{ borderRadius: "8px", overflow: "hidden", border: "1px solid #e2e8f0" }}>
+                  <div style={{ background: "#0B1A30", color: "#fff", padding: "8px 16px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                    <span style={{ fontWeight: 900, fontSize: "13px", textTransform: "uppercase" }}>{displayLabel}</span>
+                    {avg > 0 && <span style={{ fontSize: "11px", color: "#fbbf24" }}>Section Average: {avg} / 10</span>}
                   </div>
-                )}
+                  <table style={{ width: "100%", borderCollapse: "collapse" }}>
+                    <thead>
+                      <tr style={{ background: "#f8fafc" }}>
+                        <th style={{ padding: "6px 12px", fontSize: "10px", textAlign: "left", color: "#64748b", fontWeight: 700 }}>Category</th>
+                        <th style={{ padding: "6px 12px", fontSize: "10px", textAlign: "center", color: "#64748b", fontWeight: 700, width: "100px" }}>Score</th>
+                        <th style={{ padding: "6px 12px", fontSize: "10px", textAlign: "left", color: "#64748b", fontWeight: 700 }}>Rating Bar</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {group.subCategories.map((sub, i) => {
+                        const v = scores[sub.key] || 0;
+                        const barColor = v === 0 ? "#e2e8f0" : v <= 4 ? "#f87171" : v <= 7 ? "#fbbf24" : "#34d399";
+                        return (
+                          <tr key={sub.key} style={{ background: i % 2 === 0 ? "#fff" : "#f8fafc", borderTop: "1px solid #f1f5f9" }}>
+                            <td style={{ padding: "7px 12px", fontSize: "11px", color: "#334155" }}>{sub.label}</td>
+                            <td style={{ padding: "7px 12px", textAlign: "center", fontSize: "13px", fontWeight: 900, color: v <= 4 ? "#ef4444" : v <= 7 ? "#d97706" : "#10b981" }}>{v > 0 ? `${v} / 10` : "—"}</td>
+                            <td style={{ padding: "7px 12px" }}>
+                              <div style={{ background: "#e2e8f0", borderRadius: "4px", height: "8px", overflow: "hidden" }}>
+                                <div style={{ width: `${v * 10}%`, height: "8px", background: barColor, borderRadius: "4px" }} />
+                              </div>
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                  {sectionComments[group.key] && (
+                    <div style={{ background: "#fffbeb", padding: "8px 16px", borderTop: "1px solid #fde68a", fontSize: "10px", color: "#78350f" }}>
+                      <strong>Coach Notes:</strong> {sectionComments[group.key]}
+                    </div>
+                  )}
+                </div>
               </div>
             );
           })}
 
-          {/* Grand Score */}
-          <div style={{ background: "#0B1A30", borderRadius: "12px", padding: "20px", textAlign: "center", marginBottom: "20px" }}>
-            <p style={{ color: "#fbbf24", fontSize: "11px", textTransform: "uppercase", letterSpacing: "0.1em", margin: "0 0 6px 0" }}>Grand Overall Score</p>
-            <p style={{ color: grand >= 8 ? "#34d399" : grand >= 5 ? "#fbbf24" : "#f87171", fontSize: "48px", fontWeight: 900, margin: 0 }}>{grand > 0 ? `${grand} / 10` : "—"}</p>
-          </div>
-
-          {/* Overall Remarks */}
-          {overallRemarks && (
-            <div style={{ border: "1px solid #e2e8f0", borderRadius: "8px", padding: "16px", marginBottom: "20px" }}>
-              <h3 style={{ fontSize: "11px", fontWeight: 700, textTransform: "uppercase", color: "#64748b", marginBottom: "8px" }}>Overall Coach Remarks</h3>
-              <p style={{ fontSize: "12px", color: "#334155", lineHeight: 1.7 }}>{overallRemarks}</p>
+          {/* Remarks & Grand Score Block */}
+          <div id="pdf-remarks-block" style={{ width: "794px", backgroundColor: "#fff", padding: "10px 40px 20px 40px", boxSizing: "border-box" }}>
+            {/* Grand Score */}
+            <div style={{ background: "#0B1A30", borderRadius: "12px", padding: "20px", textAlign: "center", marginBottom: "20px" }}>
+              <p style={{ color: "#fbbf24", fontSize: "11px", textTransform: "uppercase", letterSpacing: "0.1em", margin: "0 0 6px 0" }}>Grand Overall Score</p>
+              <p style={{ color: grand >= 8 ? "#34d399" : grand >= 5 ? "#fbbf24" : "#f87171", fontSize: "48px", fontWeight: 900, margin: 0 }}>{grand > 0 ? `${grand} / 10` : "—"}</p>
             </div>
-          )}
 
-          {/* Footer */}
-          <div style={{ borderTop: "2px solid #e2e8f0", paddingTop: "16px", textAlign: "center" }}>
-            <p style={{ fontSize: "10px", color: "#94a3b8", marginBottom: "4px" }}>
-              This report has been generated based on assessment conducted by BCCI Level 3 & ECB Level 1 certified coaches of The Cricket Advisor.
-            </p>
-            <p style={{ fontSize: "10px", color: "#94a3b8" }}>
-              © The Cricket Advisor | www.thecricketadvisor.com | Confidential Assessment Report | {today}
-            </p>
+            {/* Overall Remarks */}
+            {overallRemarks && (
+              <div style={{ border: "1px solid #e2e8f0", borderRadius: "8px", padding: "16px" }}>
+                <h3 style={{ fontSize: "11px", fontWeight: 700, textTransform: "uppercase", color: "#64748b", marginBottom: "8px", marginTop: 0 }}>Overall Coach Remarks</h3>
+                <p style={{ fontSize: "12px", color: "#334155", lineHeight: 1.7, margin: 0 }}>{overallRemarks}</p>
+              </div>
+            )}
           </div>
+
+          {/* Footer Block */}
+          <div id="pdf-footer-block" style={{ width: "794px", backgroundColor: "#fff", padding: "10px 40px 20px 40px", boxSizing: "border-box" }}>
+            <div style={{ borderTop: "2px solid #e2e8f0", paddingTop: "16px", textAlign: "center" }}>
+              <p style={{ fontSize: "10px", color: "#94a3b8", marginBottom: "4px", marginTop: 0 }}>
+                This report has been generated based on assessment conducted by BCCI Level 3 & ECB Level 1 certified coaches of The Cricket Advisor.
+              </p>
+              <p style={{ fontSize: "10px", color: "#94a3b8", margin: 0 }}>
+                © The Cricket Advisor | www.thecricketadvisor.com | Confidential Assessment Report | {today}
+              </p>
+            </div>
+          </div>
+
         </div>
       </div>
     </div>
