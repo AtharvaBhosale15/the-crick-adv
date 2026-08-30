@@ -4670,7 +4670,7 @@ END:VCALENDAR`;
 
 
       {/* --- FLOATING CONTACT BUTTONS --- */}
-      {activeTab !== 'coaches' && (
+      {activeTab !== 'coaches' && !(activeTab === 'cricket-assessment' && assessmentView !== 'landing') && (
         <div className="fixed bottom-6 right-6 z-40 flex flex-col space-y-3">
 
 

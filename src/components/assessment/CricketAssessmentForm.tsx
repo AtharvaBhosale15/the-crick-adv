@@ -297,10 +297,10 @@ export const CricketAssessmentForm: React.FC<CricketAssessmentFormProps> = ({
               exit={{ opacity: 0, x: -20 }}
               className="bg-white rounded-2xl p-4 sm:p-6 border-2 border-blue-300 shadow-sm space-y-6"
             >
-              <div className="border-b-2 border-slate-200 pb-3 flex items-center justify-between gap-2">
-                <div className="flex items-center gap-2 text-[#0B192C] font-black text-base sm:text-lg">
+              <div className="border-b-2 border-slate-200 pb-3 flex flex-col sm:flex-row sm:items-center sm:justify-between items-start gap-3">
+                <div className="flex items-center gap-2 text-[#0B192C] font-black text-base sm:text-lg min-w-0">
                   <User size={20} className="text-blue-600 shrink-0" />
-                  <h3 className="truncate">1. Personal Information & Candidate Age</h3>
+                  <h3 className="text-sm sm:text-base md:text-lg leading-tight font-black text-[#0B1A30]">1. Personal Information & Candidate Age</h3>
                 </div>
                 <span className="text-[10px] sm:text-xs font-bold text-slate-500 bg-slate-100 px-2.5 py-0.5 sm:px-3 sm:py-1 rounded-full border border-slate-300 uppercase tracking-wider shrink-0">
                   Step 1 of 4
@@ -475,10 +475,10 @@ export const CricketAssessmentForm: React.FC<CricketAssessmentFormProps> = ({
               exit={{ opacity: 0, x: -20 }}
               className="bg-white rounded-2xl p-4 sm:p-6 border-2 border-blue-300 shadow-sm space-y-6"
             >
-              <div className="border-b-2 border-slate-200 pb-3 flex items-center justify-between gap-2">
-                <div className="flex items-center gap-2 text-[#0B192C] font-black text-base sm:text-lg">
+              <div className="border-b-2 border-slate-200 pb-3 flex flex-col sm:flex-row sm:items-center sm:justify-between items-start gap-3">
+                <div className="flex items-center gap-2 text-[#0B192C] font-black text-base sm:text-lg min-w-0">
                   <Globe size={20} className="text-blue-600 shrink-0" />
-                  <h3 className="truncate">2. Location & Contact Details</h3>
+                  <h3 className="text-sm sm:text-base md:text-lg leading-tight font-black text-[#0B1A30]">2. Location & Contact Details</h3>
                 </div>
                 <span className="text-[10px] sm:text-xs font-bold text-slate-500 bg-slate-100 px-2.5 py-0.5 sm:px-3 sm:py-1 rounded-full border border-slate-300 uppercase tracking-wider shrink-0">
                   Step 2 of 4
@@ -619,10 +619,10 @@ export const CricketAssessmentForm: React.FC<CricketAssessmentFormProps> = ({
               exit={{ opacity: 0, x: -20 }}
               className="bg-white rounded-2xl p-4 sm:p-6 border-2 border-slate-300 shadow-sm space-y-6"
             >
-              <div className="border-b-2 border-slate-200 pb-3 flex items-center justify-between gap-2">
-                <div className="flex items-center gap-2 text-[#0B192C] font-black text-base sm:text-lg">
+              <div className="border-b-2 border-slate-200 pb-3 flex flex-col sm:flex-row sm:items-center sm:justify-between items-start gap-3">
+                <div className="flex items-center gap-2 text-[#0B192C] font-black text-base sm:text-lg min-w-0">
                   <ShieldCheck size={20} className="text-blue-600 shrink-0" />
-                  <h3 className="truncate">3. Playing Role & Technical Specialty</h3>
+                  <h3 className="text-sm sm:text-base md:text-lg leading-tight font-black text-[#0B1A30]">3. Playing Role & Technical Specialty</h3>
                 </div>
                 <span className="text-[10px] sm:text-xs font-bold text-slate-500 bg-slate-100 px-2.5 py-0.5 sm:px-3 sm:py-1 rounded-full border border-slate-300 uppercase tracking-wider shrink-0">
                   Step 3 of 4
@@ -747,10 +747,10 @@ export const CricketAssessmentForm: React.FC<CricketAssessmentFormProps> = ({
               exit={{ opacity: 0, x: -20 }}
               className="bg-white rounded-2xl p-4 sm:p-6 border-2 border-slate-300 shadow-sm space-y-6"
             >
-              <div className="border-b-2 border-slate-200 pb-3 flex items-center justify-between gap-2">
-                <div className="flex items-center gap-2 text-[#0B192C] font-black text-base sm:text-lg">
+              <div className="border-b-2 border-slate-200 pb-3 flex flex-col sm:flex-row sm:items-center sm:justify-between items-start gap-3">
+                <div className="flex items-center gap-2 text-[#0B192C] font-black text-base sm:text-lg min-w-0">
                   <Award size={20} className="text-blue-600 shrink-0" />
-                  <h3 className="truncate">4. Select Assessment Format & Fee</h3>
+                  <h3 className="text-sm sm:text-base md:text-lg leading-tight font-black text-[#0B1A30]">4. Select Assessment Format & Fee</h3>
                 </div>
                 <span className="text-[10px] sm:text-xs font-bold text-amber-700 bg-amber-100 px-2.5 py-0.5 sm:px-3 sm:py-1 rounded-full border border-amber-300 uppercase tracking-wider shrink-0">
                   Step 4 of 4
