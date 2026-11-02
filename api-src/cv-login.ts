@@ -73,29 +73,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       });
     }
 
-    // Fix legacy records unconditionally for all users if columns are NULL
-    if (hasPostgres()) {
-      try {
-        await sql`
-          UPDATE cv_users 
-          SET 
-            first_name = COALESCE(NULLIF(first_name, ''), 'Player'),
-            last_name = COALESCE(NULLIF(last_name, ''), 'Profile'),
-            country = COALESCE(NULLIF(country, ''), 'India'), 
-            state_province = COALESCE(NULLIF(state_province, ''), 'Maharashtra'), 
-            mobile_number = COALESCE(NULLIF(mobile_number, ''), '9321885233'), 
-            nationality = COALESCE(NULLIF(nationality, ''), 'India'), 
-            date_of_birth = COALESCE(NULLIF(date_of_birth, ''), '28')
-          WHERE email = ${sanitizedEmail};
-        `;
-        const refetch = await sql`SELECT * FROM cv_users WHERE email = ${sanitizedEmail} LIMIT 1`;
-        if (refetch.rows.length > 0) {
-          dbUser = refetch.rows[0];
-        }
-      } catch (updateErr) {
-        console.error("Error patching legacy user:", updateErr);
-      }
-    }
+    // (Removed: a 'legacy patch' here overwrote blank profile fields with placeholder
+    //  values such as a fixed mobile number and date of birth '28' on every login.)
 
     // Generate JWT Token
     const jwtSecret = process.env.CV_JWT_SECRET || 'tca_cv_default_jwt_secret_key_2026';

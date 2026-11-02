@@ -2,6 +2,7 @@ import { sql } from '@vercel/postgres';
 import fs from 'fs';
 import path from 'path';
 import type { VercelRequest, VercelResponse } from '@vercel/node';
+import { isAdminSecret } from './utils/admin-auth.js';
 
 const LOCAL_CVS_PATH = path.join(process.cwd(), 'cvs-db.json');
 
@@ -32,6 +33,12 @@ const hasPostgres = () => {
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
+  }
+
+  // Admin-only: this endpoint can set payment status and edit counts directly.
+  // Previously it had no protection, so anyone could mark any CV as paid.
+  if (!isAdminSecret(req.body?.secret)) {
+    return res.status(401).json({ error: 'Unauthorized' });
   }
 
   const { cv } = req.body;

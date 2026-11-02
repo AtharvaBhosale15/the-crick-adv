@@ -706,6 +706,7 @@ export default function App() {
   const [isProcessingCvPayment, setIsProcessingCvPayment] = useState(false);
   const [cvPaymentError, setCvPaymentError] = useState('');
   const [cvList, setCvList] = useState<any[]>([]);
+  const [cvUsersList, setCvUsersList] = useState<any[]>([]);
   const [deliveryEmail, setDeliveryEmail] = useState('');
   const [confirmDeliveryEmail, setConfirmDeliveryEmail] = useState('');
   const [emailDeliveryError, setEmailDeliveryError] = useState('');
@@ -1621,8 +1622,9 @@ END:VCALENDAR`;
     }
   };
 
-  const handleSaveCvDraft = async (updatedCv: CricketCVFull = cvForm, isStyleUpdate: boolean = false) => {
-    if (!cvToken) return;
+  // Returns the CV as saved on the server, or null if the save failed.
+  const handleSaveCvDraft = async (updatedCv: CricketCVFull = cvForm, isStyleUpdate: boolean = false): Promise<CricketCVFull | null> => {
+    if (!cvToken) return null;
     setIsSavingCv(true);
     try {
       const res = await fetch('/api/cv-save', {
@@ -1636,14 +1638,30 @@ END:VCALENDAR`;
       if (res.ok) {
         const data = await res.json();
         if (data.cv) {
-          setCvForm({
+          const saved = {
             ...initialCVFormFull('', '', '', ''),
             ...data.cv
-          });
+          };
+          setCvForm(saved);
+          return saved;
         }
+        return null;
       }
+      // Previously failures were silently ignored, so players continued to payment with an unsaved CV
+      if (res.status === 413) {
+        alert('Your CV could not be saved because the profile photo is too large. Please remove the photo and upload a smaller one, then try again.');
+      } else if (res.status === 401) {
+        alert('Your session has expired. Please log in again.');
+      } else {
+        let msg = '';
+        try { msg = (await res.json()).message || ''; } catch { /* ignore */ }
+        alert(msg || 'Your CV could not be saved. Please try again.');
+      }
+      return null;
     } catch (err) {
       console.error('Failed to save CV:', err);
+      alert('Your CV could not be saved. Please check your internet connection and try again.');
+      return null;
     } finally {
       setIsSavingCv(false);
     }
@@ -2482,6 +2500,16 @@ END:VCALENDAR`;
             console.error('Error fetching CVs for admin:', err);
           }
 
+          // Load registered CV accounts (email verification status, independent of payment)
+          try {
+            const usersResp = await fetch(`/api/get-cv-users?secret=${encodeURIComponent(typedPassword)}`);
+            if (usersResp.ok) {
+              setCvUsersList(await usersResp.json());
+            }
+          } catch (err) {
+            console.error('Error fetching CV users for admin:', err);
+          }
+
           // Load Skills Assessments
           try {
             const skillsResp = await fetch(`/api/get-skills-assessments?secret=${encodeURIComponent(typedPassword)}`);
@@ -2529,6 +2557,16 @@ END:VCALENDAR`;
           console.error('Error fetching CVs for admin:', err);
         }
 
+        // Load registered CV accounts (email verification status, independent of payment)
+        try {
+          const usersResp = await fetch(`/api/get-cv-users?secret=${encodeURIComponent(typedPassword)}`);
+          if (usersResp.ok) {
+            setCvUsersList(await usersResp.json());
+          }
+        } catch (err) {
+          console.error('Error fetching CV users for admin:', err);
+        }
+
         try {
           const skillsResp = await fetch(`/api/get-skills-assessments?secret=${encodeURIComponent(typedPassword)}`);
           if (skillsResp.ok) {
@@ -2539,7 +2577,7 @@ END:VCALENDAR`;
           console.error('Error fetching skills assessments for admin:', err);
         }
       } else {
-        setAdminError(`Invalid username or password. Default password is: cricket2026`);
+        setAdminError('Invalid username or password.');
       }
     } catch (err) {
       console.error('Failed to log in via server:', err);
@@ -2567,6 +2605,16 @@ END:VCALENDAR`;
           console.error('Error fetching CVs for admin:', err);
         }
 
+        // Load registered CV accounts (email verification status, independent of payment)
+        try {
+          const usersResp = await fetch(`/api/get-cv-users?secret=${encodeURIComponent(typedPassword)}`);
+          if (usersResp.ok) {
+            setCvUsersList(await usersResp.json());
+          }
+        } catch (err) {
+          console.error('Error fetching CV users for admin:', err);
+        }
+
         try {
           const skillsResp = await fetch(`/api/get-skills-assessments?secret=${encodeURIComponent(typedPassword)}`);
           if (skillsResp.ok) {
@@ -2577,7 +2625,7 @@ END:VCALENDAR`;
           console.error('Error fetching skills assessments for admin:', err);
         }
       } else {
-        setAdminError(`Invalid username or password. Default password is: cricket2026`);
+        setAdminError('Invalid username or password.');
       }
     }
   };
@@ -3219,7 +3267,7 @@ END:VCALENDAR`;
       const response = await fetch('/api/save-cv', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ cv: updatedCv })
+        body: JSON.stringify({ cv: updatedCv, secret: adminPassword })
       });
       return response.ok;
     } catch (e) {
@@ -3862,26 +3910,10 @@ END:VCALENDAR`;
       );
     };
 
+    // Previously this sent a fake 'test_payment_id' that the server accepted without payment.
+    // Now it simply takes the player to the real checkout page.
     const triggerSimulatedRazorpay = async () => {
-      try {
-        const res = await fetch('/api/cv-verify-payment', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            razorpay_order_id: 'order_test_123',
-            razorpay_payment_id: 'test_payment_id',
-            razorpay_signature: 'signature_test',
-            cvId: cvForm.id,
-            userId: cvUser?.id
-          })
-        });
-        if (res.ok) {
-          alert('Simulated Razorpay checkout successful! Premium PDF unlocked.');
-          await fetchUserCV(cvToken || '');
-        }
-      } catch (err) {
-        console.error(err);
-      }
+      setCvView('preview');
     };
 
     const handleDownloadCleanPDF = async () => {
@@ -4229,105 +4261,99 @@ END:VCALENDAR`;
     };
 
     const renderReviewAndUnlockView = () => {
-      const handleCheckoutPayment = async (isSimulated: boolean) => {
-        if (isSimulated) {
-          try {
-            const res = await fetch('/api/cv-verify-payment', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({
-                razorpay_order_id: `order_${Date.now()}`,
-                razorpay_payment_id: 'test_payment_id',
-                razorpay_signature: 'signature_test',
-                cvId: cvForm.id,
-                userId: cvUser?.id
-              })
-            });
-            if (res.ok) {
-              await fetchUserCV(cvToken || '');
-              setCvView('success');
-            } else {
-              const data = await res.json();
-              alert(`Verification failed: ${data.error || 'Unknown error'}`);
-            }
-          } catch (err: any) {
-            console.error(err);
-            alert(`Error: ${err.message}`);
+      const handleCheckoutPayment = async (_isSimulated: boolean) => {
+        // Simulated payments have been removed; every unlock goes through Razorpay.
+        try {
+          // Step 1: make sure the CV is saved on the server BEFORE taking payment.
+          // If this fails we stop here, so nobody pays for a CV that isn't stored.
+          const savedCv = await handleSaveCvDraft(cvForm, true);
+          if (!savedCv) return;
+
+          const isLoaded = await loadRazorpayScript();
+          if (!isLoaded) {
+            alert('Failed to load Razorpay payment SDK. Please check your internet connection.');
+            return;
           }
-        } else {
-          try {
-            const isLoaded = await loadRazorpayScript();
-            if (!isLoaded) {
-              alert('Failed to load Razorpay payment SDK. Please check your internet connection.');
-              return;
-            }
 
-            const orderRes = await fetch('/api/create-order', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ amount: 249 }) // amount in rupees; create-order API converts to paise
-            });
+          const orderRes = await fetch('/api/create-order', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ amount: 249 }) // amount in rupees; create-order API converts to paise
+          });
 
-            if (!orderRes.ok) {
-              const errorText = await orderRes.text();
-              throw new Error(errorText || 'Failed to create order on server');
-            }
+          if (!orderRes.ok) {
+            const errorText = await orderRes.text();
+            throw new Error(errorText || 'Failed to create order on server');
+          }
 
-            const orderData = await orderRes.json();
-            if (!orderData.id) {
-              throw new Error('Order creation did not return a valid order ID');
-            }
+          const orderData = await orderRes.json();
+          if (!orderData.id) {
+            throw new Error('Order creation did not return a valid order ID');
+          }
 
-            const razorpayKeyId = import.meta.env.VITE_RAZORPAY_KEY_ID || '';
-            const options = {
-              key: razorpayKeyId,
-              amount: orderData.amount,
-              currency: orderData.currency || 'INR',
-              name: 'The Cricket Advisor',
-              description: 'Premium Cricket CV Package',
-              order_id: orderData.id,
-              handler: async function (response: any) {
-                try {
-                  const verifyRes = await fetch('/api/cv-verify-payment', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                      razorpay_order_id: response.razorpay_order_id,
-                      razorpay_payment_id: response.razorpay_payment_id,
-                      razorpay_signature: response.razorpay_signature,
-                      cvId: cvForm.id,
-                      userId: cvUser?.id
-                    })
-                  });
+          const razorpayKeyId = import.meta.env.VITE_RAZORPAY_KEY_ID || '';
+          const options = {
+            key: razorpayKeyId,
+            amount: orderData.amount,
+            currency: orderData.currency || 'INR',
+            name: 'The Cricket Advisor',
+            description: 'Premium Cricket CV Package',
+            order_id: orderData.id,
+            handler: async function (response: any) {
+              setIsTransitioning(true);
+              try {
+                // Step 2: confirm the payment on the server. The server identifies the CV
+                // from the logged-in session, so the CV always gets marked as paid.
+                const verifyRes = await fetch('/api/cv-verify-payment', {
+                  method: 'POST',
+                  headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${cvToken}`
+                  },
+                  body: JSON.stringify({
+                    razorpay_order_id: response.razorpay_order_id,
+                    razorpay_payment_id: response.razorpay_payment_id,
+                    razorpay_signature: response.razorpay_signature,
+                    cvId: savedCv.id
+                  })
+                });
 
-                  if (verifyRes.ok) {
-                    await fetchUserCV(cvToken || '');
-                    setCvView('success');
+                const data = await verifyRes.json().catch(() => ({}));
+                if (verifyRes.ok) {
+                  if (data.cv) {
+                    setCvForm({ ...initialCVFormFull('', '', '', ''), ...data.cv });
                   } else {
-                    const data = await verifyRes.json();
-                    alert(`Verification failed: ${data.error || 'Unknown error'}`);
+                    await fetchUserCV(cvToken || '');
                   }
-                } catch (err: any) {
-                  console.error(err);
-                  alert(`Verification error: ${err.message}`);
+                  setCvView('success');
+                } else {
+                  alert(`Your payment was received but could not be confirmed automatically: ${data.error || 'Unknown error'}\n\nPlease contact support with payment ID ${response.razorpay_payment_id}.`);
                 }
-              },
-              prefill: {
-                name: `${cvForm.firstName || ''} ${cvForm.lastName || ''}`,
-                email: cvForm.email || '',
-                contact: cvForm.phone || ''
-              },
-              theme: {
-                color: '#0B1A30'
+              } catch (err: any) {
+                console.error(err);
+                alert(`Verification error: ${err.message}. Please contact support with payment ID ${response.razorpay_payment_id}.`);
+              } finally {
+                setIsTransitioning(false);
               }
-            };
+            },
+            prefill: {
+              name: `${savedCv.firstName || ''} ${savedCv.lastName || ''}`,
+              email: savedCv.email || '',
+              contact: savedCv.phone || ''
+            },
+            theme: {
+              color: '#0B1A30'
+            }
+          };
 
-            const rzp = new (window as any).Razorpay(options);
-            rzp.open();
-          } catch (err: any) {
-            console.error('Razorpay check failed:', err);
-            alert(`Payment failed to initialize: ${err.message}`);
-          }
+          const rzp = new (window as any).Razorpay(options);
+          rzp.on('payment.failed', (resp: any) => {
+            alert(`Payment failed: ${resp?.error?.description || 'Please try again.'}`);
+          });
+          rzp.open();
+        } catch (err: any) {
+          console.error('Razorpay check failed:', err);
+          alert(`Payment failed to initialize: ${err.message}`);
         }
       };
 
@@ -7303,7 +7329,7 @@ END:VCALENDAR`;
                       className={`px-4 py-2 text-xs font-bold rounded-lg uppercase tracking-wider transition flex items-center space-x-1.5 cursor-pointer ${adminSubTab === 'cvs' ? 'bg-navy-900 text-white shadow-md font-extrabold' : 'bg-slate-100 text-slate-700 hover:bg-slate-200 border border-slate-200'}`}
                     >
                       <FileSpreadsheet className="h-4 w-4 text-emerald-600" />
-                      <span>Cricket CVs ({cvList.length})</span>
+                      <span>Cricket CVs ({cvUsersList.length} players / {cvList.length} CVs)</span>
                     </button>
                     <button 
                       onClick={() => setAdminSubTab('economics')}
@@ -9018,6 +9044,84 @@ END:VCALENDAR`;
                     </div>
                   </div>
 
+                  {/* Registered players: shows every account and its email verification status,
+                      whether or not the player has created a CV or paid */}
+                  <div className="space-y-3">
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <h4 className="text-sm font-bold text-navy-900 uppercase tracking-wider">
+                        Registered Players ({cvUsersList.length})
+                      </h4>
+                      <div className="flex flex-wrap gap-2 text-[10px] font-bold uppercase tracking-wider">
+                        <span className="px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
+                          Verified: {cvUsersList.filter((u) => u.emailVerified).length}
+                        </span>
+                        <span className="px-2 py-0.5 rounded-full bg-amber-50 text-amber-700 border border-amber-200">
+                          Not verified: {cvUsersList.filter((u) => !u.emailVerified).length}
+                        </span>
+                        <span className="px-2 py-0.5 rounded-full bg-sky-50 text-sky-700 border border-sky-200">
+                          Paid: {cvUsersList.filter((u) => u.paymentStatus === 'Paid').length}
+                        </span>
+                      </div>
+                    </div>
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-left text-xs border-collapse">
+                        <thead>
+                          <tr className="border-b border-slate-200 bg-slate-50 text-slate-500 font-bold uppercase tracking-wider text-[10px]">
+                            <th className="py-3 px-4">Player</th>
+                            <th className="py-3 px-4">Email</th>
+                            <th className="py-3 px-4">Mobile</th>
+                            <th className="py-3 px-4">Registered On</th>
+                            <th className="py-3 px-4">Email Verified</th>
+                            <th className="py-3 px-4">CV</th>
+                            <th className="py-3 px-4">Payment</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-slate-150">
+                          {cvUsersList.length === 0 ? (
+                            <tr>
+                              <td colSpan={7} className="py-8 text-center text-slate-400 font-medium">
+                                No registered players found.
+                              </td>
+                            </tr>
+                          ) : (
+                            cvUsersList.map((u) => (
+                              <tr key={u.id} className="hover:bg-slate-50 transition">
+                                <td className="py-3.5 px-4 font-semibold text-slate-700">{u.firstName} {u.lastName}</td>
+                                <td className="py-3.5 px-4 text-slate-500">{u.email}</td>
+                                <td className="py-3.5 px-4 text-slate-500">{u.mobileNumber || '-'}</td>
+                                <td className="py-3.5 px-4 text-slate-500">
+                                  {u.createdAt ? new Date(u.createdAt).toLocaleDateString('en-IN') : '-'}
+                                </td>
+                                <td className="py-3.5 px-4">
+                                  <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold border ${
+                                    u.emailVerified
+                                      ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                                      : 'bg-amber-50 text-amber-700 border-amber-200'
+                                  }`}>
+                                    {u.emailVerified ? 'Verified' : 'Pending'}
+                                  </span>
+                                </td>
+                                <td className="py-3.5 px-4 text-slate-600">{u.hasCv ? 'Created' : 'Not started'}</td>
+                                <td className="py-3.5 px-4">
+                                  <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold border ${
+                                    u.paymentStatus === 'Paid'
+                                      ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                                      : 'bg-slate-50 text-slate-600 border-slate-200'
+                                  }`}>
+                                    {u.paymentStatus}
+                                  </span>
+                                </td>
+                              </tr>
+                            ))
+                          )}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+
+                  <h4 className="text-sm font-bold text-navy-900 uppercase tracking-wider pt-2">
+                    Saved CVs ({cvList.length})
+                  </h4>
                   <div className="overflow-x-auto">
                     <table className="w-full text-left text-xs border-collapse">
                       <thead>
@@ -9053,7 +9157,7 @@ END:VCALENDAR`;
                                   cv.paymentStatus === 'Paid' 
                                     ? 'bg-emerald-50 text-emerald-700 border-emerald-200' 
                                     : 'bg-amber-50 text-amber-700 border-amber-200'
-                                }}`}>
+                                }`}>
                                   {cv.paymentStatus}
                                 </span>
                               </td>

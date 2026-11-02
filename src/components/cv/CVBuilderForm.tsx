@@ -1013,11 +1013,31 @@ export default function CVBuilderForm({
                         alert("File size exceeds the 5MB limit. Please upload a smaller image.");
                         return;
                       }
+                      // Shrink the photo before storing it. A full-size photo (up to 5MB) becomes
+                      // ~7MB as text, which exceeds Vercel's 4.5MB request limit and made CV saves fail.
                       const reader = new FileReader();
                       reader.onloadend = () => {
-                        if (typeof reader.result === 'string') {
-                          updateCVField('profilePhoto', reader.result);
-                        }
+                        if (typeof reader.result !== 'string') return;
+                        const original = reader.result;
+                        const img = new Image();
+                        img.onload = () => {
+                          const MAX = 800;
+                          const scale = Math.min(1, MAX / Math.max(img.width, img.height));
+                          const canvas = document.createElement('canvas');
+                          canvas.width = Math.round(img.width * scale);
+                          canvas.height = Math.round(img.height * scale);
+                          const ctx = canvas.getContext('2d');
+                          if (!ctx) {
+                            updateCVField('profilePhoto', original);
+                            return;
+                          }
+                          ctx.fillStyle = '#ffffff';
+                          ctx.fillRect(0, 0, canvas.width, canvas.height);
+                          ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+                          updateCVField('profilePhoto', canvas.toDataURL('image/jpeg', 0.85));
+                        };
+                        img.onerror = () => alert('This image could not be read. Please try a JPG or PNG file.');
+                        img.src = original;
                       };
                       reader.readAsDataURL(file);
                     }}

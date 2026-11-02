@@ -4,7 +4,7 @@ import path from 'path';
 import crypto from 'crypto';
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { generateSalt, hashPassword, signToken } from './utils/cv-auth.js';
-import { Resend } from 'resend';
+import { sendEmail, notifyAdmin } from './utils/send-email.js';
 
 const LOCAL_USERS_PATH = path.join(process.cwd(), 'cv-users-db.json');
 
@@ -48,6 +48,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   const userId = `user_${Date.now()}`;
   const verificationToken = crypto.randomBytes(32).toString('hex');
 
+  let isResend = false;
+
   try {
     // 1. Ensure Table Exists & Check Existing User
     if (hasPostgres()) {
@@ -80,12 +82,25 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         console.error("Error migrating cv_users table schema:", colErr);
       }
 
-      const checkUser = await sql`SELECT id FROM cv_users WHERE email = ${sanitizedEmail} LIMIT 1`;
-      if (checkUser.rows.length > 0) {
-        return res.status(409).json({ error: 'User with this email already exists' });
+      const checkUser = await sql`SELECT id, email_verified FROM cv_users WHERE email = ${sanitizedEmail} LIMIT 1`;
+      if (checkUser.rows.length > 0 && checkUser.rows[0].email_verified) {
+        return res.status(409).json({ error: 'An account with this email already exists. Please log in.' });
       }
 
-      await sql`
+      if (checkUser.rows.length > 0) {
+        // Registered before but never verified (e.g. the first email never arrived).
+        // Update their details and send a fresh verification link instead of blocking them.
+        isResend = true;
+        await sql`
+          UPDATE cv_users SET
+            password_hash = ${pwdHash}, password_salt = ${salt},
+            first_name = ${firstName}, last_name = ${lastName},
+            country = ${country || ''}, state_province = ${stateProvince || ''},
+            mobile_number = ${mobileNumber || ''}, nationality = ${nationality || ''},
+            date_of_birth = ${dateOfBirth || ''}, verification_token = ${verificationToken}
+          WHERE email = ${sanitizedEmail}
+        `;
+      } else await sql`
         INSERT INTO cv_users (
           id, email, password_hash, password_salt, first_name, last_name, country, state_province, mobile_number, nationality, date_of_birth, verification_token, email_verified
         ) VALUES (
@@ -94,9 +109,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       `;
     } else {
       const users = getLocalUsers();
-      const exists = users.some((u: any) => u.email === sanitizedEmail);
-      if (exists) {
-        return res.status(409).json({ error: 'User with this email already exists' });
+      const existingIdx = users.findIndex((u: any) => u.email === sanitizedEmail);
+      if (existingIdx > -1 && users[existingIdx].email_verified) {
+        return res.status(409).json({ error: 'An account with this email already exists. Please log in.' });
+      }
+      if (existingIdx > -1) {
+        isResend = true;
+        users.splice(existingIdx, 1);
       }
 
       users.push({
@@ -119,13 +138,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
 
     // Dispatch Verification Email
-    const resendApiKey = process.env.RESEND_API_KEY;
-    if (resendApiKey) {
-      const resend = new Resend(resendApiKey.trim());
-      const fromEmail = process.env.RESEND_FROM_EMAIL || 'booking@thecricketadvisor.com';
-      const verifyLink = `https://${req.headers.host || 'thecricketadvisor.com'}/#cricket-cv?verify=${verificationToken}`;
-      
-      const htmlContent = `
+    // Use the site's own domain for the link (not a Vercel preview URL)
+    const siteUrl = (process.env.SITE_URL || `https://${req.headers.host || 'thecricketadvisor.com'}`).replace(/\/$/, '');
+    const verifyLink = `${siteUrl}/#cricket-cv?verify=${verificationToken}`;
+    const htmlContent = `
         <div style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; border: 1px solid #e0e0e0; border-radius: 8px; overflow: hidden;">
           <div style="background-color: #0b1a30; padding: 20px; text-align: center; color: white;">
             <h2 style="margin: 0; color: #ffffff;">Verify Your Email Address</h2>
@@ -147,14 +163,31 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         </div>
       `;
 
-      await resend.emails.send({
-        from: `The Cricket Advisor <${fromEmail}>`,
-        to: sanitizedEmail,
-        subject: 'Verify Your Cricket CV Account',
-        html: htmlContent
+    const sent = await sendEmail({
+      to: sanitizedEmail,
+      subject: 'Verify Your Cricket CV Account',
+      html: htmlContent
+    });
+
+    // Let the admin know about the new registration (failure here must not block the player)
+    await notifyAdmin(
+      isResend ? 'Cricket CV: verification link re-sent' : 'Cricket CV: new player registration',
+      isResend ? 'Player re-registered (not yet verified)' : 'New player registration',
+      {
+        Name: `${firstName} ${lastName}`,
+        Email: sanitizedEmail,
+        Mobile: mobileNumber,
+        Country: country,
+        'State / Province': stateProvince,
+        'Email verified': 'No (verification link sent)',
+        'Registered at': new Date().toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' })
+      }
+    );
+
+    if (!sent.ok) {
+      return res.status(502).json({
+        error: `Your account was created, but we could not send the verification email (${sent.error}). Please try registering again in a few minutes with the same email, or contact thecricketadvisor@gmail.com.`
       });
-    } else {
-      console.warn('RESEND_API_KEY is not set. Verification link is: ', `https://localhost:3000/#cricket-cv?verify=${verificationToken}`);
     }
 
     return res.status(200).json({ 

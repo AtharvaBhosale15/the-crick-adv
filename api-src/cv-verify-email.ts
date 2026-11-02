@@ -2,6 +2,7 @@ import { sql } from '@vercel/postgres';
 import fs from 'fs';
 import path from 'path';
 import type { VercelRequest, VercelResponse } from '@vercel/node';
+import { notifyAdmin } from './utils/send-email.js';
 
 const LOCAL_USERS_PATH = path.join(process.cwd(), 'cv-users-db.json');
 
@@ -37,10 +38,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   try {
     let verified = false;
+    let verifiedUser: any = null;
 
     if (hasPostgres()) {
-      const userRes = await sql`SELECT id FROM cv_users WHERE verification_token = ${token} LIMIT 1`;
+      const userRes = await sql`SELECT id, email, first_name, last_name, mobile_number FROM cv_users WHERE verification_token = ${token} LIMIT 1`;
       if (userRes.rows.length > 0) {
+        verifiedUser = userRes.rows[0];
         const userId = userRes.rows[0].id;
         await sql`UPDATE cv_users SET email_verified = TRUE, verification_token = NULL WHERE id = ${userId}`;
         verified = true;
@@ -49,6 +52,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       const users = getLocalUsers();
       const userIdx = users.findIndex((u: any) => u.verification_token === token);
       if (userIdx > -1) {
+        verifiedUser = users[userIdx];
         users[userIdx].email_verified = true;
         users[userIdx].verification_token = null;
         saveLocalUsers(users);
@@ -57,6 +61,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
 
     if (verified) {
+      if (verifiedUser) {
+        await notifyAdmin('Cricket CV: player verified email', 'Player email verified', {
+          Name: `${verifiedUser.first_name || ''} ${verifiedUser.last_name || ''}`,
+          Email: verifiedUser.email,
+          Mobile: verifiedUser.mobile_number,
+          'Verified at': new Date().toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' })
+        });
+      }
       return res.status(200).json({ status: 'verified', message: 'Email verified successfully!' });
     } else {
       return res.status(404).json({ error: 'Invalid or expired verification token' });

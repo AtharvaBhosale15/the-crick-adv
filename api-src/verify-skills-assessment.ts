@@ -59,9 +59,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   try {
     let isValid = false;
 
-    if (razorpay_payment_id === 'test_payment_id') {
-      isValid = true;
-    } else if (key_secret) {
+    if (key_secret) {
       const hmac = crypto.createHmac('sha256', key_secret);
       hmac.update(`${razorpay_order_id}|${razorpay_payment_id}`);
       const generated_signature = hmac.digest('hex');

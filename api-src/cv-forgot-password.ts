@@ -3,7 +3,7 @@ import fs from 'fs';
 import path from 'path';
 import crypto from 'crypto';
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { Resend } from 'resend';
+import { sendEmail } from './utils/send-email.js';
 
 const LOCAL_USERS_PATH = path.join(process.cwd(), 'cv-users-db.json');
 
@@ -81,9 +81,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     if (userExists) {
       const resendApiKey = process.env.RESEND_API_KEY;
       if (resendApiKey) {
-        const resend = new Resend(resendApiKey.trim());
-        const fromEmail = process.env.RESEND_FROM_EMAIL || 'booking@thecricketadvisor.com';
-        const resetLink = `https://${req.headers.host || 'thecricketadvisor.com'}/#cricket-cv?reset=${resetToken}`;
+        const siteUrl = (process.env.SITE_URL || `https://${req.headers.host || 'thecricketadvisor.com'}`).replace(/\/$/, '');
+        const resetLink = `${siteUrl}/#cricket-cv?reset=${resetToken}`;
         
         const htmlContent = `
           <div style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; border: 1px solid #e0e0e0; border-radius: 8px; overflow: hidden;">
@@ -107,8 +106,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           </div>
         `;
 
-        await resend.emails.send({
-          from: `The Cricket Advisor <${fromEmail}>`,
+        await sendEmail({
           to: sanitizedEmail,
           subject: 'Reset Your Cricket CV Password',
           html: htmlContent

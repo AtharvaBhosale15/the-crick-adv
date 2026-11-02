@@ -19,6 +19,7 @@ import emailCv from '../api-src/email-cv.js';
 import getAssessments from '../api-src/get-assessments.js';
 import getBookings from '../api-src/get-bookings.js';
 import getCvs from '../api-src/get-cvs.js';
+import getCvUsers from '../api-src/get-cv-users.js';
 import getSettings from '../api-src/get-settings.js';
 import saveAssessments from '../api-src/save-assessments.js';
 import saveBookings from '../api-src/save-bookings.js';
@@ -48,6 +49,7 @@ const routes: Record<string, (req: VercelRequest, res: VercelResponse) => Promis
   'get-assessments': getAssessments,
   'get-bookings': getBookings,
   'get-cvs': getCvs,
+  'get-cv-users': getCvUsers,
   'get-settings': getSettings,
   'save-assessments': saveAssessments,
   'save-bookings': saveBookings,

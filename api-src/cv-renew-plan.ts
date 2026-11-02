@@ -3,6 +3,7 @@ import fs from 'fs';
 import path from 'path';
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { verifyToken } from './utils/cv-auth.js';
+import { isAdminSecret } from './utils/admin-auth.js';
 
 const LOCAL_CVS_PATH = path.join(process.cwd(), 'cvs-db.json');
 
@@ -32,6 +33,12 @@ const hasPostgres = () => {
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
+  }
+
+  // Previously any logged-in player could call this to reset their edits for free.
+  // Renewals must go through Razorpay (cv-verify-payment). Kept only as an admin tool.
+  if (!isAdminSecret(req.body?.secret)) {
+    return res.status(403).json({ error: 'Renewal requires payment' });
   }
 
   const authHeader = req.headers.authorization;

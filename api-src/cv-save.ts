@@ -105,14 +105,16 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       existingCv = cvs.find((c: any) => c.userId === decoded.userId);
     }
 
-    const cvId = existingCv ? existingCv.id : `cv_${Date.now()}`;
+    // Stable ID per player so the browser and server always agree on which CV this is
+    const cvId = existingCv ? existingCv.id : `cv_${decoded.userId}`;
     const refNum = existingCv ? existingCv.reference_number : `TCA-CV-${new Date().getFullYear()}-${Math.floor(100000 + Math.random() * 900000)}`;
 
     let newEditsUsed = existingCv ? (existingCv.edits_used || 0) : 0;
     const editsAllowed = existingCv ? (existingCv.edits_allowed || 5) : 5;
 
     // Identity Lock Check & Update Profile Lock on purchase
-    const isPaid = existingCv ? (existingCv.payment_status === 'Paid') : (cv.paymentStatus === 'Paid');
+    // Payment status comes ONLY from the database (set by cv-verify-payment), never from the browser
+    const isPaid = existingCv ? (existingCv.payment_status === 'Paid') : false;
     const isLocked = existingCv ? (existingCv.identity_locked || false) : false;
     const isStyleUpdate = req.body.isStyleUpdate === true;
 

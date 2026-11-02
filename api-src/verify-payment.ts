@@ -86,7 +86,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     hmac.update(`${razorpay_order_id}|${razorpay_payment_id}`);
     const generated_signature = hmac.digest('hex');
 
-    if (generated_signature === razorpay_signature || razorpay_payment_id === 'test_payment_id') {
+    if (generated_signature === razorpay_signature) {
       if (booking) {
         const verifiedBooking = {
           ...booking,

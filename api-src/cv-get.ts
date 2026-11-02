@@ -112,7 +112,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     } else {
 
       const initialCv = {
-        id: `cv_${Date.now()}`,
+        id: `cv_${decoded.userId}`, // stable ID (previously changed on every request)
         userId: decoded.userId,
         referenceNumber: `TCA-CV-${new Date().getFullYear()}-${Math.floor(100000 + Math.random() * 900000)}`,
         templateId: 'prestige',
